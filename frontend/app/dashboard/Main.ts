@@ -5,7 +5,7 @@ import { Project, UserAccount } from './types';
 const currentUser: UserAccount = {
     name: "Hon. Juan Dela Cruz",
     role: "Chairman",
-    barangay: "Barangay Tibay"
+    barangay: "Barangay Cuta"
 };
 
 const projects: Project[] = [
