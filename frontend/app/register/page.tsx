@@ -2,74 +2,102 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "../../lib/supabase";
+import { supabase } from "../../lib/supabase"; // Adjust this path if needed
 
 export default function RegisterPage() {
   const router = useRouter();
+
+  // 1. Added full_name and barangay to the initial state
   const [formData, setFormData] = useState({
+    full_name: "",
+    barangay: "",
     username: "",
     password: "",
     confirmPassword: "",
-    role_type: "SK_Official",
+    role_type: "SK_Chairperson",
   });
+
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  // Password requires at least 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char
   const validatePassword = (password: string) => {
     const regex =
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     return regex.test(password);
   };
 
-  const handleRegister = async (e: React.SubmitEvent<HTMLFormElement>) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
     setIsLoading(true);
+    setError("");
 
-    if (!validatePassword(formData.password)) {
-      setError(
-        "Password must be at least 8 characters, include an uppercase letter, a number, and a special character.",
-      );
+    // Destructure values from formData for cleaner code
+    const {
+      full_name,
+      barangay,
+      username,
+      password,
+      confirmPassword,
+      role_type,
+    } = formData;
+
+    // UX & Security: Ironclad validation before hitting the database
+    if (!username || !password || !full_name || !barangay || !role_type) {
+      setError("All fields are required.");
       setIsLoading(false);
       return;
     }
 
-    if (formData.password !== formData.confirmPassword) {
+    if (password !== confirmPassword) {
       setError("Passwords do not match.");
       setIsLoading(false);
       return;
     }
 
-    const cleanUsername = formData.username
-      .replace(/[^a-zA-Z0-9_]/g, "")
-      .toLowerCase();
-    const dummyEmail = `${cleanUsername}@skledge.com`;
-
-    const { data, error: authError } = await supabase.auth.signUp({
-      email: dummyEmail,
-      password: formData.password,
-      options: {
-        data: {
-          username: formData.username,
-          role_type: formData.role_type,
-        },
-      },
-    });
-
-    if (authError) {
-      setError(authError.message);
+    if (!validatePassword(password)) {
+      setError(
+        "Password must be at least 8 characters and include uppercase, lowercase, number, and special character.",
+      );
       setIsLoading(false);
       return;
     }
 
-    setIsLoading(false);
-    router.push("/login");
+    // Auth Workaround: Map username to the dummy email scheme
+    const dummyEmail = `${username.toLowerCase()}@skledge.com`;
+
+    try {
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: dummyEmail,
+        password: password,
+        options: {
+          data: {
+            username: username,
+            role_type: role_type,
+            full_name: full_name,
+            barangay: barangay,
+          },
+        },
+      });
+
+      if (signUpError) throw signUpError;
+
+      // UX: Redirect on success
+      console.log("Registration successful!", data);
+      router.push("/login");
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to register account.";
+      setError(message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
-      <div className="w-full max-w-md rounded-xl bg-white p-8 shadow-lg border border-gray-100">
+      <div className="w-full max-w-md rounded-xl bg-white p-8 shadow-lg border border-gray-100 my-8">
         <div className="mb-6 text-center">
           <h1 className="text-2xl font-bold text-gray-900">SK-Ledge</h1>
           <p className="text-sm text-gray-500">Create your secure account</p>
@@ -82,6 +110,42 @@ export default function RegisterPage() {
         )}
 
         <form onSubmit={handleRegister} className="space-y-4">
+          {/* FULL NAME FIELD */}
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              Full Name
+            </label>
+            <input
+              type="text"
+              required
+              value={formData.full_name}
+              onChange={(e) =>
+                setFormData({ ...formData, full_name: e.target.value })
+              }
+              className="w-full rounded-md border border-gray-300 p-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              placeholder="e.g., Juan Dela Cruz"
+            />
+          </div>
+
+          {/* BARANGAY FIELD */}
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              Barangay
+            </label>
+            <input
+              type="text"
+              required
+              value={formData.barangay}
+              onChange={(e) =>
+                setFormData({ ...formData, barangay: e.target.value })
+              }
+              className="w-full rounded-md border border-gray-300 p-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              placeholder="e.g., San Jose"
+            />
+            {/* Note: If you want to restrict this to specific barangays, change this <input> to a <select> tag similar to the Role dropdown */}
+          </div>
+
+          {/* ROLE FIELD */}
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">
               Role
@@ -91,15 +155,17 @@ export default function RegisterPage() {
               onChange={(e) =>
                 setFormData({ ...formData, role_type: e.target.value })
               }
-              className="w-full rounded-md border border-gray-300 p-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full rounded-md border border-gray-300 p-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
             >
-              <option value="SK_Official">SK Official</option>
+              <option value="SK_Chairperson">SK Chairperson</option>
+              <option value="SK_Treasurer">SK Treasurer</option>
               <option value="BMO">Budget Gatekeeper (BMO/RBCPB)</option>
               <option value="SK_Fed">SK Provincial Federation</option>
               <option value="COA">Commission on Audit (COA)</option>
             </select>
           </div>
 
+          {/* USERNAME FIELD */}
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">
               Username
@@ -116,6 +182,7 @@ export default function RegisterPage() {
             />
           </div>
 
+          {/* PASSWORD FIELD */}
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">
               Password
@@ -141,6 +208,7 @@ export default function RegisterPage() {
             </div>
           </div>
 
+          {/* CONFIRM PASSWORD FIELD */}
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">
               Confirm Password
@@ -157,10 +225,11 @@ export default function RegisterPage() {
             />
           </div>
 
+          {/* SUBMIT BUTTON */}
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full rounded-md bg-blue-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:bg-blue-400"
+            className="w-full rounded-md bg-blue-600 py-2.5 mt-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:bg-blue-400"
           >
             {isLoading ? "Registering..." : "Register Account"}
           </button>

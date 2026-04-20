@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "../../lib/supabase";
+import { supabase } from "../../lib/supabase"; // Adjust path if needed
 
 export default function LoginPage() {
   const router = useRouter();
@@ -14,37 +14,50 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = async (e: React.SubmitEvent<HTMLFormElement>) => {
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
 
-    const cleanUsername = credentials.username
-      .replace(/[^a-zA-Z0-9_]/g, "")
-      .toLowerCase();
+    // Clean whitespace and lowercase to match the registration logic
+    const cleanUsername = credentials.username.trim().toLowerCase();
     const dummyEmail = `${cleanUsername}@skledge.com`;
 
-    const { data, error: authError } = await supabase.auth.signInWithPassword({
-      email: dummyEmail,
-      password: credentials.password,
-    });
+    try {
+      const { data, error: authError } = await supabase.auth.signInWithPassword(
+        {
+          email: dummyEmail,
+          password: credentials.password,
+        },
+      );
 
-    if (authError) {
-      setError("Invalid username or password.");
+      if (authError) {
+        throw new Error("Invalid username or password.");
+      }
+
+      if (data.user) {
+        const { error: updateError } = await supabase
+          .from("profiles")
+          .update({ created_at: new Date().toISOString() })
+          .eq("id", data.user.id);
+
+        if (updateError) {
+          console.warn(
+            "Failed to update created_at timestamp:",
+            updateError.message,
+          );
+        }
+      }
+
+      // UX: Redirect on success
+      router.push("/dashboard");
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Invalid login credentials.";
+      setError(message);
+    } finally {
       setIsLoading(false);
-      return;
     }
-
-    // Update last_login timestamp in your database
-    if (data.user) {
-      await supabase
-        .from("profiles")
-        .update({ last_login: new Date().toISOString() })
-        .eq("id", data.user.id);
-    }
-
-    setIsLoading(false);
-    router.push("/dashboard");
   };
 
   return (
@@ -106,13 +119,13 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full rounded-md bg-blue-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:bg-blue-400"
+            className="w-full rounded-md bg-blue-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:bg-blue-400 mt-2"
           >
             {isLoading ? "Authenticating..." : "Sign In"}
           </button>
         </form>
 
-        <div className="mt-4 text-center text-sm text-gray-600">
+        <div className="mt-6 text-center text-sm text-gray-600">
           Need an account?{" "}
           <button
             onClick={() => router.push("/register")}

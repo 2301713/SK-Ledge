@@ -8,9 +8,10 @@
 
   /* Status Colors */
   --color-success: #10B981;
-  --color-warning: #F59E0B;
+  --color-pending: #F59E0B;
   --color-danger: #DC2626;
   --color-information: #3B82F6;
+  --color-ongoing: #2563EB;
 
   /* Neutral Templates */
   --color-primary-foreground: #1E293B;

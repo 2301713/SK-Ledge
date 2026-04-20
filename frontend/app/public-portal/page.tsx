@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import {
   Chart as ChartJS,
@@ -13,8 +13,8 @@ import {
   Title,
 } from "chart.js";
 import { Pie, Bar } from "react-chartjs-2";
+import { Project, StatusType } from "./types";
 
-// Register Chart.js components
 ChartJS.register(
   ArcElement,
   Tooltip,
@@ -25,24 +25,10 @@ ChartJS.register(
   Title,
 );
 
-// TYPES & INTERFACES
-type StatusType = "ongoing" | "done" | "pending";
-
-interface Project {
-  name: string;
-  barangay: string;
-  chair: string;
-  date: string;
-  budget: string;
-  category: string;
-  status: StatusType;
-}
-
-// SAMPLE DATA
 const projectsData: Project[] = [
   {
     name: "Youth Leadership Summit",
-    barangay: "Sta. Cruz",
+    barangay: "Bauan",
     chair: "J. Reyes",
     date: "Mar 2024",
     budget: "₱85,000",
@@ -60,7 +46,7 @@ const projectsData: Project[] = [
   },
   {
     name: "Free Medical & Dental Mission",
-    barangay: "Poblacion",
+    barangay: "Sorosoro Karsada",
     chair: "A. Cruz",
     date: "Jan 2024",
     budget: "₱45,000",
@@ -69,7 +55,7 @@ const projectsData: Project[] = [
   },
   {
     name: "Anti-Drug Campaign Seminar",
-    barangay: "Maligaya",
+    barangay: "Alangilan",
     chair: "C. Garcia",
     date: "Dec 2023",
     budget: "₱30,000",
@@ -78,7 +64,7 @@ const projectsData: Project[] = [
   },
   {
     name: "Tree Planting & Clean-Up Drive",
-    barangay: "Rizal",
+    barangay: "Cuta",
     chair: "L. Torres",
     date: "Dec 2023",
     budget: "₱25,000",
@@ -87,7 +73,7 @@ const projectsData: Project[] = [
   },
   {
     name: "Nutrition & Health Awareness",
-    barangay: "Pag-asa",
+    barangay: "Lemery",
     chair: "F. Ramos",
     date: "Oct 2023",
     budget: "₱35,000",
@@ -96,7 +82,7 @@ const projectsData: Project[] = [
   },
   {
     name: "Kabataan Film Festival",
-    barangay: "Maliwanag",
+    barangay: "San Pascual",
     chair: "G. Lim",
     date: "Oct 2023",
     budget: "₱55,000",
@@ -105,7 +91,7 @@ const projectsData: Project[] = [
   },
   {
     name: "Youth Entrepreneurship Forum",
-    barangay: "Sta. Cruz",
+    barangay: "As-is",
     chair: "J. Reyes",
     date: "Sep 2023",
     budget: "₱68,000",
@@ -114,7 +100,7 @@ const projectsData: Project[] = [
   },
   {
     name: "Sports Equipment Procurement",
-    barangay: "San Jose",
+    barangay: "Cupang",
     chair: "M. Santos",
     date: "Aug 2023",
     budget: "₱50,000",
@@ -124,169 +110,165 @@ const projectsData: Project[] = [
 ];
 
 export default function PublicDashboard() {
-  // STATES
   const [searchQuery, setSearchQuery] = useState("");
 
-  // FILTER LOGIC
-  const filteredProjects = projectsData.filter((p) => {
-    const q = searchQuery.toLowerCase();
-    return (
-      p.name.toLowerCase().includes(q) ||
-      p.barangay.toLowerCase().includes(q) ||
-      p.chair.toLowerCase().includes(q) ||
-      p.category.toLowerCase().includes(q)
-    );
-  });
+  const filteredProjects = useMemo(() => {
+    return projectsData.filter((p) => {
+      const q = searchQuery.toLowerCase();
+      return (
+        p.name.toLowerCase().includes(q) ||
+        p.barangay.toLowerCase().includes(q) ||
+        p.category.toLowerCase().includes(q)
+      );
+    });
+  }, [searchQuery]);
 
-  // STATUS BADGE STYLES
-  const getStatusStyles = (status: StatusType) => {
-    switch (status) {
-      case "ongoing":
-        return "bg-blue-100 text-blue-800";
-      case "done":
-        return "bg-green-100 text-green-800";
-      case "pending":
-        return "bg-yellow-100 text-yellow-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const getStatusLabel = (status: StatusType) => {
-    switch (status) {
-      case "ongoing":
-        return "Ongoing";
-      case "done":
-        return "Completed";
-      case "pending":
-        return "Pending Approval";
-      default:
-        return status;
-    }
-  };
-
-  // CHART CONFIGS
-  const pieData = {
-    labels: [
-      "Youth Development",
-      "Sports",
-      "Health",
-      "Livelihood",
-      "Environment",
-      "Peace & Order",
-      "Arts & Culture",
-    ],
-    datasets: [
-      {
-        data: [1, 2, 2, 1, 1, 1, 1],
-        backgroundColor: [
-          "#3b82f6",
-          "#10b981",
-          "#f59e0b",
-          "#ec4899",
-          "#06b6d4",
-          "#f97316",
-          "#84cc16",
-        ],
-        borderWidth: 2,
-        borderColor: "#fff",
-      },
-    ],
-  };
-
-  const barData = {
-    labels: ["Q1 2023", "Q2 2023", "Q3 2023", "Q4 2023", "Q1 2024"],
-    datasets: [
-      {
-        label: "Disbursed (₱)",
-        data: [320000, 480000, 610000, 890000, 600000],
-        backgroundColor: "#3b82f6",
-        borderRadius: 4,
-      },
-    ],
-  };
+  // Modernized Chart Colors based on brand
+  const chartColors = [
+    "#003366",
+    "#FFCC00",
+    "#10B981",
+    "#3B82F6",
+    "#F59E0B",
+    "#6366F1",
+    "#EC4899",
+  ];
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 font-sans">
-      {/* NAV */}
-      <nav className="bg-white border-b border-gray-200 px-6 h-14 flex items-center justify-between">
-        <div>
-          <h1 className="text-[15px] font-semibold">SK-Ledge</h1>
-          <p className="text-xs text-gray-500">
-            Sangguniang Kabataan Fund Transparency Portal
-          </p>
+    <div className="min-h-screen bg-background text-primary-foreground selection:bg-tertiary selection:text-primary">
+      {/* HEADER / NAV */}
+      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-border px-8 h-16 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="h-10 w-10 bg-primary rounded-lg flex items-center justify-center text-tertiary font-bold text-xl shadow-lg shadow-primary/20">
+            B
+          </div>
+          <div>
+            <h1 className="text-lg font-bold leading-tight tracking-tight text-primary">
+              SK-Ledge
+            </h1>
+            <p className="text-[10px] uppercase tracking-[0.15em] font-semibold text-secondary-foreground">
+              Batangas Province Transparency Hub
+            </p>
+          </div>
         </div>
         <Link
           href="/login"
-          className="bg-blue-600 text-white border-none rounded-lg px-4 py-2 text-sm font-medium hover:bg-blue-700 transition-colors"
+          className="bg-primary text-white hover:bg-primary/90 px-6 py-2 rounded-full text-sm font-semibold transition-all hover:shadow-md active:scale-95"
         >
-          Login
+          Access Portal
         </Link>
       </nav>
 
-      {/* MAIN */}
-      <main className="max-w-275 mx-auto p-6">
-        {/* METRIC CARDS */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+      <main className="max-w-7xl mx-auto p-8">
+        {/* HERO SECTION */}
+        <section className="mb-10">
+          <h2 className="text-3xl font-extrabold text-primary mb-2">
+            Public Expenditure Dashboard
+          </h2>
+          <p className="text-secondary-foreground max-w-2xl">
+            Real-time monitoring of the Annual Barangay Youth Investment Program
+            (ABYIP). Ensuring every centavo counts for the Batangueño youth.
+          </p>
+        </section>
+
+        {/* METRICS */}
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-10">
           <MetricCard
-            label="Total Projects"
+            label="Active Projects"
             value="24"
-            sub="ABYIP 2023 – 2024"
+            sub="Cycle 2023-2024"
+            accent="border-primary"
           />
           <MetricCard
             label="Ongoing"
             value="8"
-            sub="currently active"
-            valueColor="text-yellow-600"
+            sub="Execution phase"
+            valueColor="text-ongoing"
+            accent="border-ongoing"
           />
           <MetricCard
             label="Completed"
             value="13"
-            sub="fully documented"
-            valueColor="text-green-600"
+            sub="Validated records"
+            valueColor="text-success"
+            accent="border-success"
           />
           <MetricCard
             label="Total ABYIP Budget"
             value="₱4.2M"
-            sub="10% SK fund allocation"
+            sub="Annual Allocation"
+            accent="border-tertiary"
           />
-          <MetricCard
-            label="Total Disbursed"
-            value="₱2.9M"
-            sub="69% of allocation"
-          />
-          <MetricCard label="Barangays" value="10" sub="enrolled in SK-Ledge" />
         </div>
 
-        {/* CHARTS */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <div className="bg-white border border-gray-200 rounded-xl p-4">
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-              Projects by Fund Category
+        {/* ANALYTICS */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
+          <div className="lg:col-span-1 bg-white rounded-2xl p-6 shadow-sm border border-border">
+            <h3 className="text-sm font-bold text-primary uppercase tracking-widest mb-6">
+              Fund Distribution
             </h3>
-            <div className="relative w-full h-55">
+            <div className="h-64">
               <Pie
-                data={pieData}
+                data={{
+                  labels: [
+                    "Youth Dev",
+                    "Sports",
+                    "Health",
+                    "Livelihood",
+                    "Env",
+                    "Peace",
+                    "Arts",
+                  ],
+                  datasets: [
+                    {
+                      data: [1, 2, 2, 1, 1, 1, 1],
+                      backgroundColor: chartColors,
+                      borderWidth: 0,
+                    },
+                  ],
+                }}
                 options={{
                   maintainAspectRatio: false,
-                  plugins: { legend: { position: "bottom" } },
+                  plugins: {
+                    legend: {
+                      position: "bottom",
+                      labels: { usePointStyle: true, padding: 20 },
+                    },
+                  },
                 }}
               />
             </div>
           </div>
-          <div className="bg-white border border-gray-200 rounded-xl p-4">
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-              Disbursement per Quarter
+
+          <div className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-border">
+            <h3 className="text-sm font-bold text-primary uppercase tracking-widest mb-6">
+              Disbursement Trend (Quarterly)
             </h3>
-            <div className="relative w-full h-55">
+            <div className="h-64">
               <Bar
-                data={barData}
+                data={{
+                  labels: [
+                    "Q1 2023",
+                    "Q2 2023",
+                    "Q3 2023",
+                    "Q4 2023",
+                    "Q1 2024",
+                  ],
+                  datasets: [
+                    {
+                      label: "Disbursed (₱)",
+                      data: [320000, 480000, 610000, 890000, 600000],
+                      backgroundColor: "#003366",
+                      borderRadius: 6,
+                    },
+                  ],
+                }}
                 options={{
                   maintainAspectRatio: false,
                   plugins: { legend: { display: false } },
                   scales: {
                     x: { grid: { display: false } },
-                    y: { beginAtZero: true },
+                    y: { border: { display: false } },
                   },
                 }}
               />
@@ -294,86 +276,64 @@ export default function PublicDashboard() {
           </div>
         </div>
 
-        {/* TABLE */}
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border-b border-gray-200 gap-3">
-            <h2 className="text-sm font-semibold">SK Project List</h2>
-            <input
-              type="text"
-              placeholder="Search projects..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="border border-gray-300 rounded-md px-3 py-1.5 text-sm outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 w-full sm:w-62.5"
-            />
+        {/* DATA TABLE */}
+        <div className="bg-white rounded-2xl shadow-sm border border-border overflow-hidden">
+          <div className="p-6 border-b border-border flex flex-col md:flex-row justify-between items-center gap-4 bg-gray-50/50">
+            <h2 className="text-lg font-bold text-primary">Project Registry</h2>
+            <div className="relative w-full md:w-80">
+              <input
+                type="text"
+                placeholder="Search by project, barangay..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-4 pr-10 py-2 bg-white border border-border rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+              />
+            </div>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-left">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="p-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Project Name
+                <tr className="text-[11px] uppercase tracking-wider text-secondary-foreground bg-gray-50/50">
+                  <th className="px-6 py-4 font-bold">
+                    Project Identification
                   </th>
-                  <th className="p-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Barangay
-                  </th>
-                  <th className="p-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Chairperson
-                  </th>
-                  <th className="p-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th className="p-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Budget
-                  </th>
-                  <th className="p-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Category
-                  </th>
-                  <th className="p-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
+                  <th className="px-6 py-4 font-bold">Location</th>
+                  <th className="px-6 py-4 font-bold">Implementation Date</th>
+                  <th className="px-6 py-4 font-bold text-right">Budget</th>
+                  <th className="px-6 py-4 font-bold text-center">Status</th>
                 </tr>
               </thead>
-              <tbody>
-                {filteredProjects.length > 0 ? (
-                  filteredProjects.map((p, idx) => (
-                    <tr
-                      key={idx}
-                      className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
-                    >
-                      <td className="p-3 text-sm">{p.name}</td>
-                      <td className="p-3 text-sm">{p.barangay}</td>
-                      <td className="p-3 text-sm">{p.chair}</td>
-                      <td className="p-3 text-sm">{p.date}</td>
-                      <td className="p-3 text-sm">{p.budget}</td>
-                      <td className="p-3 text-sm text-gray-600">
+              <tbody className="divide-y divide-border">
+                {filteredProjects.map((p, idx) => (
+                  <tr
+                    key={idx}
+                    className="hover:bg-primary/2 transition-colors group"
+                  >
+                    <td className="px-6 py-4">
+                      <p className="text-sm font-semibold text-primary">
+                        {p.name}
+                      </p>
+                      <p className="text-xs text-secondary-foreground">
                         {p.category}
-                      </td>
-                      <td className="p-3 text-sm">
-                        <span
-                          className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusStyles(p.status)}`}
-                        >
-                          {getStatusLabel(p.status)}
-                        </span>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td
-                      colSpan={7}
-                      className="p-6 text-center text-sm text-gray-500"
-                    >
-                      {`No projects found matching "${searchQuery}"`}
+                      </p>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-primary-foreground font-medium">
+                      {p.barangay}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-secondary-foreground">
+                      {p.date}
+                    </td>
+                    <td className="px-6 py-4 text-sm font-mono text-right font-bold text-primary">
+                      {p.budget}
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <StatusBadge status={p.status} />
                     </td>
                   </tr>
-                )}
+                ))}
               </tbody>
             </table>
-          </div>
-
-          <div className="p-3 bg-gray-50 border-top border-gray-200 text-xs text-gray-500">
-            Showing {filteredProjects.length} project(s)
           </div>
         </div>
       </main>
@@ -381,25 +341,50 @@ export default function PublicDashboard() {
   );
 }
 
-// REUSABLE COMPONENT FOR METRIC CARDS
 function MetricCard({
   label,
   value,
   sub,
-  valueColor = "text-gray-900",
+  valueColor = "text-primary",
+  accent,
 }: {
   label: string;
   value: string;
   sub: string;
   valueColor?: string;
+  accent: string;
 }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-      <div className="text-[11px] text-gray-500 uppercase tracking-wider mb-1.5">
+    <div
+      className={`bg-white border-l-4 ${accent} rounded-xl p-5 shadow-sm border-y border-r border-border hover:shadow-md transition-shadow`}
+    >
+      <p className="text-[10px] font-bold text-secondary-foreground uppercase tracking-wider mb-1">
         {label}
-      </div>
-      <div className={`text-2xl font-semibold ${valueColor}`}>{value}</div>
-      <div className="text-[11px] text-gray-500 mt-1">{sub}</div>
+      </p>
+      <p className={`text-2xl font-black ${valueColor} tracking-tight`}>
+        {value}
+      </p>
+      <p className="text-[10px] text-secondary-foreground font-medium mt-1 uppercase italic">
+        {sub}
+      </p>
     </div>
+  );
+}
+
+function StatusBadge({ status }: { status: StatusType }) {
+  const config = {
+    ongoing: "bg-ongoing/10 text-ongoing border-ongoing/20",
+    done: "bg-success/10 text-success border-success/20",
+    pending: "bg-pending/10 text-pending border-pending/20",
+  };
+
+  const labels = { ongoing: "Ongoing", done: "Completed", pending: "Pending" };
+
+  return (
+    <span
+      className={`px-3 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider ${config[status] || "bg-gray-100"}`}
+    >
+      {labels[status] || status}
+    </span>
   );
 }
