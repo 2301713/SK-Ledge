@@ -140,7 +140,7 @@ export default function PublicDashboard() {
       <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-border px-8 h-16 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="h-10 w-10 bg-primary rounded-lg flex items-center justify-center text-tertiary font-bold text-xl shadow-lg shadow-primary/20">
-            B
+            SK
           </div>
           <div>
             <h1 className="text-lg font-bold leading-tight tracking-tight text-primary">
