@@ -1,32 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import SideBar from "@/components/SideBar"; // Ensure this matches your exact file name casing
-import { UserAccount, Project } from "./types";
+import SideBar from "@/components/SideBar";
+import { UserAccount } from "./types";
+import { dummyProjects } from "@/lib/dummyData";
 import { supabase } from "@/lib/supabase";
 
 export default function SKDashboard() {
   // STATE
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-
-  // Dummy projects
-  const projects: Project[] = [
-    {
-      id: "1",
-      name: "Youth Basketball League",
-      category: "Sports",
-      status: "Approved",
-      budget: 45000,
-    },
-    {
-      id: "2",
-      name: "SK Scholarship Grant",
-      category: "Education",
-      status: "Pending",
-      budget: 120000,
-    },
-  ];
 
   // GET USER DATA
   useEffect(() => {
@@ -243,7 +226,7 @@ export default function SKDashboard() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border/50">
-                    {projects.map((p) => (
+                    {dummyProjects.map((p) => (
                       <tr
                         key={p.id}
                         className="hover:bg-primary/2 transition-colors group"
@@ -292,7 +275,7 @@ export default function SKDashboard() {
                       </tr>
                     ))}
                     {/* Empty State / Fill Row if needed */}
-                    {projects.length === 0 && (
+                    {dummyProjects.length === 0 && (
                       <tr>
                         <td
                           colSpan={4}
