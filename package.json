@@ -1,28 +1,19 @@
 {
-  "name": "frontend",
-  "version": "0.1.0",
+  "name": "sk-ledge-root",
+  "version": "1.0.0",
   "private": true,
+  "description": "Root configuration for SK-Ledge monorepo",
+  "workspaces": [
+    "frontend",
+    "backend",
+    "blockchain"
+  ],
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
-  },
-  "dependencies": {
-    "@supabase/ssr": "^0.10.2",
-    "@supabase/supabase-js": "^2.103.3",
-    "next": "^9.3.3",
-    "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "dev:frontend": "npm run dev -w frontend",
+    "build:frontend": "npm run build -w frontend",
+    "install:all": "npm install"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20.19.39",
-    "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3",
-    "eslint": "^9",
-    "eslint-config-next": "16.2.4",
-    "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5.7.3"
   }
 }
