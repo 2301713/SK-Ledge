@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import SideBar from "@/components/SideBar";
 import { UserAccount } from "./types";
-import { dummyProjects } from "@/lib/dummyData";
+import { INITIAL_PROJECTS } from "@/lib/dummyData";
 import { supabase } from "@/lib/supabase";
 
 export default function SKDashboard() {
@@ -39,7 +39,7 @@ export default function SKDashboard() {
         if (profileData) {
           setCurrentUser({
             name: profileData.full_name || profileData.username,
-            role: profileData.role_type as "Chairman" | "Treasurer",
+            role_type: profileData.role_type as "Chairman" | "Treasurer",
             barangay: profileData.barangay || "No Barangay Assigned",
           });
         }
@@ -106,7 +106,7 @@ export default function SKDashboard() {
       {/* SIDEBAR */}
       <SideBar
         userName={currentUser.name}
-        roleType={currentUser.role}
+        roleType={currentUser.role_type}
         barangay={currentUser.barangay}
       />
 
@@ -226,7 +226,7 @@ export default function SKDashboard() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border/50">
-                    {dummyProjects.map((p) => (
+                    {INITIAL_PROJECTS.map((p) => (
                       <tr
                         key={p.id}
                         className="hover:bg-primary/2 transition-colors group"
@@ -275,7 +275,7 @@ export default function SKDashboard() {
                       </tr>
                     ))}
                     {/* Empty State / Fill Row if needed */}
-                    {dummyProjects.length === 0 && (
+                    {INITIAL_PROJECTS.length === 0 && (
                       <tr>
                         <td
                           colSpan={4}

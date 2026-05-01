@@ -9,6 +9,6 @@ export interface Project {
 
 export interface UserAccount {
   name: string;
-  role: "Chairman" | "Treasurer";
+  role_type: "Chairman" | "Treasurer";
   barangay: string;
 }

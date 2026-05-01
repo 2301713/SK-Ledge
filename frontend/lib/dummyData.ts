@@ -2,20 +2,58 @@
 
 import { ApprovalRequest } from "@/app/coa_dashboard/types";
 
-export const dummyProjects = [
+export type ProjectStatus = "Approved" | "Pending" | "Rejected";
+
+export type Project = {
+  id: string;
+  name: string;
+  category: string;
+  status: ProjectStatus;
+  budget: number;
+  proposedBy: string;
+  dateProposed: string;
+};
+
+// CONSTANTS
+export const PROJECT_CATEGORIES = [
+  "Infrastructure",
+  "Livelihood",
+  "Health & Wellness",
+  "Education",
+  "Environment",
+  "Sports & Recreation",
+  "Culture & Arts",
+  "Peace & Order",
+  "Others",
+];
+
+export const INITIAL_PROJECTS: Project[] = [
   {
     id: "1",
-    name: "Youth Basketball League",
-    category: "Sports",
+    name: "Basketball Court Repair",
+    category: "Sports & Recreation",
     status: "Approved",
     budget: 45000,
+    proposedBy: "Juan dela Cruz",
+    dateProposed: "Apr 10, 2026",
   },
   {
     id: "2",
-    name: "SK Scholarship Grant",
-    category: "Education",
+    name: "Livelihood Seminar Series",
+    category: "Livelihood",
     status: "Pending",
-    budget: 120000,
+    budget: 28500,
+    proposedBy: "Maria Santos",
+    dateProposed: "Apr 18, 2026",
+  },
+  {
+    id: "3",
+    name: "Tree Planting Drive",
+    category: "Environment",
+    status: "Approved",
+    budget: 12000,
+    proposedBy: "Jose Reyes",
+    dateProposed: "Apr 22, 2026",
   },
 ];
 

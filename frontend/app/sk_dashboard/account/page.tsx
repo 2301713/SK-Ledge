@@ -52,7 +52,7 @@ export default function AccountPage() {
           // Set Layout State
           setCurrentUser({
             name: profileData.full_name || profileData.username,
-            role: profileData.role_type,
+            role_type: profileData.role_type,
             barangay: profileData.barangay || "No Barangay Assigned",
           });
 
@@ -160,7 +160,7 @@ export default function AccountPage() {
       {/* SIDEBAR */}
       <SideBar
         userName={currentUser.name}
-        roleType={currentUser.role}
+        roleType={currentUser.role_type}
         barangay={currentUser.barangay}
       />
 
