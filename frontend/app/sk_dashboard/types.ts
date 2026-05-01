@@ -8,7 +8,9 @@ export interface Project {
 }
 
 export interface UserAccount {
+  id: string;
   name: string;
+  username: string;
   role_type: "Chairman" | "Treasurer";
   barangay: string;
 }

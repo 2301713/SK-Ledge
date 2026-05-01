@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import SideBar from "@/components/SideBar";
-import { useAuthStore } from "@/lib/useAuthStore";
+import { supabase } from "@/lib/supabase";
+import { UserAccount } from "../types";
 import {
   Project,
   ProjectStatus,
@@ -30,7 +31,9 @@ const statusAccent: Record<ProjectStatus, string> = {
 
 export default function ProjectsPage() {
   // STATE
-  const { currentUser, isLoading } = useAuthStore();
+  const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
   const [projects, setProjects] = useState<Project[]>(INITIAL_PROJECTS);
   const [showForm, setShowForm] = useState(false);
   const [successMsg, setSuccessMsg] = useState(false);
@@ -43,6 +46,44 @@ export default function ProjectsPage() {
     category?: string;
     budget?: string;
   }>({});
+
+  // FETCH USER DATA ON MOUNT
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (!session) {
+          setIsLoading(false);
+          return;
+        }
+
+        const { data: profile, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", session.user.id)
+          .single();
+
+        if (profile && !error) {
+          setCurrentUser({
+            id: session.user.id,
+            username: profile.username,
+            name: profile.full_name || profile.username,
+            role_type: profile.role_type,
+            barangay: profile.barangay || "N/A",
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching user session:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, []);
 
   // VARIABLES
   const totalBudget = projects.reduce((s, p) => s + p.budget, 0);
