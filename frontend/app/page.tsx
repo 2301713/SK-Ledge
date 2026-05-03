@@ -1,20 +1,19 @@
-"use client";
+import HeroSection from "@/components/landing/HeroSection";
+import FeaturesSection from "@/components/landing/FeaturesSection";
+import CTASection from "@/components/landing/CTASection";
+import Footer from "@/components/landing/Footer";
+import NavBar from "@/components/landing/NavigationBar";
 
-import { useRouter } from "next/navigation";
-
-export default function App() {
-  const router = useRouter();
-
+export default function LandingPage() {
   return (
-    <div className="flex flex-col justify-center items-center min-h-screen">
-      <h1>Landing Page</h1>
-      <div className="flex gap-4">
-        <button onClick={() => router.push("/login")}>Login</button>
-        <button onClick={() => router.push("/public-portal")}>
-          Public Portal
-        </button>
-        <button onClick={() => router.push("/register")}>Register</button>
-      </div>
+    <div className="min-h-screen bg-slate-50">
+      <NavBar />
+      <main>
+        <HeroSection />
+        <FeaturesSection />
+        <CTASection />
+      </main>
+      <Footer />
     </div>
   );
 }
