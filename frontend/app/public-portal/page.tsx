@@ -146,7 +146,7 @@ export default function PublicDashboard() {
             <h1 className="text-lg font-bold leading-tight tracking-tight text-primary">
               SK-Ledge
             </h1>
-            <p className="text-[10px] uppercase tracking-[0.15em] font-semibold text-secondary-foreground">
+            <p className="text-[10px] uppercase tracking-widest font-semibold text-slate-500">
               Batangas Province Transparency Hub
             </p>
           </div>
@@ -278,7 +278,7 @@ export default function PublicDashboard() {
 
         {/* DATA TABLE */}
         <div className="bg-white rounded-2xl shadow-sm border border-border overflow-hidden">
-          <div className="p-6 border-b border-border flex flex-col md:flex-row justify-between items-center gap-4 bg-gray-50/50">
+          <div className="p-6 border-b border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4 bg-white">
             <h2 className="text-lg font-bold text-primary">Project Registry</h2>
             <div className="relative w-full md:w-80">
               <input
@@ -294,7 +294,7 @@ export default function PublicDashboard() {
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="text-[11px] uppercase tracking-wider text-secondary-foreground bg-gray-50/50">
+                <tr className="text-[10px] uppercase tracking-widest text-slate-500 bg-slate-50/80">
                   <th className="px-6 py-4 font-bold">
                     Project Identification
                   </th>
@@ -304,7 +304,7 @@ export default function PublicDashboard() {
                   <th className="px-6 py-4 font-bold text-center">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <tbody className="divide-y divide-slate-100">
                 {filteredProjects.map((p, idx) => (
                   <tr
                     key={idx}
@@ -355,16 +355,17 @@ function MetricCard({
   accent: string;
 }) {
   return (
-    <div
-      className={`bg-white border-l-4 ${accent} rounded-xl p-5 shadow-sm border-y border-r border-border hover:shadow-md transition-shadow`}
-    >
-      <p className="text-[10px] font-bold text-secondary-foreground uppercase tracking-wider mb-1">
-        {label}
-      </p>
-      <p className={`text-2xl font-black ${valueColor} tracking-tight`}>
-        {value}
-      </p>
-      <p className="text-[10px] text-secondary-foreground font-medium mt-1 uppercase italic">
+    <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm hover:border-slate-300 transition-colors relative overflow-hidden flex flex-col justify-between">
+      <div className={`absolute top-0 left-0 w-full border-t-[3px] ${accent}`}></div>
+      <div>
+        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 mt-1">
+          {label}
+        </p>
+        <p className={`text-2xl md:text-3xl font-extrabold ${valueColor} tracking-tight`}>
+          {value}
+        </p>
+      </div>
+      <p className="text-[10px] text-slate-400 font-medium mt-3 uppercase tracking-wider">
         {sub}
       </p>
     </div>
@@ -382,7 +383,7 @@ function StatusBadge({ status }: { status: StatusType }) {
 
   return (
     <span
-      className={`px-3 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider ${config[status] || "bg-gray-100"}`}
+      className={`px-3 py-1 rounded-full text-[10px] font-bold border uppercase tracking-widest ${config[status] || "bg-slate-100"}`}
     >
       {labels[status] || status}
     </span>

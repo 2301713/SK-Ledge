@@ -3,6 +3,7 @@ import FeaturesSection from "@/components/landing/FeaturesSection";
 import CTASection from "@/components/landing/CTASection";
 import Footer from "@/components/landing/Footer";
 import NavBar from "@/components/landing/NavigationBar";
+import AboutSection from "@/components/landing/AboutSection";
 
 export default function LandingPage() {
   return (
@@ -10,6 +11,7 @@ export default function LandingPage() {
       <NavBar />
       <main>
         <HeroSection />
+        <AboutSection />
         <FeaturesSection />
         <CTASection />
       </main>

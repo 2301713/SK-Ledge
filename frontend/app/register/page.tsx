@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase"; // Adjust this path if needed
+import { CircleAlert, Loader2 } from "lucide-react";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -107,11 +108,7 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-6 relative overflow-hidden selection:bg-tertiary selection:text-primary">
-      {/* Subtle Background Glows for Modern Depth */}
-      <div className="absolute top-[-10%] left-[-5%] w-96 h-96 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
-      <div className="absolute bottom-[-10%] right-[-5%] w-96 h-96 bg-tertiary/10 rounded-full blur-3xl pointer-events-none"></div>
-
-      <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl shadow-primary/5 border border-border relative z-10 overflow-hidden">
+      <div className="w-full max-w-lg bg-white rounded-2xl shadow-md border border-slate-200 relative z-10 overflow-hidden">
         {/* Institutional Gold Accent Line */}
         <div className="h-1.5 w-full bg-tertiary"></div>
 
@@ -124,7 +121,7 @@ export default function RegisterPage() {
             <h1 className="text-2xl font-extrabold text-primary tracking-tight">
               SK-Ledge Portal
             </h1>
-            <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-secondary-foreground mt-1 text-center">
+            <p className="text-[10px] uppercase tracking-widest font-bold text-slate-500 mt-1 text-center">
               Official Account Registration
             </p>
           </div>
@@ -132,7 +129,9 @@ export default function RegisterPage() {
           {/* ERROR ALERT */}
           {error && (
             <div className="mb-6 rounded-lg bg-danger/10 p-4 border border-danger/20 flex items-start gap-3">
-              <span className="text-danger mt-0.5">⚠️</span>
+              <span className="text-danger mt-0.5">
+                <CircleAlert />
+              </span>
               <p className="text-sm font-medium text-danger leading-snug">
                 {error}
               </p>
@@ -152,7 +151,7 @@ export default function RegisterPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, full_name: e.target.value })
                 }
-                className="w-full bg-gray-50/50 border border-border rounded-lg px-4 py-3 text-sm font-medium text-primary-foreground focus:bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none placeholder:text-gray-400 placeholder:font-normal"
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-sm font-medium text-primary focus:bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none placeholder:text-slate-400 placeholder:font-normal"
                 placeholder="e.g., Juan Dela Cruz"
               />
             </div>
@@ -176,7 +175,7 @@ export default function RegisterPage() {
                           : "",
                     });
                   }}
-                  className="w-full bg-gray-50/50 border border-border rounded-lg px-4 py-3 text-sm font-medium text-primary-foreground focus:bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none appearance-none cursor-pointer"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-sm font-medium text-primary focus:bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none appearance-none cursor-pointer"
                 >
                   <option value="SK_Chairperson">SK Chairperson</option>
                   <option value="SK_Treasurer">SK Treasurer</option>
@@ -199,7 +198,7 @@ export default function RegisterPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, barangay: e.target.value })
                     }
-                    className="w-full bg-gray-50/50 border border-border rounded-lg px-4 py-3 text-sm font-medium text-primary-foreground focus:bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none placeholder:text-gray-400 placeholder:font-normal"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-sm font-medium text-primary focus:bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none placeholder:text-slate-400 placeholder:font-normal"
                     placeholder="e.g., San Jose"
                   />
                 </div>
@@ -231,7 +230,7 @@ export default function RegisterPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, username: e.target.value })
                 }
-                className="w-full bg-gray-50/50 border border-border rounded-lg px-4 py-3 text-sm font-medium text-primary-foreground focus:bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none placeholder:text-gray-400 placeholder:font-normal"
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-sm font-medium text-primary focus:bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none placeholder:text-slate-400 placeholder:font-normal"
                 placeholder="e.g., sk_brgy1"
               />
             </div>
@@ -250,7 +249,7 @@ export default function RegisterPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, password: e.target.value })
                     }
-                    className="w-full bg-gray-50/50 border border-border rounded-lg pl-4 pr-12 py-3 text-sm font-medium text-primary-foreground focus:bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none placeholder:text-gray-400"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-4 pr-12 py-3 text-sm font-medium text-primary focus:bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none placeholder:text-slate-400"
                     placeholder="••••••••"
                   />
                 </div>
@@ -271,7 +270,7 @@ export default function RegisterPage() {
                         confirmPassword: e.target.value,
                       })
                     }
-                    className="w-full bg-gray-50/50 border border-border rounded-lg pl-4 pr-12 py-3 text-sm font-medium text-primary-foreground focus:bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none placeholder:text-gray-400"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-4 pr-12 py-3 text-sm font-medium text-primary focus:bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none placeholder:text-slate-400"
                     placeholder="••••••••"
                   />
                   <button
@@ -290,30 +289,11 @@ export default function RegisterPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full rounded-xl bg-primary py-3.5 text-sm font-bold tracking-wide text-white transition-all hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20 active:scale-[0.98] disabled:bg-primary/50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none flex justify-center items-center gap-2"
+                className="w-full rounded-xl bg-primary py-3.5 text-sm font-bold tracking-wide text-white transition-all hover:bg-primary/90 hover:shadow-md active:scale-[0.98] disabled:bg-primary/50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none flex justify-center items-center gap-2"
               >
                 {isLoading ? (
                   <>
-                    <svg
-                      className="animate-spin h-4 w-4 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
+                    <Loader2 className="animate-spin h-4 w-4 text-white" />
                     Processing Registration...
                   </>
                 ) : (

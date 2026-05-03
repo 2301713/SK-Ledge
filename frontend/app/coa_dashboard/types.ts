@@ -7,7 +7,10 @@ export interface ApprovalRequest {
 }
 
 export interface UserAccount {
-  name: string;
-  role: string;
+  id: string;
+  username: string;
+  full_name: string;
+  role_type: string;
   barangay: string;
+  account_status?: boolean;
 }

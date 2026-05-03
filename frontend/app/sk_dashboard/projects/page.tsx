@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import SideBar from "@/components/SideBar";
+import SideBar from "@/components/dashboard/SideBar";
 import { supabase } from "@/lib/supabase";
 import { UserAccount } from "../types";
 import {
@@ -10,6 +10,7 @@ import {
   PROJECT_CATEGORIES,
   INITIAL_PROJECTS,
 } from "@/lib/dummyData";
+import { Plus, CheckCircle2, X, AlertCircle, Wallet } from "lucide-react";
 
 // HELPERS
 const formatCurrency = (amount: number) =>
@@ -70,7 +71,7 @@ export default function ProjectsPage() {
           setCurrentUser({
             id: session.user.id,
             username: profile.username,
-            name: profile.full_name || profile.username,
+            full_name: profile.full_name || profile.username,
             role_type: profile.role_type,
             barangay: profile.barangay || "N/A",
           });
@@ -110,7 +111,7 @@ export default function ProjectsPage() {
       category: formCategory,
       status: "Pending",
       budget: budgetNum,
-      proposedBy: currentUser?.name || "Unknown User",
+      proposedBy: currentUser?.full_name || "Unknown User",
       dateProposed: new Date().toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
@@ -177,9 +178,9 @@ export default function ProjectsPage() {
 
   // MAIN RENDER
   return (
-    <div className="flex min-h-screen bg-background font-sans selection:bg-tertiary selection:text-primary">
+    <div className="flex min-h-screen bg-background selection:bg-tertiary selection:text-primary">
       <SideBar
-        userName={currentUser.name}
+        userName={currentUser.full_name}
         roleType={currentUser.role_type}
         barangay={currentUser.barangay}
       />
@@ -202,19 +203,7 @@ export default function ProjectsPage() {
             onClick={() => setShowForm(true)}
             className="bg-primary text-white px-5 py-2.5 rounded-xl text-sm font-bold tracking-wide hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20 transition-all active:scale-95 flex items-center gap-2"
           >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
+            <Plus className="w-4 h-4" />
             Propose Project
           </button>
         </header>
@@ -223,18 +212,7 @@ export default function ProjectsPage() {
           <div className="max-w-6xl mx-auto space-y-8">
             {successMsg && (
               <div className="flex items-center gap-3 bg-[#e8f5e9] border border-[#a5d6a7] text-[#2e7d32] px-5 py-3.5 rounded-xl text-sm font-semibold">
-                <svg
-                  width="16"
-                  height="16"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+                <CheckCircle2 className="w-4 h-4" />
                 Project proposal submitted successfully — now pending for
                 review.
               </div>
@@ -251,18 +229,7 @@ export default function ProjectsPage() {
                     className="text-secondary-foreground hover:text-primary transition-colors"
                     aria-label="Close form"
                   >
-                    <svg
-                      width="18"
-                      height="18"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M6 18L18 6M6 6l12 12" />
-                    </svg>
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
 
@@ -287,18 +254,7 @@ export default function ProjectsPage() {
                     />
                     {errors.name && (
                       <p className="mt-1 text-[11px] font-semibold text-danger flex items-center gap-1">
-                        <svg
-                          width="12"
-                          height="12"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
+                        <AlertCircle className="w-3 h-3" />
                         {errors.name}
                       </p>
                     )}
@@ -334,18 +290,7 @@ export default function ProjectsPage() {
                       </select>
                       {errors.category && (
                         <p className="mt-1 text-[11px] font-semibold text-danger flex items-center gap-1">
-                          <svg
-                            width="12"
-                            height="12"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
+                          <AlertCircle className="w-3 h-3" />
                           {errors.category}
                         </p>
                       )}
@@ -377,18 +322,7 @@ export default function ProjectsPage() {
                       </div>
                       {errors.budget && (
                         <p className="mt-1 text-[11px] font-semibold text-danger flex items-center gap-1">
-                          <svg
-                            width="12"
-                            height="12"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
+                          <AlertCircle className="w-3 h-3" />
                           {errors.budget}
                         </p>
                       )}
@@ -422,13 +356,7 @@ export default function ProjectsPage() {
                 <p className="text-3xl font-extrabold text-primary tracking-tight ml-2">
                   {formatCurrency(totalBudget)}
                 </p>
-                <svg
-                  className="absolute right-[-5%] bottom-[-10%] w-28 h-28 text-primary/5 group-hover:scale-110 transition-transform duration-500"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
-                </svg>
+                <Wallet className="absolute right-[-5%] bottom-[-10%] w-28 h-28 text-primary/5 group-hover:scale-110 transition-transform duration-500" />
               </div>
 
               <div className="bg-white p-6 rounded-2xl border border-border shadow-sm relative overflow-hidden group">

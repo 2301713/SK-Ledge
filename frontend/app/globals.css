@@ -18,4 +18,22 @@
   --color-secondary-foreground: #64748B;
   --color-border: #E2E8F0;
   --color-background: #F1F5F9;
+
+  --animate-fadein: fadein 1s ease-in;
+
+  @keyframes fadein {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+html {
+  scroll-behavior: smooth;
 }

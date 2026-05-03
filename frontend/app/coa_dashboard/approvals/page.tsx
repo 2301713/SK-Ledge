@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import SideBar from "@/components/SideBar";
+import SideBar from "@/components/dashboard/SideBar";
 import { supabase } from "@/lib/supabase";
 import { ApprovalRequest, UserAccount } from "../types";
 import { dummyApprovals } from "@/lib/dummyData";
@@ -26,17 +26,23 @@ export default function ApprovalsPage() {
           return;
         }
 
-        const { data: profileData } = await supabase
+        const { data: profileData, error: profileError } = await supabase
           .from("profiles")
-          .select("username, role_type, full_name, barangay")
-          .eq("id", user.id)
+          .select("id, username, full_name, role_type, barangay")
           .single();
+
+        if (profileError) {
+          console.error("Error fetching profile:", profileError.message);
+        }
 
         if (profileData) {
           setCurrentUser({
-            name: profileData.full_name || profileData.username,
-            role: profileData.role_type,
-            barangay: profileData.barangay || "N/A",
+            id: profileData.id,
+            username: profileData.username,
+
+            full_name: profileData.full_name || profileData.username,
+            role_type: profileData.role_type as "Chairman" | "Treasurer",
+            barangay: profileData.barangay || "No Barangay Assigned",
           });
         }
       } catch (err) {
@@ -62,8 +68,8 @@ export default function ApprovalsPage() {
     <div className="flex min-h-screen bg-background selection:bg-tertiary selection:text-primary">
       {currentUser && (
         <SideBar
-          userName={currentUser.name}
-          roleType={currentUser.role}
+          userName={currentUser.full_name}
+          roleType={currentUser.role_type}
           barangay={currentUser.barangay}
         />
       )}
@@ -89,7 +95,7 @@ export default function ApprovalsPage() {
                 <h2 className="text-base font-bold text-primary">
                   Pending Approvals
                 </h2>
-                <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-700 border border-amber-200">
+                <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-primary/10 text-primary border border-primary/20">
                   Action Required
                 </span>
               </div>
@@ -138,7 +144,7 @@ export default function ApprovalsPage() {
                             disabled={item.status === "Approved"}
                             className={`px-4 py-2 rounded-xl text-xs font-bold tracking-wide transition-all ${
                               item.status === "Approved"
-                                ? "bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200"
+                                ? "bg-slate-50 text-slate-400 cursor-not-allowed border border-slate-200"
                                 : "bg-primary text-white hover:bg-primary/90 hover:shadow-md active:scale-95"
                             }`}
                           >

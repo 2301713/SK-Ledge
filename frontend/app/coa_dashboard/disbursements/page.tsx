@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import SideBar from "@/components/SideBar";
+import SideBar from "@/components/dashboard/SideBar";
 import { supabase } from "@/lib/supabase";
 import { UserAccount } from "../types";
 
@@ -21,17 +21,23 @@ export default function DisbursementsPage() {
           return;
         }
 
-        const { data: profileData } = await supabase
+        const { data: profileData, error: profileError } = await supabase
           .from("profiles")
-          .select("username, role_type, full_name, barangay")
-          .eq("id", user.id)
+          .select("id, username, full_name, role_type, barangay")
           .single();
+
+        if (profileError) {
+          console.error("Error fetching profile:", profileError.message);
+        }
 
         if (profileData) {
           setCurrentUser({
-            name: profileData.full_name || profileData.username,
-            role: profileData.role_type,
-            barangay: profileData.barangay || "N/A",
+            id: profileData.id,
+            username: profileData.username,
+
+            full_name: profileData.full_name || profileData.username,
+            role_type: profileData.role_type as "Chairman" | "Treasurer",
+            barangay: profileData.barangay || "No Barangay Assigned",
           });
         }
       } catch (err) {
@@ -49,8 +55,8 @@ export default function DisbursementsPage() {
     <div className="flex min-h-screen bg-background selection:bg-tertiary selection:text-primary">
       {currentUser && (
         <SideBar
-          userName={currentUser.name}
-          roleType={currentUser.role}
+          userName={currentUser.full_name}
+          roleType={currentUser.role_type}
           barangay={currentUser.barangay}
         />
       )}
@@ -103,7 +109,7 @@ export default function DisbursementsPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-gray-100 text-gray-700">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-50 border border-slate-200 text-slate-500">
                           Admin
                         </span>
                       </td>
@@ -120,7 +126,7 @@ export default function DisbursementsPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-gray-100 text-gray-700">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-50 border border-slate-200 text-slate-500">
                           Engineering
                         </span>
                       </td>

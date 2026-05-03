@@ -12,7 +12,7 @@ import {
 
 export default function FeaturesSection() {
   return (
-    <section id="features" className="py-24 bg-white px-6">
+    <section id="features" className="py-24 bg-white px-6 animate-fadein">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-5xl font-extrabold text-slate-900 mb-6 tracking-tight">
@@ -28,10 +28,10 @@ export default function FeaturesSection() {
         {/* Bento Box Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Card 1: Project Management (Spans 2 columns) */}
-          <div className="md:col-span-2 p-8 rounded-3xl border border-slate-200 bg-slate-50 relative overflow-hidden group hover:border-primary-200 transition-colors">
+          <div className="md:col-span-2 p-8 rounded-3xl border border-slate-200 bg-slate-50 relative overflow-hidden group hover:border-slate-300 transition-colors">
             <div className="relative z-10 flex flex-col h-full justify-between">
               <div>
-                <div className="w-12 h-12 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center mb-6">
+                <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-6">
                   <LayoutDashboard className="w-6 h-6" />
                 </div>
                 <h3 className="text-2xl font-bold text-slate-900 mb-3">
@@ -53,7 +53,7 @@ export default function FeaturesSection() {
                   <span className="text-xs font-semibold text-slate-700">
                     Liga ng Kabataan 2026
                   </span>
-                  <span className="flex items-center gap-1 text-[10px] text-primary bg-primary-50 px-2 py-1 rounded-md font-bold">
+                  <span className="flex items-center gap-1 text-[10px] text-primary bg-primary/10 px-2 py-1 rounded-md font-bold">
                     <CheckCircle2 className="w-3 h-3" /> Approved
                   </span>
                 </div>
@@ -62,9 +62,9 @@ export default function FeaturesSection() {
           </div>
 
           {/* Card 2: Budget Tracking (Spans 1 column) */}
-          <div className="md:col-span-1 p-8 rounded-3xl border border-slate-200 bg-slate-50 relative overflow-hidden group hover:border-primary-200 transition-colors flex flex-col justify-between">
+          <div className="md:col-span-1 p-8 rounded-3xl border border-slate-200 bg-slate-50 relative overflow-hidden group hover:border-slate-300 transition-colors flex flex-col justify-between">
             <div>
-              <div className="w-12 h-12 rounded-2xl bg-primary-100 text-primary flex items-center justify-center mb-6">
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-6">
                 <Wallet className="w-6 h-6" />
               </div>
               <h3 className="text-2xl font-bold text-slate-900 mb-3">
@@ -91,8 +91,8 @@ export default function FeaturesSection() {
           </div>
 
           {/* Card 3: Public Transparency (Spans 1 column) */}
-          <div className="md:col-span-1 p-8 rounded-3xl border border-slate-200 bg-slate-50 relative overflow-hidden group hover:border-primary-200 transition-colors">
-            <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center mb-6">
+          <div className="md:col-span-1 p-8 rounded-3xl border border-slate-200 bg-slate-50 relative overflow-hidden group hover:border-slate-300 transition-colors">
+            <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-700 flex items-center justify-center mb-6">
               <Eye className="w-6 h-6" />
             </div>
             <h3 className="text-2xl font-bold text-slate-900 mb-3">
@@ -105,8 +105,8 @@ export default function FeaturesSection() {
 
             {/* Micro-UI */}
             <div className="bg-white border border-slate-100 rounded-xl p-4 shadow-sm flex items-center gap-4 group-hover:-translate-y-1 transition-transform duration-300">
-              <div className="w-10 h-10 bg-amber-50 rounded-lg flex items-center justify-center">
-                <BarChart3 className="w-5 h-5 text-amber-500" />
+              <div className="w-10 h-10 bg-slate-50 rounded-lg flex items-center justify-center">
+                <BarChart3 className="w-5 h-5 text-slate-500" />
               </div>
               <div>
                 <p className="text-sm font-bold text-slate-800">
@@ -118,10 +118,10 @@ export default function FeaturesSection() {
           </div>
 
           {/* Card 4: Council Workflows & Roles (Spans 2 columns) - UPDATED */}
-          <div className="md:col-span-2 p-8 rounded-3xl border border-slate-200 bg-slate-50 relative overflow-hidden group hover:border-primary-200 transition-colors">
+          <div className="md:col-span-2 p-8 rounded-3xl border border-slate-200 bg-slate-50 relative overflow-hidden group hover:border-slate-300 transition-colors">
             <div className="flex flex-col md:flex-row gap-8 h-full items-center">
               <div className="flex-1">
-                <div className="w-12 h-12 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center mb-6">
+                <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-6">
                   <Users className="w-6 h-6" />
                 </div>
                 <h3 className="text-2xl font-bold text-slate-900 mb-3">
@@ -148,7 +148,7 @@ export default function FeaturesSection() {
                       </p>
                     </div>
                   </div>
-                  <Shield className="w-5 h-5 text-primary-500" />
+                  <Shield className="w-5 h-5 text-primary" />
                 </div>
 
                 {/* Workflow Row */}
@@ -158,7 +158,7 @@ export default function FeaturesSection() {
                   </p>
 
                   <div className="flex items-center gap-3">
-                    <div className="w-6 h-6 rounded-full bg-primary-100 flex items-center justify-center">
+                    <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
                       <CheckCircle2 className="w-3 h-3 text-primary" />
                     </div>
                     <p className="text-xs text-slate-600 flex-1">

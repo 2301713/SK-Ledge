@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import SideBar from "@/components/SideBar";
+import SideBar from "@/components/dashboard/SideBar";
 import { supabase } from "@/lib/supabase";
 import { UserAccount } from "../types";
+import { UserCircle } from "lucide-react";
 
 export default function AccountPage() {
   // LAYOUT & AUTH STATE
@@ -40,8 +41,7 @@ export default function AccountPage() {
 
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
-          .select("username, role_type, full_name, barangay")
-          .eq("id", user.id)
+          .select("id, username, full_name, role_type, barangay")
           .single();
 
         if (profileError) {
@@ -49,10 +49,11 @@ export default function AccountPage() {
         }
 
         if (profileData) {
-          // Set Layout State
           setCurrentUser({
-            name: profileData.full_name || profileData.username,
-            role_type: profileData.role_type,
+            id: profileData.id,
+            username: profileData.username,
+            full_name: profileData.full_name || profileData.username,
+            role_type: profileData.role_type as "Chairman" | "Treasurer",
             barangay: profileData.barangay || "No Barangay Assigned",
           });
 
@@ -95,7 +96,7 @@ export default function AccountPage() {
 
       // Update the sidebar name dynamically without reloading
       if (currentUser) {
-        setCurrentUser({ ...currentUser, name: userProfile.full_name });
+        setCurrentUser({ ...currentUser, full_name: userProfile.full_name });
       }
 
       setSuccessMsg("Account details updated successfully.");
@@ -156,10 +157,10 @@ export default function AccountPage() {
 
   // --- MAIN DASHBOARD LAYOUT ---
   return (
-    <div className="flex min-h-screen bg-background font-sans selection:bg-tertiary selection:text-primary">
+    <div className="flex min-h-screen bg-background selection:bg-tertiary selection:text-primary">
       {/* SIDEBAR */}
       <SideBar
-        userName={currentUser.name}
+        userName={currentUser.full_name}
         roleType={currentUser.role_type}
         barangay={currentUser.barangay}
       />
@@ -233,13 +234,10 @@ export default function AccountPage() {
               </div>
 
               {/* Decorative background icon */}
-              <svg
+              <UserCircle
                 className="absolute right-[-5%] bottom-[-20%] w-48 h-48 text-primary/5 group-hover:scale-110 transition-transform duration-700"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-              </svg>
+                strokeWidth={1}
+              />
             </section>
 
             {/* DETAILS FORM SECTION */}
@@ -317,7 +315,7 @@ export default function AccountPage() {
                         // Reset name to original state
                         setUserProfile((prev) => ({
                           ...prev,
-                          full_name: currentUser?.name || "",
+                          full_name: currentUser?.full_name || "",
                         }));
                       }}
                       disabled={isSaving}

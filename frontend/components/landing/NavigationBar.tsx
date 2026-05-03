@@ -8,13 +8,13 @@ export default function NavBar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <header className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-slate-200 transition-all">
+    <header className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-slate-200 transition-all animate-fadein">
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex items-center justify-between h-20">
           {/* Left: Brand Logo */}
           <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shadow-md shadow-emerald-600/20 group-hover:scale-105 transition-transform">
-              <Layers className="w-5 h-5 text-white" />
+            <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shadow-sm shadow-primary/20 group-hover:scale-105 transition-transform">
+              <Layers className="w-5 h-5 text-tertiary" />
             </div>
             <span className="font-extrabold text-xl text-slate-900 tracking-tight">
               SK-Ledge
@@ -24,22 +24,22 @@ export default function NavBar() {
           {/* Center: Desktop Navigation Links */}
           <nav className="hidden md:flex items-center gap-8">
             <Link
-              href="#hero"
+              href="#home"
               className="text-sm font-semibold text-slate-600 hover:text-primary transition-colors"
             >
               Home
+            </Link>
+            <Link
+              href="#about"
+              className="text-sm font-semibold text-slate-600 hover:text-primary transition-colors"
+            >
+              About
             </Link>
             <Link
               href="#features"
               className="text-sm font-semibold text-slate-600 hover:text-primary transition-colors"
             >
               Features
-            </Link>
-            <Link
-              href="#contact"
-              className="text-sm font-semibold text-slate-600 hover:text-primary transition-colors"
-            >
-              Contact
             </Link>
           </nav>
 
@@ -53,7 +53,7 @@ export default function NavBar() {
             </Link>
             <Link
               href="/public-portal"
-              className="px-5 py-2.5 bg-primary text-white text-sm font-bold rounded-xl hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20 transition-all"
+              className="px-5 py-2.5 bg-primary text-white text-sm font-bold rounded-xl hover:bg-primary/90 hover:shadow-md transition-all"
             >
               Dashboard
             </Link>

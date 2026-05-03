@@ -1,17 +1,28 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import SideBar from "@/components/SideBar";
+import SideBar from "@/components/dashboard/SideBar";
 import { UserAccount } from "./types";
 import { INITIAL_PROJECTS } from "@/lib/dummyData";
 import { supabase } from "@/lib/supabase";
+import {
+  Plus,
+  Wallet,
+  TrendingUp,
+  ChevronRight,
+  Activity,
+  CheckCircle2,
+  Clock,
+  Calendar,
+  FileText,
+  Folder,
+  CircleAlert,
+} from "lucide-react";
 
 export default function SKDashboard() {
-  // STATE
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // GET USER DATA
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
@@ -21,24 +32,20 @@ export default function SKDashboard() {
         } = await supabase.auth.getUser();
 
         if (authError || !user) {
-          console.error("No active user session found.");
           setIsLoading(false);
           return;
         }
 
-        const { data: profileData, error: profileError } = await supabase
+        const { data: profileData } = await supabase
           .from("profiles")
-          .select("username, role_type, full_name, barangay")
-          .eq("id", user.id)
+          .select("id, username, full_name, role_type, barangay")
           .single();
-
-        if (profileError) {
-          console.error("Error fetching profile:", profileError.message);
-        }
 
         if (profileData) {
           setCurrentUser({
-            name: profileData.full_name || profileData.username,
+            id: profileData.id,
+            username: profileData.username,
+            full_name: profileData.full_name || profileData.username,
             role_type: profileData.role_type as "Chairman" | "Treasurer",
             barangay: profileData.barangay || "No Barangay Assigned",
           });
@@ -60,38 +67,38 @@ export default function SKDashboard() {
     }).format(amount);
   };
 
-  // LOADING STATE
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background">
-        <div className="h-14 w-14 bg-primary rounded-xl flex items-center justify-center text-tertiary font-black text-3xl shadow-lg shadow-primary/20 mb-6 animate-pulse">
-          B
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
+        <div className="h-16 w-16 bg-primary rounded-2xl flex items-center justify-center text-tertiary font-black text-3xl shadow-xl shadow-primary/30 mb-6 animate-bounce">
+          SK
         </div>
-        <p className="text-[11px] font-bold text-secondary-foreground uppercase tracking-widest animate-pulse">
-          Initializing Dashboard...
+        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest animate-pulse">
+          Loading Workspace...
         </p>
       </div>
     );
   }
 
-  // ERROR / UNAUTHORIZED STATE
   if (!currentUser) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-6">
-        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl shadow-primary/5 border border-border p-8 text-center">
-          <div className="h-12 w-12 bg-danger/10 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-danger text-xl">⚠️</span>
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
+        <div className="max-w-md w-full bg-white rounded-4xl shadow-xl border border-slate-200 p-10 text-center">
+          <div className="h-16 w-16 bg-danger/10 text-danger rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <span className="text-2xl">
+              <CircleAlert />
+            </span>
           </div>
-          <h2 className="text-xl font-extrabold text-primary mb-2">
+          <h2 className="text-2xl font-black text-primary mb-3 tracking-tight">
             Access Restricted
           </h2>
-          <p className="text-sm text-secondary-foreground mb-6">
+          <p className="text-sm text-slate-500 mb-8 leading-relaxed">
             You do not have the required credentials or an active session to
             view this official dashboard.
           </p>
           <button
             onClick={() => (window.location.href = "/login")}
-            className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-white transition-all hover:bg-primary/90"
+            className="w-full rounded-xl bg-primary py-4 text-sm font-bold text-white transition-all hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20"
           >
             Return to Login
           </button>
@@ -100,196 +107,239 @@ export default function SKDashboard() {
     );
   }
 
-  // MAIN DASHBOARD
+  // Calculate some dummy metrics for the UI
+  const totalAllocated = 1250000;
+  const totalSpent = 165000;
+  const percentageSpent = (totalSpent / totalAllocated) * 100;
+
   return (
-    <div className="flex min-h-screen bg-background font-sans selection:bg-tertiary selection:text-primary">
-      {/* SIDEBAR */}
+    <div className="flex min-h-screen bg-[#f8fafc] selection:bg-tertiary selection:text-primary">
       <SideBar
-        userName={currentUser.name}
+        userName={currentUser.full_name}
         roleType={currentUser.role_type}
         barangay={currentUser.barangay}
       />
 
-      {/* MAIN CONTENT AREA */}
-      <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
-        {/* Subtle Background Elements */}
-        <div className="absolute top-[-20%] right-[-10%] w-160 h-160 bg-tertiary/5 rounded-full blur-3xl pointer-events-none z-0"></div>
-
-        {/* HEADER */}
-        <header className="h-20 bg-white/80 backdrop-blur-md border-b border-border px-8 flex items-center justify-between z-10 shrink-0">
-          <div>
-            <h1 className="text-2xl font-extrabold text-primary tracking-tight flex items-center gap-2">
-              <span className="text-tertiary text-2xl">•</span>
-              Barangay {currentUser.barangay}
-            </h1>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-secondary-foreground mt-0.5">
-              Official SK Dashboard
-            </p>
+      <main className="flex-1 flex flex-col h-screen overflow-y-auto relative">
+        {/* TOP NAVBAR */}
+        <header className="h-24 px-10 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-3 text-sm font-bold text-slate-500 uppercase tracking-widest">
+            <Calendar className="w-4 h-4 text-tertiary" />
+            {new Date().toLocaleDateString("en-US", {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}
           </div>
-          <button className="bg-primary text-white px-5 py-2.5 rounded-xl text-sm font-bold tracking-wide hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20 transition-all active:scale-95 flex items-center gap-2">
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-            New Project
-          </button>
+          <div className="flex items-center gap-4">
+            <button className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-primary hover:border-primary/30 transition-all shadow-sm">
+              <Activity className="w-4 h-4" />
+            </button>
+          </div>
         </header>
 
-        {/* SCROLLABLE CONTENT */}
-        <div className="flex-1 overflow-y-auto p-8 z-10">
-          <div className="max-w-6xl mx-auto space-y-8">
-            {/* METRICS GRID */}
-            <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Card 1 */}
-              <div className="bg-white p-6 rounded-2xl border border-border shadow-sm relative overflow-hidden group">
-                <div className="absolute top-0 left-0 w-1.5 h-full bg-primary"></div>
-                <h3 className="text-[10px] font-bold uppercase tracking-wider text-secondary-foreground mb-2 ml-2">
-                  Total Allocated Budget
-                </h3>
-                <p className="text-3xl md:text-4xl font-extrabold text-primary tracking-tight ml-2">
-                  ₱ 1,250,000.00
-                </p>
-                {/* Decorative background icon */}
-                <svg
-                  className="absolute right-[-5%] bottom-[-10%] w-32 h-32 text-primary/5 group-hover:scale-110 transition-transform duration-500"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
-                </svg>
-              </div>
+        <div className="px-10 pb-12 space-y-8 max-w-[1400px] mx-auto w-full">
+          {/* WELCOME BANNER (Massive, engaging) */}
+          <section className="bg-primary rounded-[2.5rem] p-12 relative overflow-hidden text-white shadow-xl shadow-primary/20 border border-primary">
+            {/* Abstract Decorative Elements */}
+            <div className="absolute top-0 right-0 w-full h-full overflow-hidden pointer-events-none z-0">
+              <div className="absolute -top-32 -right-20 w-[500px] h-[500px] bg-white/5 rounded-full blur-3xl"></div>
+              <div className="absolute -bottom-40 right-20 w-[400px] h-[400px] bg-tertiary/10 rounded-full blur-3xl"></div>
+            </div>
 
-              {/* Card 2 */}
-              <div className="bg-white p-6 rounded-2xl border border-border shadow-sm relative overflow-hidden group">
-                <div className="absolute top-0 left-0 w-1.5 h-full bg-tertiary"></div>
-                <h3 className="text-[10px] font-bold uppercase tracking-wider text-secondary-foreground mb-2 ml-2">
-                  Project Expenditure YTD
-                </h3>
-                <p className="text-3xl md:text-4xl font-extrabold text-primary tracking-tight ml-2">
-                  ₱ 165,000.00
-                </p>
-                <div className="mt-2 ml-2 flex items-center gap-2 text-xs font-semibold text-danger">
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline>
-                    <polyline points="17 18 23 18 23 12"></polyline>
-                  </svg>
-                  <span>13.2% of allocation used</span>
-                </div>
-              </div>
-            </section>
+            <div className="relative z-10 w-full lg:w-2/3">
+              <p className="text-tertiary font-bold tracking-widest uppercase text-xs mb-3">
+                Barangay {currentUser.barangay}
+              </p>
+              <h2 className="text-4xl md:text-5xl font-black mb-4 tracking-tight leading-tight">
+                Welcome back, <br /> {currentUser.full_name.split(" ")[0]}!
+              </h2>
+              <p className="text-white/70 text-lg leading-relaxed max-w-xl">
+                You have{" "}
+                <strong className="text-white">
+                  3 projects pending approval
+                </strong>{" "}
+                and the fiscal year budget is currently operating at optimal
+                capacity.
+              </p>
 
-            {/* LEDGER TABLE */}
-            <section className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden flex flex-col">
-              <div className="px-6 py-5 border-b border-border bg-gray-50/50 flex justify-between items-center">
-                <h2 className="text-base font-bold text-primary">
-                  Active Project Ledger
-                </h2>
-                <button className="text-[10px] font-bold uppercase tracking-wider text-secondary-foreground hover:text-primary transition-colors">
-                  View Full History &rarr;
+              <div className="mt-10 flex flex-wrap gap-4">
+                <button className="bg-tertiary text-primary px-8 py-4 rounded-2xl text-sm font-black tracking-wide hover:bg-white hover:shadow-xl hover:shadow-white/10 transition-all active:scale-95 flex items-center gap-3">
+                  <Plus className="w-5 h-5" />
+                  Propose New Project
+                </button>
+                <button className="bg-white/10 backdrop-blur-md border border-white/20 text-white px-8 py-4 rounded-2xl text-sm font-bold tracking-wide hover:bg-white/20 transition-all active:scale-95 flex items-center gap-3">
+                  <FileText className="w-5 h-5" />
+                  View Ledger
                 </button>
               </div>
+            </div>
+          </section>
 
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead className="bg-white border-b border-border">
-                    <tr>
-                      <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-secondary-foreground">
-                        Project Name
-                      </th>
-                      <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-secondary-foreground">
-                        Category
-                      </th>
-                      <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-secondary-foreground">
-                        Approval Status
-                      </th>
-                      <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-secondary-foreground text-right">
-                        Allocated Budget
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border/50">
-                    {INITIAL_PROJECTS.map((p) => (
-                      <tr
-                        key={p.id}
-                        className="hover:bg-primary/2 transition-colors group"
-                      >
-                        <td className="px-6 py-4">
-                          <p className="font-bold text-primary text-sm group-hover:text-tertiary transition-colors">
-                            {p.name}
-                          </p>
-                          <p className="text-xs text-secondary-foreground mt-0.5 font-medium">
-                            ID: PRJ-{p.id.padStart(4, "0")}
-                          </p>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-gray-100 text-gray-700">
-                            {p.category}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span
-                            className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border ${
-                              p.status === "Approved"
-                                ? "bg-[#e8f5e9] text-[#2e7d32] border-[#a5d6a7]" // Refined Green
-                                : p.status === "Pending"
-                                  ? "bg-[#fff8e1] text-[#f57f17] border-[#ffe082]" // Refined Yellow/Gold
-                                  : "bg-[#ffebee] text-[#c62828] border-[#ef9a9a]" // Refined Red
-                            }`}
-                          >
-                            {p.status === "Approved" && (
-                              <span className="mr-1.5 text-lg leading-none">
-                                •
-                              </span>
-                            )}
-                            {p.status === "Pending" && (
-                              <span className="mr-1.5 text-lg leading-none animate-pulse">
-                                •
-                              </span>
-                            )}
-                            {p.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <span className="font-bold text-primary tracking-tight">
-                            {formatCurrency(p.budget)}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                    {/* Empty State / Fill Row if needed */}
-                    {INITIAL_PROJECTS.length === 0 && (
-                      <tr>
-                        <td
-                          colSpan={4}
-                          className="px-6 py-12 text-center text-sm font-medium text-secondary-foreground"
-                        >
-                          No active projects found for this barangay.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+          {/* ASYMMETRICAL METRICS GRID */}
+          <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* LARGE BUDGET CARD (Span 2 cols) */}
+            <div className="lg:col-span-2 bg-white rounded-4xl p-8 border border-slate-200 shadow-sm flex flex-col justify-between">
+              <div className="flex justify-between items-start mb-12">
+                <div>
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
+                    Total Allocated Budget (FY 2024)
+                  </h3>
+                  <p className="text-4xl md:text-5xl font-black text-primary tracking-tight">
+                    {formatCurrency(totalAllocated)}
+                  </p>
+                </div>
+                <div className="w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center border border-slate-100">
+                  <Wallet className="w-6 h-6 text-tertiary" />
+                </div>
               </div>
-            </section>
-          </div>
+
+              <div>
+                <div className="flex justify-between items-end mb-3">
+                  <span className="text-sm font-bold text-slate-600">
+                    Budget Utilization
+                  </span>
+                  <span className="text-xl font-black text-primary">
+                    {percentageSpent.toFixed(1)}%
+                  </span>
+                </div>
+                <div className="w-full h-4 bg-slate-100 rounded-full overflow-hidden border border-slate-200/50">
+                  <div
+                    className="h-full bg-primary rounded-full relative"
+                    style={{ width: `${percentageSpent}%` }}
+                  >
+                    <div className="absolute right-0 top-0 bottom-0 w-10 bg-linear-to-r from-transparent to-white/30 rounded-full"></div>
+                  </div>
+                </div>
+                <div className="mt-3 flex justify-between text-xs font-bold text-slate-400">
+                  <span>{formatCurrency(totalSpent)} Spent</span>
+                  <span>
+                    {formatCurrency(totalAllocated - totalSpent)} Remaining
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* QUICK STATS STACK */}
+            <div className="flex flex-col gap-8">
+              <div className="bg-white rounded-4xl p-8 border border-slate-200 shadow-sm flex-1 flex flex-col justify-center group hover:border-primary/30 transition-all">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 rounded-2xl bg-primary/5 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                    <Activity className="w-5 h-5" />
+                  </div>
+                  <span className="px-3 py-1 bg-success/10 text-success text-[10px] font-black uppercase tracking-widest rounded-lg">
+                    On Track
+                  </span>
+                </div>
+                <p className="text-3xl font-black text-primary tracking-tight mb-1">
+                  12
+                </p>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                  Active Projects
+                </p>
+              </div>
+
+              <div className="bg-slate-900 rounded-4xl p-8 shadow-sm flex-1 flex flex-col justify-center relative overflow-hidden group">
+                <div className="absolute -right-6 -bottom-6 w-32 h-32 bg-tertiary/20 rounded-full blur-2xl group-hover:bg-tertiary/40 transition-colors"></div>
+                <div className="flex items-center justify-between mb-4 relative z-10">
+                  <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-tertiary">
+                    <TrendingUp className="w-5 h-5" />
+                  </div>
+                </div>
+                <p className="text-3xl font-black text-white tracking-tight mb-1 relative z-10">
+                  4
+                </p>
+                <p className="text-xs font-bold text-white/50 uppercase tracking-widest relative z-10">
+                  Awaiting Approval
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* CARD-ROW LEDGER LIST */}
+          <section className="bg-white rounded-[2.5rem] p-8 md:p-10 border border-slate-200 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
+              <div>
+                <h2 className="text-2xl font-black text-primary tracking-tight">
+                  Active Proposals
+                </h2>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
+                  Recent entries in the ledger
+                </p>
+              </div>
+              <button className="text-xs font-black text-primary hover:text-tertiary transition-colors uppercase tracking-widest flex items-center gap-1 bg-slate-50 px-4 py-2 rounded-xl">
+                View All <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {INITIAL_PROJECTS.map((p) => (
+                <div
+                  key={p.id}
+                  className="flex flex-col md:flex-row md:items-center justify-between p-5 md:p-6 bg-slate-50/50 hover:bg-slate-50 border border-slate-100 hover:border-slate-200 rounded-2xl transition-all group gap-4"
+                >
+                  <div className="flex items-center gap-5 md:w-1/3">
+                    <div className="w-12 h-12 rounded-2xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 group-hover:text-primary transition-colors shrink-0 shadow-sm">
+                      <Folder className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="font-black text-primary text-base group-hover:text-tertiary transition-colors leading-tight mb-1">
+                        {p.name}
+                      </p>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                        ID: PRJ-{p.id.padStart(4, "0")}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="md:w-1/4">
+                    <span className="inline-flex px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest bg-white border border-slate-200 text-slate-500 shadow-sm">
+                      {p.category}
+                    </span>
+                  </div>
+
+                  <div className="md:w-1/4">
+                    <span
+                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest ${
+                        p.status === "Approved"
+                          ? "bg-success/10 text-success"
+                          : p.status === "Pending"
+                            ? "bg-pending/10 text-pending"
+                            : "bg-danger/10 text-danger"
+                      }`}
+                    >
+                      {p.status === "Approved" && (
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                      )}
+                      {p.status === "Pending" && (
+                        <Clock className="w-3.5 h-3.5" />
+                      )}
+                      {p.status}
+                    </span>
+                  </div>
+
+                  <div className="text-left md:text-right md:w-1/4">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+                      Budget
+                    </p>
+                    <span className="font-black text-primary text-lg tracking-tight">
+                      {formatCurrency(p.budget)}
+                    </span>
+                  </div>
+                </div>
+              ))}
+
+              {INITIAL_PROJECTS.length === 0 && (
+                <div className="p-12 text-center border-2 border-dashed border-slate-200 rounded-3xl">
+                  <Folder className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                  <p className="text-sm font-bold text-slate-500">
+                    No active projects found.
+                  </p>
+                </div>
+              )}
+            </div>
+          </section>
         </div>
       </main>
     </div>

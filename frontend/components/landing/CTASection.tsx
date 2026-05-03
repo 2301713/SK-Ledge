@@ -9,8 +9,8 @@ import {
 
 export default function CTASection() {
   return (
-    <section className="py-24 px-6">
-      <div className="max-w-6xl mx-auto bg-slate-200 rounded-[2.5rem] relative overflow-hidden shadow-2xl border border-slate-200">
+    <section className="py-24 px-6 animate-fadein">
+      <div className="max-w-6xl mx-auto bg-slate-100 rounded-[2.5rem] relative overflow-hidden shadow-sm border border-slate-200">
         <div className="grid lg:grid-cols-2 gap-12 items-center p-10 md:p-16 lg:p-20 relative z-10">
           {/* Left Column: Copy & Action */}
           <div className="text-left space-y-8">
@@ -28,7 +28,7 @@ export default function CTASection() {
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
               <Link
                 href="/public-portal"
-                className="w-full sm:w-auto px-8 py-4 bg-primary text-white rounded-xl font-bold text-sm hover:bg-primary hover:shadow-lg hover:shadow-primary/20 transition-all flex items-center justify-center gap-2 group"
+                className="w-full sm:w-auto px-8 py-4 bg-primary text-white rounded-xl font-bold text-sm hover:bg-primary/90 hover:shadow-md transition-all flex items-center justify-center gap-2 group"
               >
                 <Rocket className="w-5 h-5 group-hover:-translate-y-1 group-hover:translate-x-1 transition-transform" />
                 Access Public Dashboard
@@ -57,11 +57,8 @@ export default function CTASection() {
 
           {/* Right Column: Dark Mode Micro-UI (Secure Gateway Mockup) */}
           <div className="hidden lg:flex justify-end relative">
-            {/* Subtle glow behind the UI card */}
-            <div className="absolute top-1/2 right-10 -translate-y-1/2 w-64 h-64 bg-primary/20 rounded-full blur-3xl -z-10"></div>
-
-            <div className="w-full max-w-sm bg-slate-100 backdrop-blur-xl border border-slate-200 rounded-2xl p-6 shadow-2xl">
-              <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-400">
+            <div className="w-full max-w-sm bg-white border border-slate-200 rounded-2xl p-6 shadow-md">
+              <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-100">
                 <div className="flex items-center gap-2">
                   <Lock className="w-4 h-4 text-primary" />
                   <span className="text-sm font-bold text-primary">
@@ -104,8 +101,8 @@ export default function CTASection() {
                   </div>
                 </div>
 
-                <div className="pt-4 mt-2 border-t border-slate-400">
-                  <div className="w-full py-3 bg-primary rounded-lg border border-slate-700 flex items-center justify-center gap-2 text-sm font-bold text-white">
+                <div className="pt-4 mt-2 border-t border-slate-100">
+                  <div className="w-full py-3 bg-primary rounded-lg flex items-center justify-center gap-2 text-sm font-bold text-white shadow-sm">
                     <span className="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
                     Ready for Login
                   </div>

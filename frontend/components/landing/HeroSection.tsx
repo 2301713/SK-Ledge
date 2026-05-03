@@ -4,8 +4,8 @@ import { ArrowRight, ShieldCheck, Wallet, ChevronRight } from "lucide-react";
 export default function HeroSection() {
   return (
     <section
-      id="hero"
-      className="relative pt-24 pb-16 lg:pt-36 lg:pb-24 overflow-hidden bg-slate-50 px-6"
+      id="home"
+      className="relative pt-24 pb-16 lg:pt-36 lg:pb-24 overflow-hidden bg-slate-50 px-6 animate-fadein"
     >
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
@@ -31,7 +31,7 @@ export default function HeroSection() {
             <div className="flex flex-col sm:flex-row items-center gap-4 pt-2">
               <Link
                 href="/public-portal"
-                className="w-full sm:w-auto px-7 py-3.5 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20 transition-all flex items-center justify-center gap-2 group"
+                className="w-full sm:w-auto px-7 py-3.5 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 hover:shadow-md transition-all flex items-center justify-center gap-2 group"
               >
                 View Public Dashboard
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -48,11 +48,8 @@ export default function HeroSection() {
 
           {/* Right Column: Creative "Ledger Dashboard" Mockup */}
           <div className="relative hidden lg:block px-8">
-            {/* Soft decorative glow strictly behind the card */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-primary/20 rounded-full blur-3xl -z-10"></div>
-
             {/* Main floating card */}
-            <div className="bg-white border border-slate-200 shadow-xl shadow-slate-200/50 rounded-2xl p-6 transform rotate-1 hover:rotate-0 transition-transform duration-500">
+            <div className="bg-white border border-slate-200 shadow-md rounded-2xl p-6 transform rotate-1 hover:rotate-0 transition-transform duration-500">
               {/* Card Header */}
               <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
                 <div className="flex items-center gap-3">
