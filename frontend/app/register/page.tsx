@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
-import { CircleAlert, Loader2 } from "lucide-react";
-import Link from "next/link";
+import { Check, Loader2 } from "lucide-react";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -108,218 +107,213 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-6 relative overflow-hidden selection:bg-tertiary selection:text-primary">
-      <div className="w-full max-w-lg bg-white rounded-2xl shadow-md border border-slate-200 relative z-10 overflow-hidden">
-        {/* Institutional Gold Accent Line */}
-        <div className="h-1.5 w-full bg-tertiary"></div>
+    <div className="h-screen flex overflow-hidden">
+      {/* LEFT SIDE */}
+      <div className="w-full md:w-1/2 flex items-center justify-center p-4 relative overflow-hidden bg-linear-to-br from-slate-100 via-white to-slate-200">
+        {/* Background Decorations */}
+        <div className="absolute w-64 h-64 bg-primary/10 rounded-full -top-10 -left-10 blur-3xl"></div>
+        <div className="absolute w-64 h-64 bg-primary/10 rounded-full -bottom-10 -right-10 blur-3xl"></div>
 
-        <div className="p-8 sm:p-10">
-          {/* BRANDING HEADER */}
-          <div className="flex flex-col items-center mb-8">
-            <Link
-              href="/public_portal"
-              className="h-12 w-12 bg-primary rounded-xl flex items-center justify-center text-tertiary font-black text-2xl shadow-md shadow-primary/20 mb-4"
-            >
+        {/* FORM CARD */}
+        <div className="w-full max-w-sm relative z-10 bg-white/90 backdrop-blur-xl border border-white/40 shadow-xl rounded-2xl p-5">
+          {/* HEADER */}
+          <div className="text-center mb-4">
+            <div className="mx-auto w-12 h-12 bg-primary text-white flex items-center justify-center rounded-lg font-black text-lg shadow-md">
               SK
-            </Link>
-            <h1 className="text-2xl font-extrabold text-primary tracking-tight">
+            </div>
+            <h1 className="mt-2 text-xl font-extrabold text-primary">
               SK-Ledge Portal
             </h1>
-            <p className="text-[10px] uppercase tracking-widest font-bold text-slate-500 mt-1 text-center">
-              Official Account Registration
+            <p className="text-[11px] text-slate-500">
+              Create your official account
             </p>
           </div>
 
-          {/* ERROR ALERT */}
-          {error && (
-            <div className="mb-6 rounded-lg bg-danger/10 p-4 border border-danger/20 flex items-start gap-3">
-              <span className="text-danger mt-0.5">
-                <CircleAlert />
-              </span>
-              <p className="text-sm font-medium text-danger leading-snug">
-                {error}
-              </p>
-            </div>
-          )}
-
-          <form onSubmit={handleRegister} className="space-y-5">
+          {/* FORM */}
+          <form onSubmit={handleRegister} className="space-y-3">
             {/* FULL NAME */}
-            <div>
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-secondary-foreground mb-1.5">
-                Full Name (As it appears on ID)
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-slate-600">
+                Full Name
               </label>
               <input
                 type="text"
                 required
+                placeholder="e.g. Juan Dela Cruz"
                 value={formData.full_name}
                 onChange={(e) =>
                   setFormData({ ...formData, full_name: e.target.value })
                 }
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-sm font-medium text-primary focus:bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none placeholder:text-slate-400 placeholder:font-normal"
-                placeholder="e.g., Juan Dela Cruz"
+                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:border-primary focus:ring-1 focus:ring-primary/20 outline-none transition"
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {/* ROLE CLASSIFICATION */}
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-secondary-foreground mb-1.5">
-                  Official Role
+            {/* ROLE */}
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-slate-600">
+                Role
+              </label>
+              <select
+                value={formData.role_type}
+                onChange={(e) =>
+                  setFormData({ ...formData, role_type: e.target.value })
+                }
+                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:border-primary focus:ring-1 focus:ring-primary/20 outline-none transition"
+              >
+                <option value="SK_Chairperson">SK Chairperson</option>
+                <option value="SK_Treasurer">SK Treasurer</option>
+                <option value="BMO">BMO</option>
+                <option value="SK_Fed">SK Fed</option>
+                <option value="COA">COA</option>
+              </select>
+            </div>
+
+            {/* BARANGAY */}
+            {isSKRole && (
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-600">
+                  Barangay
                 </label>
-                <select
-                  value={formData.role_type}
-                  onChange={(e) => {
-                    setFormData({
-                      ...formData,
-                      role_type: e.target.value,
-                      barangay:
-                        e.target.value === "SK_Chairperson" ||
-                        e.target.value === "SK_Treasurer"
-                          ? formData.barangay
-                          : "",
-                    });
-                  }}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-sm font-medium text-primary focus:bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none appearance-none cursor-pointer"
-                >
-                  <option value="SK_Chairperson">SK Chairperson</option>
-                  <option value="SK_Treasurer">SK Treasurer</option>
-                  <option value="BMO">Budget Gatekeeper (BMO)</option>
-                  <option value="SK_Fed">SK Provincial Fed</option>
-                  <option value="COA">Commission on Audit</option>
-                </select>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Barangay San Jose"
+                  value={formData.barangay}
+                  onChange={(e) =>
+                    setFormData({ ...formData, barangay: e.target.value })
+                  }
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:border-primary focus:ring-1 focus:ring-primary/20 outline-none transition"
+                />
               </div>
-
-              {/* CONDITIONAL BARANGAY */}
-              {isSKRole ? (
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-secondary-foreground mb-1.5">
-                    Assigned Barangay
-                  </label>
-                  <input
-                    type="text"
-                    required={isSKRole}
-                    value={formData.barangay}
-                    onChange={(e) =>
-                      setFormData({ ...formData, barangay: e.target.value })
-                    }
-                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-sm font-medium text-primary focus:bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none placeholder:text-slate-400 placeholder:font-normal"
-                    placeholder="e.g., San Jose"
-                  />
-                </div>
-              ) : (
-                <div className="hidden md:block"></div> /* Spacer to keep grid aligned */
-              )}
-            </div>
-
-            {/* SYSTEM CREDENTIALS DIVIDER */}
-            <div className="pt-4 pb-2">
-              <div className="flex items-center gap-3">
-                <div className="h-px bg-border flex-1"></div>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
-                  System Credentials
-                </span>
-                <div className="h-px bg-border flex-1"></div>
-              </div>
-            </div>
+            )}
 
             {/* USERNAME */}
-            <div>
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-secondary-foreground mb-1.5">
-                Portal Username
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-slate-600">
+                Username
               </label>
               <input
                 type="text"
                 required
+                placeholder="e.g. juandelacruz123"
                 value={formData.username}
                 onChange={(e) =>
                   setFormData({ ...formData, username: e.target.value })
                 }
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-sm font-medium text-primary focus:bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none placeholder:text-slate-400 placeholder:font-normal"
-                placeholder="e.g., sk_brgy1"
+                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:border-primary focus:ring-1 focus:ring-primary/20 outline-none transition"
               />
             </div>
 
-            {/* PASSWORD GRID */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-secondary-foreground mb-1.5">
-                  Secure Password
-                </label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    required
-                    value={formData.password}
-                    onChange={(e) =>
-                      setFormData({ ...formData, password: e.target.value })
-                    }
-                    className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-4 pr-12 py-3 text-sm font-medium text-primary focus:bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none placeholder:text-slate-400"
-                    placeholder="••••••••"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-secondary-foreground mb-1.5">
-                  Confirm Password
-                </label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    required
-                    value={formData.confirmPassword}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        confirmPassword: e.target.value,
-                      })
-                    }
-                    className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-4 pr-12 py-3 text-sm font-medium text-primary focus:bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none placeholder:text-slate-400"
-                    placeholder="••••••••"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-3 text-[10px] font-bold uppercase tracking-wider text-secondary-foreground hover:text-primary transition-colors"
-                  >
-                    {showPassword ? "Hide" : "Show"}
-                  </button>
-                </div>
-              </div>
+            {/* PASSWORD */}
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-slate-600">
+                Password
+              </label>
+              <input
+                type={showPassword ? "text" : "password"}
+                required
+                placeholder="Minimum 8 characters"
+                value={formData.password}
+                onChange={(e) =>
+                  setFormData({ ...formData, password: e.target.value })
+                }
+                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:border-primary focus:ring-1 focus:ring-primary/20 outline-none transition"
+              />
             </div>
 
-            {/* SUBMIT BUTTON */}
-            <div className="pt-4">
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full rounded-xl bg-primary py-3.5 text-sm font-bold tracking-wide text-white transition-all hover:bg-primary/90 hover:shadow-md active:scale-[0.98] disabled:bg-primary/50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none flex justify-center items-center gap-2"
+            {/* CONFIRM PASSWORD */}
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-slate-600">
+                Confirm Password
+              </label>
+              <input
+                type={showPassword ? "text" : "password"}
+                required
+                placeholder="Re-enter your password"
+                value={formData.confirmPassword}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    confirmPassword: e.target.value,
+                  })
+                }
+                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:border-primary focus:ring-1 focus:ring-primary/20 outline-none transition"
+              />
+            </div>
+
+            {/* SHOW PASSWORD */}
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="text-[11px] text-primary font-semibold hover:underline"
+            >
+              {showPassword ? "Hide Password" : "Show Password"}
+            </button>
+
+            {/* SUBMIT */}
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-primary text-white py-2.5 rounded-lg text-sm font-bold 
+            hover:scale-[1.02] hover:shadow-md hover:shadow-primary/20 
+            transition flex justify-center items-center gap-2"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="animate-spin h-4 w-4" />
+                  Processing...
+                </>
+              ) : (
+                "Create Account"
+              )}
+            </button>
+
+            {/* LOGIN */}
+            <p className="text-center text-[11px] text-slate-500">
+              Already registered?{" "}
+              <span
+                onClick={() => router.push("/login")}
+                className="text-primary font-bold cursor-pointer hover:underline"
               >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="animate-spin h-4 w-4 text-white" />
-                    Processing Registration...
-                  </>
-                ) : (
-                  "Create Official Account"
-                )}
-              </button>
+                Login
+              </span>
+            </p>
+          </form>
+        </div>
+      </div>
+
+      {/* RIGHT SIDE */}
+      <div className="hidden md:flex w-1/2 bg-primary text-white items-center justify-center relative overflow-hidden">
+        <div className="absolute w-80 h-80 bg-white/10 rounded-full -top-10 -left-10" />
+        <div className="absolute w-72 h-72 bg-white/10 rounded-full -bottom-10 -right-10" />
+
+        <div className="relative z-10 max-w-md text-center px-8">
+          <h2 className="text-3xl font-extrabold mb-3">
+            Empower Youth Governance
+          </h2>
+
+          <p className="text-xs opacity-90 leading-relaxed">
+            SK-Ledge ensures transparency, accountability, and real-time
+            financial tracking for SK officials.
+          </p>
+
+          {/* FEATURES WITH LUCIDE ICON */}
+          <div className="mt-6 space-y-2 text-xs">
+            <div className="bg-white/10 p-2 rounded-md flex items-center gap-2">
+              <Check size={16} className="text-white" />
+              Secure Records
             </div>
 
-            {/* RETURN TO LOGIN */}
-            <div className="text-center mt-6">
-              <p className="text-xs text-secondary-foreground font-medium">
-                Already have portal access?{" "}
-                <button
-                  type="button"
-                  onClick={() => router.push("/login")}
-                  className="text-primary font-bold hover:underline underline-offset-4"
-                >
-                  Sign in here
-                </button>
-              </p>
+            <div className="bg-white/10 p-2 rounded-md flex items-center gap-2">
+              <Check size={16} className="text-white" />
+              Real-time Monitoring
             </div>
-          </form>
+
+            <div className="bg-white/10 p-2 rounded-md flex items-center gap-2">
+              <Check size={16} className="text-white" />
+              Audit-ready Reports
+            </div>
+          </div>
         </div>
       </div>
     </div>
