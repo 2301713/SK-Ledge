@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "../../lib/supabase"; // Adjust path if needed
+import { supabase } from "../../lib/supabase";
 import { CircleAlert, Loader2 } from "lucide-react";
 
 export default function LoginPage() {
@@ -48,7 +48,7 @@ export default function LoginPage() {
 
         const { error: updateError } = await supabase
           .from("profiles")
-          .update({ created_at: new Date().toISOString() }) // Ideally update a 'last_login' column here
+          .update({ created_at: new Date().toISOString() })
           .eq("id", authData.user.id);
 
         if (updateError) {

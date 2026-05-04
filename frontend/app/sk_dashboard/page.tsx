@@ -74,7 +74,7 @@ export default function SKDashboard() {
           SK
         </div>
         <p className="text-xs font-bold text-slate-500 uppercase tracking-widest animate-pulse">
-          Loading Workspace...
+          Loading Dashboard...
         </p>
       </div>
     );

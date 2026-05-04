@@ -31,13 +31,13 @@ const ROLE_LINKS: Record<
     { label: "Overview", href: "/sk_dashboard", icon: LayoutDashboard },
     { label: "Projects", href: "/sk_dashboard/projects", icon: FolderKanban },
     { label: "Documents", href: "/sk_dashboard/upload", icon: UploadCloud },
-    { label: "Settings", href: "/sk_dashboard/account", icon: UserCircle },
+    { label: "Account", href: "/sk_dashboard/account", icon: UserCircle },
   ],
   SK_Treasurer: [
     { label: "Overview", href: "/sk_dashboard", icon: LayoutDashboard },
     { label: "Projects", href: "/sk_dashboard/projects", icon: FolderKanban },
     { label: "Documents", href: "/sk_dashboard/upload", icon: UploadCloud },
-    { label: "Settings", href: "/sk_dashboard/account", icon: UserCircle },
+    { label: "Account", href: "/sk_dashboard/account", icon: UserCircle },
   ],
   COA: [
     { label: "Overview", href: "/coa_dashboard", icon: TrendingUp },
@@ -47,12 +47,12 @@ const ROLE_LINKS: Record<
       href: "/coa_dashboard/disbursements",
       icon: FileText,
     },
-    { label: "Settings", href: "/coa_dashboard/account", icon: UserCircle },
+    { label: "Account", href: "/coa_dashboard/account", icon: UserCircle },
   ],
   BMO: [
     { label: "Overview", href: "/bmo_dashboard", icon: PieChart },
     { label: "Budget Review", href: "/bmo_dashboard/review", icon: TextSearch },
-    { label: "Settings", href: "/bmo_dashboard/account", icon: UserCircle },
+    { label: "Account", href: "/bmo_dashboard/account", icon: UserCircle },
   ],
   SK_Fed: [
     { label: "Overview", href: "/skfed_dashboard", icon: Globe },
@@ -62,7 +62,7 @@ const ROLE_LINKS: Record<
       icon: FileText,
     },
     {
-      label: "Settings",
+      label: "Account",
       href: "/skfed_dashboard/account",
       icon: UserCircle,
     },
@@ -133,7 +133,9 @@ export default function Sidebar({
                 )}
                 <Icon
                   className={`w-5 h-5 mr-3 transition-colors ${
-                    isActive ? "text-tertiary" : "text-white/50 group-hover:text-white"
+                    isActive
+                      ? "text-tertiary"
+                      : "text-white/50 group-hover:text-white"
                   }`}
                 />
                 {link.label}
@@ -164,13 +166,16 @@ export default function Sidebar({
               <p className="text-[10px] text-tertiary uppercase tracking-widest font-bold truncate">
                 {formatRole(roleType)}
               </p>
+              {barangay && (
+                <p className="text-[10px] text-foreground">{barangay}</p>
+              )}
             </div>
           </div>
-          
+
           <button
             onClick={handleLogout}
             title="Sign Out"
-            className="w-10 h-10 rounded-full bg-white/5 hover:bg-danger/20 text-white/70 hover:text-danger flex items-center justify-center transition-all shrink-0"
+            className="w-10 h-10 rounded-full bg-white/5 hover:bg-danger/20 text-white/70 hover:text-danger flex items-center justify-center transition-all shrink-0 cursor-pointer"
           >
             <LogOut className="w-4 h-4" />
           </button>
