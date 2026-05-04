@@ -93,7 +93,7 @@ export default function Sidebar({
   };
 
   return (
-    <aside className="w-[280px] bg-primary text-white flex flex-col h-screen sticky top-0 shadow-2xl z-50">
+    <aside className="w-70 bg-primary text-white flex flex-col h-screen sticky top-0 shadow-2xl z-50">
       {/* BRANDING HEADER */}
       <div className="h-24 flex items-center px-8 border-b border-white/10 shrink-0">
         <div className="flex items-center gap-3">

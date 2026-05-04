@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import SideBar from "@/components/dashboard/SideBar";
 import { supabase } from "@/lib/supabase";
 import { UserAccount } from "../types";
-import { UserCircle } from "lucide-react";
+import { AlertCircle, UserCircle } from "lucide-react";
 
 export default function AccountPage() {
   // LAYOUT & AUTH STATE
@@ -135,7 +135,9 @@ export default function AccountPage() {
       <div className="min-h-screen flex items-center justify-center bg-background p-6">
         <div className="max-w-md w-full bg-white rounded-2xl shadow-xl shadow-primary/5 border border-border p-8 text-center">
           <div className="h-12 w-12 bg-danger/10 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-danger text-xl">⚠️</span>
+            <span className="text-danger text-xl">
+              <AlertCircle />
+            </span>
           </div>
           <h2 className="text-xl font-extrabold text-primary mb-2">
             Access Restricted
@@ -188,7 +190,10 @@ export default function AccountPage() {
             {/* ALERTS */}
             {error && (
               <div className="bg-danger/10 border border-danger/20 text-danger px-5 py-4 rounded-xl text-sm font-medium flex items-center gap-3">
-                <span className="text-lg">⚠️</span> {error}
+                <span className="text-lg">
+                  <AlertCircle />
+                </span>{" "}
+                {error}
               </div>
             )}
             {successMsg && (

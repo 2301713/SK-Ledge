@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "../../lib/supabase"; // Adjust this path if needed
+import { supabase } from "../../lib/supabase";
 import { CircleAlert, Loader2 } from "lucide-react";
+import Link from "next/link";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -115,9 +116,12 @@ export default function RegisterPage() {
         <div className="p-8 sm:p-10">
           {/* BRANDING HEADER */}
           <div className="flex flex-col items-center mb-8">
-            <div className="h-12 w-12 bg-primary rounded-xl flex items-center justify-center text-tertiary font-black text-2xl shadow-md shadow-primary/20 mb-4">
+            <Link
+              href="/public_portal"
+              className="h-12 w-12 bg-primary rounded-xl flex items-center justify-center text-tertiary font-black text-2xl shadow-md shadow-primary/20 mb-4"
+            >
               SK
-            </div>
+            </Link>
             <h1 className="text-2xl font-extrabold text-primary tracking-tight">
               SK-Ledge Portal
             </h1>

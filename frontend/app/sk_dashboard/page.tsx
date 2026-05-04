@@ -5,6 +5,7 @@ import SideBar from "@/components/dashboard/SideBar";
 import { UserAccount } from "./types";
 import { INITIAL_PROJECTS } from "@/lib/dummyData";
 import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
 import {
   Plus,
   Wallet,
@@ -22,6 +23,7 @@ import {
 export default function SKDashboard() {
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -32,21 +34,35 @@ export default function SKDashboard() {
         } = await supabase.auth.getUser();
 
         if (authError || !user) {
-          setIsLoading(false);
+          router.push("/login");
           return;
         }
 
-        const { data: profileData } = await supabase
+        const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .select("id, username, full_name, role_type, barangay")
+          .eq("id", user.id)
           .single();
 
+        if (profileError) {
+          console.error("Error fetching profile:", profileError.message);
+        }
+
         if (profileData) {
+          if (
+            profileData.role_type !== "SK_Chairperson" &&
+            profileData.role_type !== "SK_Treasurer"
+          ) {
+            console.warn("Unauthorized access: User is not an SK Official");
+            router.push("/unauthorized");
+            return;
+          }
+
           setCurrentUser({
             id: profileData.id,
             username: profileData.username,
             full_name: profileData.full_name || profileData.username,
-            role_type: profileData.role_type as "Chairman" | "Treasurer",
+            role_type: profileData.role_type,
             barangay: profileData.barangay || "No Barangay Assigned",
           });
         }
@@ -58,7 +74,7 @@ export default function SKDashboard() {
     };
 
     fetchUserProfile();
-  }, []);
+  }, [router]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-PH", {
@@ -139,13 +155,13 @@ export default function SKDashboard() {
           </div>
         </header>
 
-        <div className="px-10 pb-12 space-y-8 max-w-[1400px] mx-auto w-full">
+        <div className="px-10 pb-12 space-y-8 max-w-350 mx-auto w-full">
           {/* WELCOME BANNER (Massive, engaging) */}
           <section className="bg-primary rounded-[2.5rem] p-12 relative overflow-hidden text-white shadow-xl shadow-primary/20 border border-primary">
             {/* Abstract Decorative Elements */}
             <div className="absolute top-0 right-0 w-full h-full overflow-hidden pointer-events-none z-0">
-              <div className="absolute -top-32 -right-20 w-[500px] h-[500px] bg-white/5 rounded-full blur-3xl"></div>
-              <div className="absolute -bottom-40 right-20 w-[400px] h-[400px] bg-tertiary/10 rounded-full blur-3xl"></div>
+              <div className="absolute -top-32 -right-20 w-125 h-125 bg-white/5 rounded-full blur-3xl"></div>
+              <div className="absolute -bottom-40 right-20 w-100 h-100 bg-tertiary/10 rounded-full blur-3xl"></div>
             </div>
 
             <div className="relative z-10 w-full lg:w-2/3">

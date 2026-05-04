@@ -36,7 +36,7 @@ export default function CTASection() {
 
               <div className="flex flex-col sm:flex-row gap-3">
                 <Link
-                  href="/public-portal"
+                  href="/public_portal"
                   className="inline-flex items-center justify-center gap-2 px-7 py-4 bg-primary text-white rounded-xl font-bold text-sm hover:bg-primary/90 transition-all group shadow-xl shadow-primary/20"
                 >
                   <Rocket className="w-4 h-4 group-hover:-translate-y-0.5 transition-transform" />

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import SideBar from "@/components/dashboard/SideBar";
 import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -36,6 +37,7 @@ ChartJS.register(
 export default function COADashboard() {
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
 
   // For the overview chart/KPIs
   const pendingApprovalCount = 3;
@@ -50,13 +52,14 @@ export default function COADashboard() {
         } = await supabase.auth.getUser();
 
         if (authError || !user) {
-          setIsLoading(false);
+          router.push("/login");
           return;
         }
 
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .select("id, username, full_name, role_type, barangay")
+          .eq("id", user.id)
           .single();
 
         if (profileError) {
@@ -64,11 +67,18 @@ export default function COADashboard() {
         }
 
         if (profileData) {
+          // Verify that this user is actually a BMO
+          if (profileData.role_type !== "COA") {
+            console.warn("Unauthorized access: User is not a COA");
+            router.push("/unauthorized");
+            return;
+          }
+
           setCurrentUser({
             id: profileData.id,
             username: profileData.username,
             full_name: profileData.full_name || profileData.username,
-            role_type: profileData.role_type as "Chairman" | "Treasurer",
+            role_type: profileData.role_type as "COA",
             barangay: profileData.barangay || "No Barangay Assigned",
           });
         }
@@ -80,7 +90,7 @@ export default function COADashboard() {
     };
 
     fetchUserProfile();
-  }, []);
+  }, [router]);
 
   const chartData = {
     labels: ["Approvals", "Disbursements"],
@@ -88,7 +98,7 @@ export default function COADashboard() {
       {
         label: "Pending Volume",
         data: [pendingApprovalCount, pendingDisbursementCount],
-        backgroundColor: ["#003366", "#D4AF37"], // primary and tertiary
+        backgroundColor: ["#003366", "#D4AF37"],
         borderRadius: 8,
         barThickness: 48,
         borderSkipped: false,
@@ -198,13 +208,13 @@ export default function COADashboard() {
           </div>
         </header>
 
-        <div className="px-10 pb-12 space-y-8 max-w-[1400px] mx-auto w-full">
+        <div className="px-10 pb-12 space-y-8 max-w-350 mx-auto w-full">
           {/* WELCOME BANNER (Massive, engaging) */}
           <section className="bg-slate-900 rounded-[2.5rem] p-12 relative overflow-hidden text-white shadow-xl shadow-slate-900/20 border border-slate-800">
             {/* Abstract Decorative Elements */}
             <div className="absolute top-0 right-0 w-full h-full overflow-hidden pointer-events-none z-0">
-              <div className="absolute -top-32 -right-20 w-[500px] h-[500px] bg-tertiary/20 rounded-full blur-3xl"></div>
-              <div className="absolute -bottom-40 right-20 w-[400px] h-[400px] bg-primary/30 rounded-full blur-3xl"></div>
+              <div className="absolute -top-32 -right-20 w-125 h-125 bg-tertiary/20 rounded-full blur-3xl"></div>
+              <div className="absolute -bottom-40 right-20 w-100 h-100 bg-primary/30 rounded-full blur-3xl"></div>
             </div>
 
             <div className="relative z-10 w-full lg:w-2/3">
@@ -257,7 +267,7 @@ export default function COADashboard() {
                 </div>
               </div>
 
-              <div className="relative flex-1 min-h-[300px] w-full">
+              <div className="relative flex-1 min-h-75 w-full">
                 <Bar data={chartData} options={chartOptions} />
               </div>
             </div>

@@ -14,7 +14,7 @@ export default function PortalHero() {
               <span className="text-tertiary">Dashboard</span>
             </h1>
           </div>
-          <p className="text-primary/60 text-base leading-relaxed max-w-sm md:text-right">
+          <p className="text-primary/60 text-sm leading-relaxed max-w-sm md:text-right">
             Real-time monitoring of the Annual Barangay Youth Investment
             Program. Ensuring every centavo counts for the Batangueño youth.
           </p>

@@ -1,12 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import SideBar from "@/components/dashboard/SideBar";
+import { useRouter } from "next/navigation";
+import SideBar from "@/components/dashboard/SideBar"; // Verify this path!
 import { supabase } from "@/lib/supabase";
-import { UserAccount } from "../types";
+import { UserAccount } from "../types"; // Verify this path based on your folder structure!
 import { AlertCircle, UserCircle } from "lucide-react";
 
-export default function AccountPage() {
+export default function BMOAccountPage() {
+  const router = useRouter();
+
   // LAYOUT & AUTH STATE
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -35,13 +38,14 @@ export default function AccountPage() {
 
         if (authError || !user) {
           console.error("No active user session found.");
-          setIsLoading(false);
+          router.push("/login");
           return;
         }
 
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .select("id, username, role_type, full_name, barangay")
+          .eq("id", user.id)
           .single();
 
         if (profileError) {
@@ -49,13 +53,23 @@ export default function AccountPage() {
         }
 
         if (profileData) {
-          setCurrentUser({
+          // BMO-Specific Protection
+          if (profileData.role_type !== "BMO") {
+            console.warn("Unauthorized access: User is not a BMO");
+            router.push("/unauthorized");
+            return;
+          }
+
+          const profile = {
             id: profileData.id,
             username: profileData.username,
             full_name: profileData.full_name || profileData.username,
             role_type: profileData.role_type,
             barangay: profileData.barangay || "No Barangay Assigned",
-          });
+          };
+
+          setCurrentUser(profile);
+          setUserProfile(profile);
         }
       } catch (err) {
         console.error("Unexpected error loading profile:", err);
@@ -65,7 +79,7 @@ export default function AccountPage() {
     };
 
     fetchUserProfile();
-  }, []);
+  }, [router]);
 
   // HANDLERS
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -85,19 +99,19 @@ export default function AccountPage() {
 
       if (updateError) throw updateError;
 
-      // Update the sidebar name dynamically without reloading
+      // Update the sidebar name without reloading
       if (currentUser) {
         setCurrentUser({ ...currentUser, full_name: userProfile.full_name });
       }
 
-      setSuccessMsg("Account details updated successfully.");
+      setSuccessMsg("BMO Account details updated successfully.");
       setIsEditing(false);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Failed to update profile.";
       setError(message);
     } finally {
-      setIsLoading(false);
+      setIsSaving(false); // Fixed: Should be setIsSaving(false), not setIsLoading
     }
   };
 
@@ -114,7 +128,7 @@ export default function AccountPage() {
           B
         </div>
         <p className="text-[11px] font-bold text-secondary-foreground uppercase tracking-widest animate-pulse">
-          Initializing Account...
+          Initializing BMO Account...
         </p>
       </div>
     );
@@ -134,11 +148,11 @@ export default function AccountPage() {
             Access Restricted
           </h2>
           <p className="text-sm text-secondary-foreground mb-6">
-            You do not have the required credentials or an active session to
-            view this official dashboard.
+            You do not have the required BMO credentials or an active session to
+            view this dashboard.
           </p>
           <button
-            onClick={() => (window.location.href = "/login")}
+            onClick={() => router.push("/login")}
             className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-white transition-all hover:bg-primary/90"
           >
             Return to Login
@@ -155,6 +169,7 @@ export default function AccountPage() {
       <SideBar
         userName={currentUser.full_name}
         roleType={currentUser.role_type}
+        // If your BMO SideBar doesn't accept the 'barangay' prop, delete the line below to avoid TS errors
         barangay={currentUser.barangay}
       />
 
@@ -167,7 +182,7 @@ export default function AccountPage() {
         <header className="h-20 bg-white/80 backdrop-blur-md border-b border-border px-8 flex items-center justify-between z-10 shrink-0">
           <div>
             <h1 className="text-2xl font-extrabold text-primary tracking-tight flex items-center gap-2">
-              Account Settings
+              BMO Account Settings
             </h1>
             <p className="text-[10px] font-bold uppercase tracking-wider text-secondary-foreground mt-0.5">
               Manage your profile and system credentials
@@ -200,12 +215,12 @@ export default function AccountPage() {
               <div className="w-28 h-28 shrink-0 rounded-full bg-primary flex items-center justify-center text-5xl font-black text-white shadow-md border-4 border-white z-10">
                 {userProfile.full_name
                   ? userProfile.full_name.charAt(0).toUpperCase()
-                  : "U"}
+                  : "B"}
               </div>
 
               <div className="text-center md:text-left flex-1 z-10">
                 <h2 className="text-3xl font-extrabold text-primary tracking-tight">
-                  {userProfile.full_name || "Unknown User"}
+                  {userProfile.full_name || "Unknown BMO User"}
                 </h2>
                 <p className="text-sm font-bold text-tertiary mt-1 uppercase tracking-widest">
                   {formatRole(userProfile.role_type)}
@@ -308,7 +323,6 @@ export default function AccountPage() {
                         setIsEditing(false);
                         setError("");
                         setSuccessMsg("");
-                        // Reset name to original state
                         setUserProfile((prev) => ({
                           ...prev,
                           full_name: currentUser?.full_name || "",
