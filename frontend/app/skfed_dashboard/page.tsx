@@ -46,7 +46,6 @@ export default function SKFederationDashboard() {
         }
 
         if (profileData) {
-          // CRITICAL: Double-check that "SK_Federation" matches your Supabase DB exactly!
           if (profileData.role_type !== "SK_Fed") {
             console.warn("Unauthorized: User is not an SK Federation Official");
             router.push("/unauthorized");
@@ -94,7 +93,7 @@ export default function SKFederationDashboard() {
   }
 
   // UNAUTHORIZED / NULL STATE
-  if (!currentUser) return null; // Prevent flash before redirect
+  if (!currentUser) return null;
 
   return (
     <div className="flex min-h-screen bg-[#f8fafc] selection:bg-blue-200 selection:text-blue-900">
