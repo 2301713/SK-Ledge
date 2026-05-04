@@ -6,6 +6,7 @@ import { UserAccount } from "./types";
 import { INITIAL_PROJECTS } from "@/lib/dummyData";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
+import ProposeProjectModal from "@/components/dashboard/ProposeProjectModal"; // Make sure this path is correct!
 import {
   Plus,
   Wallet,
@@ -23,6 +24,7 @@ import {
 export default function SKDashboard() {
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -181,7 +183,10 @@ export default function SKDashboard() {
               </p>
 
               <div className="mt-10 flex flex-wrap gap-4">
-                <button className="bg-tertiary text-primary px-8 py-4 rounded-2xl text-sm font-black tracking-wide hover:bg-white hover:shadow-xl hover:shadow-white/10 transition-all active:scale-95 flex items-center gap-3">
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  className="bg-blue-600 text-white px-8 py-4 rounded-2xl text-sm font-black tracking-wide hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-600/20 transition-all active:scale-95 flex items-center gap-3"
+                >
                   <Plus className="w-5 h-5" />
                   Propose New Project
                 </button>
@@ -357,6 +362,13 @@ export default function SKDashboard() {
             </div>
           </section>
         </div>
+        <ProposeProjectModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSubmitSuccess={() => {
+            console.log("Proposal successfully dispatched!");
+          }}
+        />
       </main>
     </div>
   );

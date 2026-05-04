@@ -157,7 +157,7 @@ export default function AccountPage() {
     );
   }
 
-  // --- MAIN DASHBOARD LAYOUT ---
+  // MAIN DASHBOARD LAYOUT
   return (
     <div className="flex min-h-screen bg-background selection:bg-tertiary selection:text-primary">
       {/* SIDEBAR */}
