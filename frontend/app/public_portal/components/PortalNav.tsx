@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Layers, ExternalLink } from "lucide-react";
+import { Layers, ExternalLink, Activity } from "lucide-react";
 
 export default function PortalNav() {
   return (
@@ -22,13 +22,23 @@ export default function PortalNav() {
           </div>
 
           {/* Right */}
-          <Link
-            href="/login"
-            className="flex items-center gap-1.5 bg-primary text-white hover:bg-primary/90 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-lg shadow-primary/20 active:scale-95"
-          >
-            Access Portal
-            <ExternalLink className="w-3 h-3" />
-          </Link>
+          <div className="flex gap-x-2">
+            <Link
+              href="/open_bidding"
+              className="flex items-center gap-1.5 bg-primary text-white hover:bg-primary/90 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-lg shadow-primary/20 active:scale-95"
+            >
+              Access Public Bidding
+              <Activity className="w-3 h-3" />
+            </Link>
+
+            <Link
+              href="/login"
+              className="flex items-center gap-1.5 bg-primary text-white hover:bg-primary/90 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-lg shadow-primary/20 active:scale-95"
+            >
+              Access Portal
+              <ExternalLink className="w-3 h-3" />
+            </Link>
+          </div>
         </div>
       </div>
     </nav>

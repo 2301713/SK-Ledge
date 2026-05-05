@@ -86,7 +86,7 @@ export default function LoginPage() {
           case "BMO":
             router.push("/bmo_dashboard");
             break;
-          case "SK_Fed":
+          case "SK_Federation":
             router.push("/skfed_dashboard");
             break;
           default:

@@ -110,7 +110,7 @@ export default function RegisterPage() {
 
       if (signUpError) throw signUpError;
 
-      // UX: Redirect on success
+      // UX
       console.log("Registration successful!", data);
       router.push("/login");
     } catch (err) {
@@ -124,7 +124,7 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-white overflow-hidden selection:bg-tertiary selection:text-primary">
-      {/* ─── LEFT SIDE: REGISTER FORM ─── */}
+      {/* LEFT SIDE */}
       <section className="w-full lg:w-[55%] flex flex-col items-center justify-center p-8 sm:p-16 lg:p-20 bg-white relative z-10 order-2 lg:order-1">
         <div className="w-full max-w-lg">
           {/* Mobile Branding Header */}
@@ -205,14 +205,14 @@ export default function RegisterPage() {
                     <option value="SK_Chairperson">SK Chairperson</option>
                     <option value="SK_Treasurer">SK Treasurer</option>
                     <option value="BMO">BMO</option>
-                    <option value="SK_Fed">SK Fed</option>
+                    <option value="SK_Federation">SK Fed</option>
                     <option value="COA">COA</option>
                   </select>
                 </div>
               </div>
             </div>
 
-            {/* BARANGAY — conditional, full width */}
+            {/* BARANGAY */}
             {isSKRole && (
               <div className="space-y-2">
                 <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
@@ -258,7 +258,7 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            {/* ROW 2: Password + Confirm Password — side by side */}
+            {/* ROW 2 */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               {/* PASSWORD */}
               <div className="space-y-2">
@@ -341,7 +341,7 @@ export default function RegisterPage() {
             </div>
           </form>
 
-          {/* LOGIN PROMPT — mirrors the register prompt on login page */}
+          {/* LOGIN PROMPT */}
           <div className="mt-12 pt-8 border-t border-slate-100">
             <div className="bg-slate-50 p-6 rounded-4xl border border-dashed border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="text-center sm:text-left">
@@ -371,10 +371,8 @@ export default function RegisterPage() {
         </div>
       </section>
 
-      {/* ─── RIGHT SIDE: BRANDING PANEL ─── */}
-      {/* Mirrors the login's left branding section — same bg, same card, same effects */}
+      {/* RIGHT SIDE */}
       <section className="hidden lg:flex lg:w-[45%] relative items-center justify-center p-12 overflow-hidden bg-[#0B3B78] order-1 lg:order-2">
-        {/* Background Visual Effects — identical to login */}
         <div
           className="absolute inset-0 opacity-20 pointer-events-none"
           style={{

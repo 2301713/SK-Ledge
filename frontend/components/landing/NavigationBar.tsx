@@ -44,7 +44,7 @@ export default function NavBar() {
               Sign In
             </Link>
             <Link
-              href="/public-portal"
+              href="/public_portal"
               className="px-4 py-2 bg-primary text-white text-xs font-bold rounded-xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/25"
             >
               Dashboard →
@@ -57,7 +57,11 @@ export default function NavBar() {
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             aria-label="Toggle menu"
           >
-            {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            {isMobileMenuOpen ? (
+              <X className="w-5 h-5" />
+            ) : (
+              <Menu className="w-5 h-5" />
+            )}
           </button>
         </div>
 
