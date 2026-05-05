@@ -5,11 +5,13 @@ import SideBar from "@/components/dashboard/SideBar";
 import { supabase } from "@/lib/supabase";
 import { UserAccount } from "../types";
 import { AlertCircle, UserCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function AccountPage() {
   // LAYOUT & AUTH STATE
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
 
   // ACCOUNT FORM STATE
   const [isEditing, setIsEditing] = useState(false);
@@ -35,13 +37,14 @@ export default function AccountPage() {
 
         if (authError || !user) {
           console.error("No active user session found.");
-          setIsLoading(false);
+          router.push("/login");
           return;
         }
 
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .select("id, username, role_type, full_name, barangay")
+          .eq("id", user.id)
           .single();
 
         if (profileError) {
@@ -49,13 +52,23 @@ export default function AccountPage() {
         }
 
         if (profileData) {
-          setCurrentUser({
+          // BMO-Specific Protection
+          if (profileData.role_type !== "COA") {
+            console.warn("Unauthorized access: User is not a CMO");
+            router.push("/unauthorized");
+            return;
+          }
+
+          const profile = {
             id: profileData.id,
             username: profileData.username,
             full_name: profileData.full_name || profileData.username,
             role_type: profileData.role_type,
             barangay: profileData.barangay || "No Barangay Assigned",
-          });
+          };
+
+          setCurrentUser(profile);
+          setUserProfile(profile);
         }
       } catch (err) {
         console.error("Unexpected error loading profile:", err);
@@ -65,7 +78,7 @@ export default function AccountPage() {
     };
 
     fetchUserProfile();
-  }, []);
+  }, [router]);
 
   // HANDLERS
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -106,15 +119,14 @@ export default function AccountPage() {
     return role.replace("_", " ");
   };
 
-  // LOADING STATE
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background">
-        <div className="h-14 w-14 bg-primary rounded-xl flex items-center justify-center text-tertiary font-black text-3xl shadow-lg shadow-primary/20 mb-6 animate-pulse">
-          B
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
+        <div className="h-16 w-16 bg-primary rounded-2xl flex items-center justify-center text-tertiary font-black text-xl shadow-xl shadow-primary/30 mb-6 animate-bounce">
+          COA
         </div>
-        <p className="text-[11px] font-bold text-secondary-foreground uppercase tracking-widest animate-pulse">
-          Initializing Account...
+        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest animate-pulse">
+          Loading Dashboard...
         </p>
       </div>
     );

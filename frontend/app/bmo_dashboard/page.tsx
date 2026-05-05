@@ -77,11 +77,15 @@ export default function BMODashboard() {
     0,
   );
 
-  // Show a loading state while fetching from Supabase
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="w-8 h-8 bg-primary rounded-full animate-pulse"></div>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
+        <div className="h-16 w-16 bg-primary rounded-2xl flex items-center justify-center text-tertiary font-black text-xl shadow-xl shadow-primary/30 mb-6 animate-bounce">
+          BMO
+        </div>
+        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest animate-pulse">
+          Loading Dashboard...
+        </p>
       </div>
     );
   }

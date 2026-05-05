@@ -20,5 +20,23 @@ export interface Project {
   status: ProjectStatus;
   budget: number;
   date?: string;
-  description?: string;
+}
+
+export interface VendorBid {
+  id: string;
+  vendorName: string;
+  bidAmount: number;
+  dateSubmitted: string;
+  status: "Pending" | "Evaluated" | "Awarded";
+  documentsValid: boolean;
+}
+
+export interface ProcurementProject {
+  id: string;
+  title: string;
+  barangay: string;
+  abc: number;
+  status: "Accepting Bids" | "Evaluation" | "Awarded";
+  deadline: string;
+  bids: VendorBid[];
 }

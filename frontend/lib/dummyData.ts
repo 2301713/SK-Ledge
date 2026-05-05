@@ -12,6 +12,8 @@ export type Project = {
   budget: number;
   proposedBy: string;
   dateProposed: string;
+  description?: string;
+  barangay?: string;
 };
 
 // CONSTANTS

@@ -123,12 +123,12 @@ export default function BMOAccountPage() {
   // LOADING STATE
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background">
-        <div className="h-14 w-14 bg-primary rounded-xl flex items-center justify-center text-tertiary font-black text-3xl shadow-lg shadow-primary/20 mb-6 animate-pulse">
-          B
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
+        <div className="h-16 w-16 bg-primary rounded-2xl flex items-center justify-center text-tertiary font-black text-xl shadow-xl shadow-primary/30 mb-6 animate-bounce">
+          BMO
         </div>
-        <p className="text-[11px] font-bold text-secondary-foreground uppercase tracking-widest animate-pulse">
-          Initializing BMO Account...
+        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest animate-pulse">
+          Loading Dashboard...
         </p>
       </div>
     );

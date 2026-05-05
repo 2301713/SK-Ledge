@@ -62,7 +62,18 @@ export default function ApprovalsPage() {
     );
   };
 
-  if (isLoading) return <div className="min-h-screen bg-background" />; // Simplified loading for brevity
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
+        <div className="h-16 w-16 bg-primary rounded-2xl flex items-center justify-center text-tertiary font-black text-xl shadow-xl shadow-primary/30 mb-6 animate-bounce">
+          COA
+        </div>
+        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest animate-pulse">
+          Loading Dashboard...
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-background selection:bg-tertiary selection:text-primary">

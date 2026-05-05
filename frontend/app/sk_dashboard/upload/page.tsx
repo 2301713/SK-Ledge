@@ -181,12 +181,18 @@ export default function SKUploadPage() {
     </div>
   );
 
-  if (isLoading)
+  if (isLoading) {
     return (
-      <div className="h-screen w-full flex items-center justify-center bg-white">
-        <div className="w-12 h-1 bg-blue-600 animate-pulse rounded-full" />
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
+        <div className="h-16 w-16 bg-primary rounded-2xl flex items-center justify-center text-tertiary font-black text-3xl shadow-xl shadow-primary/30 mb-6 animate-bounce">
+          SK
+        </div>
+        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest animate-pulse">
+          Loading Dashboard...
+        </p>
       </div>
     );
+  }
 
   if (!currentUser) return null;
 

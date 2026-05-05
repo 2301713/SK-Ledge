@@ -15,6 +15,7 @@ import {
   TextSearch,
   Globe,
   LogOut,
+  Activity,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -52,6 +53,7 @@ const ROLE_LINKS: Record<
   BMO: [
     { label: "Overview", href: "/bmo_dashboard", icon: PieChart },
     { label: "Budget Review", href: "/bmo_dashboard/review", icon: TextSearch },
+    { label: "Bidding", href: "/bmo_dashboard/bidding", icon: Activity },
     { label: "Account", href: "/bmo_dashboard/account", icon: UserCircle },
   ],
   SK_Fed: [
