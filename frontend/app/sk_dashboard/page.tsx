@@ -198,7 +198,7 @@ export default function SKDashboard() {
             </div>
           </section>
 
-          {/* ASYMMETRICAL METRICS GRID */}
+          {/* METRICS GRID */}
           <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* LARGE BUDGET CARD (Span 2 cols) */}
             <div className="lg:col-span-2 bg-white rounded-4xl p-8 border border-slate-200 shadow-sm flex flex-col justify-between">

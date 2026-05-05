@@ -4,7 +4,7 @@ export interface Project {
   name: string;
   category: "Sports" | "Infrastructure" | "Health" | "Education";
   status: "Pending" | "Approved" | "Declined";
-  budget: number;
+  budget: number | number;
 }
 
 export interface UserAccount {
@@ -14,4 +14,11 @@ export interface UserAccount {
   role_type: "Chairman" | "Treasurer";
   barangay: string;
   account_status?: boolean;
+}
+
+export interface LegendItemProps {
+  color: string;
+  label: string;
+  percentage: string | number;
+  budget: string | number;
 }
