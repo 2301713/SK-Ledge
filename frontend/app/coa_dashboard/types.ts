@@ -14,3 +14,33 @@ export interface UserAccount {
   barangay: string;
   account_status?: boolean;
 }
+
+export const pendingDisbursements = [
+  {
+    id: "DV-2026-0892",
+    payee: "Metro Office Supplies Inc.",
+    category: "MOOE - Supplies",
+    amount: 45000.0,
+    dateSubmitted: "May 4, 2026",
+    compliance: "Clean",
+    brgy: "Brgy. San Jose",
+  },
+  {
+    id: "DV-2026-0893",
+    payee: "Apex Construction Services",
+    category: "Capital Outlay",
+    amount: 350000.0,
+    dateSubmitted: "May 3, 2026",
+    compliance: "Flagged",
+    brgy: "Brgy. San Rafael",
+  },
+  {
+    id: "DV-2026-0895",
+    payee: "Maria Santos (Cash Advance)",
+    category: "Travel Expenses",
+    amount: 12500.0,
+    dateSubmitted: "May 2, 2026",
+    compliance: "Pending Docs",
+    brgy: "Brgy. San Jose",
+  },
+];

@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react"; // Removed useEffect from import
+import React, { useState } from "react";
+import { ProposeProjectModalProps } from "./types";
 import {
   X,
   Target,
@@ -11,12 +12,6 @@ import {
   AlertCircle,
   ChevronDown,
 } from "lucide-react";
-
-interface ProposeProjectModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmitSuccess: () => void;
-}
 
 export default function ProposeProjectModal({
   isOpen,

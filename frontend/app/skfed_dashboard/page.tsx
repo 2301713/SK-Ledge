@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import SideBar from "@/components/dashboard/SideBar"; // Verify this path!
+import SideBar from "@/components/dashboard/SideBar";
 import { supabase } from "@/lib/supabase";
 import { UserAccount } from "./types";
+import BroadcastMemoModal from "@/components/dashboard/BroadcastMemoModal";
 import {
   Building2,
   Megaphone,
@@ -19,6 +20,7 @@ import {
 export default function SKFederationDashboard() {
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const router = useRouter();
 
   // 1. AUTHENTICATION & ROLE PROTECTION
@@ -46,7 +48,7 @@ export default function SKFederationDashboard() {
         }
 
         if (profileData) {
-          if (profileData.role_type !== "SK_Fed") {
+          if (profileData.role_type !== "SK_Federation") {
             console.warn("Unauthorized: User is not an SK Federation Official");
             router.push("/unauthorized");
             return;
@@ -123,7 +125,10 @@ export default function SKFederationDashboard() {
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <button className="px-5 py-2.5 rounded-xl bg-blue-50 text-blue-600 font-bold text-xs uppercase tracking-widest hover:bg-blue-100 transition-colors flex items-center gap-2">
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="px-5 py-2.5 rounded-xl bg-blue-50 text-blue-600 font-bold text-xs uppercase tracking-widest hover:bg-blue-100 transition-colors flex items-center gap-2"
+            >
               <Megaphone className="w-4 h-4" /> Broadcast Memo
             </button>
           </div>
@@ -298,6 +303,14 @@ export default function SKFederationDashboard() {
           </section>
         </div>
       </main>
+      <BroadcastMemoModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmitSuccess={() => {
+          console.log("Proposal successfully dispatched!");
+          // Optional: You could add a toast notification here
+        }}
+      />
     </div>
   );
 }

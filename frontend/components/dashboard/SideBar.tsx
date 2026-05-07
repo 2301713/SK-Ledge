@@ -56,7 +56,7 @@ const ROLE_LINKS: Record<
     { label: "Bidding", href: "/bmo_dashboard/bidding", icon: Activity },
     { label: "Account", href: "/bmo_dashboard/account", icon: UserCircle },
   ],
-  SK_Fed: [
+  SK_Federation: [
     { label: "Overview", href: "/skfed_dashboard", icon: Globe },
     {
       label: "Reports",

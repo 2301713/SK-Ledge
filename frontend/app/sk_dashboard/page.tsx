@@ -6,7 +6,7 @@ import { UserAccount } from "./types";
 import { INITIAL_PROJECTS } from "@/lib/dummyData";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
-import ProposeProjectModal from "@/components/dashboard/ProposeProjectModal"; // Make sure this path is correct!
+import ProposeProjectModal from "@/components/dashboard/ProposeProjectModal";
 import {
   Plus,
   Wallet,

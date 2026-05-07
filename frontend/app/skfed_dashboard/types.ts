@@ -22,3 +22,9 @@ export interface LegendItemProps {
   percentage: string | number;
   budget: string | number;
 }
+
+export interface BroadcastMemoModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmitSuccess: () => void;
+}

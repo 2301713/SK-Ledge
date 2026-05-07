@@ -5,6 +5,7 @@ import SideBar from "@/components/dashboard/SideBar";
 import { supabase } from "@/lib/supabase";
 import { ApprovalRequest, UserAccount } from "../types";
 import { dummyApprovals } from "@/lib/dummyData";
+import { Check } from "lucide-react";
 
 export default function ApprovalsPage() {
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
@@ -85,89 +86,129 @@ export default function ApprovalsPage() {
         />
       )}
 
-      <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
-        <div className="absolute top-[-20%] right-[-10%] w-160 h-160 bg-tertiary/5 rounded-full blur-3xl pointer-events-none z-0"></div>
+      <main className="flex-1 flex flex-col h-screen overflow-hidden bg-secondary relative">
+        <div className="absolute top-0 left-0 w-1 h-full bg-primary z-20" />
 
-        <header className="h-20 bg-white/80 backdrop-blur-md border-b border-border px-8 flex items-center justify-between z-10 shrink-0">
-          <div>
-            <h1 className="text-2xl font-extrabold text-primary tracking-tight">
-              Pending Approvals
-            </h1>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-secondary-foreground mt-0.5">
-              Review and Approve Budget Requests
+        <header className="h-24 bg-white border-b border-slate-200 px-10 flex items-center justify-between z-10 shrink-0 shadow-sm">
+          <div className="space-y-1">
+            <div className="flex items-center gap-3">
+              <div className="w-2 h-6 bg-primary rounded-full" />
+              <h1 className="text-2xl font-black text-slate-900 uppercase tracking-tighter">
+                Financial Control{" "}
+                <span className="text-primary/60 font-light">/</span> Approvals
+              </h1>
+            </div>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-[0.2em] pl-5">
+              Management Ledger & Expenditure Oversight
             </p>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <div className="text-right mr-4 border-r pr-4 border-slate-200">
+              <p className="text-[10px] uppercase font-bold text-slate-400">
+                Total Pending
+              </p>
+              <p className="text-lg font-black text-primary leading-none">
+                {approvalsData.length}
+              </p>
+            </div>
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-8 z-10">
-          <div className="max-w-5xl mx-auto space-y-8">
-            <section className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden flex flex-col">
-              <div className="px-6 py-5 border-b border-border bg-gray-50/50 flex justify-between items-center">
-                <h2 className="text-base font-bold text-primary">
-                  Pending Approvals
-                </h2>
-                <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-primary/10 text-primary border border-primary/20">
-                  Action Required
-                </span>
+        <div className="flex-1 overflow-y-auto p-10 z-10">
+          <div className="max-w-6xl mx-auto">
+            <section className="bg-white border border-slate-200 shadow-[0_1px_3px_rgba(0,0,0,0.1)] rounded-sm overflow-hidden">
+              <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/30">
+                <div>
+                  <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest">
+                    Awaiting Authorization
+                  </h2>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tight">
+                    System Live
+                  </span>
+                </div>
               </div>
+
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
-                  <thead className="bg-white border-b border-border">
-                    <tr>
-                      <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-secondary-foreground">
+                  <thead>
+                    <tr className="bg-white border-b border-slate-200">
+                      <th className="px-8 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">
                         Department
                       </th>
-                      <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-secondary-foreground">
-                        Purpose
+                      <th className="px-8 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">
+                        Purpose & Justification
                       </th>
-                      <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-secondary-foreground">
+                      <th className="px-8 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">
                         Amount
                       </th>
-                      <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-secondary-foreground text-right">
-                        Action
+                      <th className="px-8 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right">
+                        Verification
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-border/50">
+                  <tbody className="divide-y divide-slate-100">
                     {approvalsData.map((item) => (
                       <tr
                         key={item.id}
-                        className="hover:bg-primary/2 transition-colors group"
+                        className="hover:bg-slate-50/80 transition-all duration-200 group"
                       >
-                        <td className="px-6 py-4">
-                          <span className="font-bold text-primary text-sm">
-                            {item.department}
-                          </span>
+                        <td className="px-8 py-6">
+                          <div className="flex flex-col">
+                            <span className="font-black text-slate-900 text-sm tracking-tight uppercase">
+                              {item.department}
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-bold">
+                              Ref: #00{item.id}
+                            </span>
+                          </div>
                         </td>
-                        <td className="px-6 py-4">
-                          <span className="text-sm font-medium text-secondary-foreground">
+                        <td className="px-8 py-6">
+                          <span className="text-sm font-semibold text-slate-600 leading-relaxed">
                             {item.purpose}
                           </span>
                         </td>
-                        <td className="px-6 py-4">
-                          <span className="font-bold text-primary tracking-tight">
+                        <td className="px-8 py-6">
+                          <span className="text-base font-black text-primary tabular-nums">
                             {item.amount}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-right">
+                        <td className="px-8 py-6 text-right">
                           <button
                             onClick={() => handleApprove(item.id)}
                             disabled={item.status === "Approved"}
-                            className={`px-4 py-2 rounded-xl text-xs font-bold tracking-wide transition-all ${
+                            className={`inline-flex items-center px-6 py-2.5 text-[11px] rounded-lg font-black uppercase tracking-widest transition-all duration-300 border-2 ${
                               item.status === "Approved"
-                                ? "bg-slate-50 text-slate-400 cursor-not-allowed border border-slate-200"
-                                : "bg-primary text-white hover:bg-primary/90 hover:shadow-md active:scale-95"
+                                ? "bg-transparent text-emerald-500 border-emerald-500/20 cursor-not-allowed"
+                                : "bg-slate-900 text-white border-slate-900 hover:bg-primary hover:border-primary active:translate-y-0.5"
                             }`}
                           >
-                            {item.status === "Approved"
-                              ? "Approved"
-                              : "Approve"}
+                            {item.status === "Approved" ? (
+                              <span className="flex items-center gap-2">
+                                <Check className="w-4 h-4" strokeWidth={3} />
+                                Released
+                              </span>
+                            ) : (
+                              "Authorize"
+                            )}
                           </button>
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
+              </div>
+
+              <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex justify-between">
+                <p className="text-[10px] font-bold text-slate-400 uppercase">
+                  sk-ledge // Internal Audit v2.4
+                </p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase italic">
+                  Confidential Enterprise Data
+                </p>
               </div>
             </section>
           </div>
