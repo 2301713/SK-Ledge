@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/dashboard/SideBar";
+import { useAuthStore } from "@/lib/useAuthStore";
 import { UserAccount } from "./types";
 import { INITIAL_PROJECTS } from "@/lib/dummyData";
 import { supabase } from "@/lib/supabase";
@@ -16,8 +17,8 @@ import {
 } from "lucide-react";
 
 export default function BMODashboard() {
-  const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { currentUser, isLoading, setCurrentUser, setIsLoading } =
+    useAuthStore();
   const router = useRouter();
 
   useEffect(() => {

@@ -1,28 +1,29 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import SideBar from "@/components/dashboard/SideBar";
 import { supabase } from "@/lib/supabase";
 import { UserAccount } from "../types";
 import { AlertCircle, UserCircle } from "lucide-react";
+import { useAuthStore } from "@/lib/useAuthStore";
 
 export default function AccountPage() {
-  // LAYOUT & AUTH STATE
-  const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // ACCOUNT FORM STATE
-  const [isEditing, setIsEditing] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState("");
-  const [successMsg, setSuccessMsg] = useState("");
-  const [userProfile, setUserProfile] = useState({
-    id: "",
-    username: "",
-    full_name: "",
-    role_type: "",
-    barangay: "",
-  });
+  const {
+    currentUser,
+    isLoading,
+    isEditing,
+    isSaving,
+    error,
+    successMsg,
+    userProfile,
+    setCurrentUser,
+    setIsLoading,
+    setIsEditing,
+    setIsSaving,
+    setError,
+    setSuccessMsg,
+    setUserProfile,
+  } = useAuthStore();
 
   // GET USER DATA
   useEffect(() => {
@@ -42,6 +43,7 @@ export default function AccountPage() {
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .select("id, username, full_name, role_type, barangay")
+          .eq("id", user.id)
           .single();
 
         if (profileError) {
@@ -55,7 +57,7 @@ export default function AccountPage() {
             full_name: profileData.full_name || profileData.username,
             role_type: profileData.role_type,
             barangay: profileData.barangay || "No Barangay Assigned",
-          });
+          } as UserAccount);
 
           // Set Form State
           setUserProfile({
@@ -73,15 +75,22 @@ export default function AccountPage() {
       }
     };
 
-    fetchUserProfile();
-  }, []);
+    // Only fetch if user not already loaded
+    if (isLoading && !currentUser) {
+      fetchUserProfile();
+    }
+  }, [isLoading, currentUser, setCurrentUser, setIsLoading, setUserProfile]);
 
   // HANDLERS
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setUserProfile({ ...userProfile, full_name: e.target.value });
+    if (userProfile) {
+      setUserProfile({ ...userProfile, full_name: e.target.value });
+    }
   };
 
   const handleSave = async () => {
+    if (!userProfile) return;
+
     setIsSaving(true);
     setError("");
     setSuccessMsg("");
@@ -96,7 +105,10 @@ export default function AccountPage() {
 
       // Update the sidebar name dynamically without reloading
       if (currentUser) {
-        setCurrentUser({ ...currentUser, full_name: userProfile.full_name });
+        setCurrentUser({
+          ...currentUser,
+          full_name: userProfile.full_name,
+        });
       }
 
       setSuccessMsg("Account details updated successfully.");
@@ -106,7 +118,7 @@ export default function AccountPage() {
         err instanceof Error ? err.message : "Failed to update profile.";
       setError(message);
     } finally {
-      setIsLoading(false);
+      setIsSaving(false);
     }
   };
 
@@ -207,22 +219,22 @@ export default function AccountPage() {
               <div className="absolute top-0 left-0 w-1.5 h-full bg-primary"></div>
 
               <div className="w-28 h-28 shrink-0 rounded-full bg-primary flex items-center justify-center text-5xl font-black text-white shadow-md border-4 border-white z-10">
-                {userProfile.full_name
+                {userProfile?.full_name
                   ? userProfile.full_name.charAt(0).toUpperCase()
                   : "U"}
               </div>
 
               <div className="text-center md:text-left flex-1 z-10">
                 <h2 className="text-3xl font-extrabold text-primary tracking-tight">
-                  {userProfile.full_name || "Unknown User"}
+                  {userProfile?.full_name || "Unknown User"}
                 </h2>
                 <p className="text-sm font-bold text-tertiary mt-1 uppercase tracking-widest">
-                  {formatRole(userProfile.role_type)}
+                  {userProfile ? formatRole(userProfile.role_type) : "Unknown"}
                 </p>
                 <div className="mt-4 inline-flex items-center gap-2 bg-gray-50 border border-border px-3 py-1.5 rounded-lg">
                   <span className="w-2.5 h-2.5 rounded-full bg-[#2e7d32]"></span>
                   <span className="text-[10px] font-bold text-secondary-foreground tracking-wider uppercase">
-                    Jurisdiction: {userProfile.barangay}
+                    Jurisdiction: {userProfile?.barangay || "N/A"}
                   </span>
                 </div>
               </div>
@@ -262,12 +274,12 @@ export default function AccountPage() {
                     </label>
                     {!isEditing ? (
                       <div className="px-4 py-3 bg-white border border-border rounded-xl text-sm font-bold text-primary">
-                        {userProfile.full_name || "Not provided"}
+                        {userProfile?.full_name || "Not provided"}
                       </div>
                     ) : (
                       <input
                         type="text"
-                        value={userProfile.full_name}
+                        value={userProfile?.full_name || ""}
                         onChange={handleNameChange}
                         className="w-full px-4 py-3 bg-white border border-primary/50 rounded-xl text-sm font-bold text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm"
                         placeholder="Enter your full name"
@@ -281,7 +293,7 @@ export default function AccountPage() {
                       System Username
                     </label>
                     <div className="px-4 py-3 bg-gray-50 border border-border/50 rounded-xl text-sm font-medium text-secondary-foreground cursor-not-allowed">
-                      {userProfile.username}
+                      {userProfile?.username || "N/A"}
                     </div>
                     <p className="text-[10px] text-secondary-foreground/70 ml-1">
                       Username is fixed to your login credentials.
@@ -294,7 +306,7 @@ export default function AccountPage() {
                       Assigned Role
                     </label>
                     <div className="px-4 py-3 bg-gray-50 border border-border/50 rounded-xl text-sm font-medium text-secondary-foreground cursor-not-allowed">
-                      {formatRole(userProfile.role_type)}
+                      {userProfile ? formatRole(userProfile.role_type) : "N/A"}
                     </div>
                   </div>
 
@@ -304,7 +316,7 @@ export default function AccountPage() {
                       Barangay / Jurisdiction
                     </label>
                     <div className="px-4 py-3 bg-gray-50 border border-border/50 rounded-xl text-sm font-medium text-secondary-foreground cursor-not-allowed">
-                      {userProfile.barangay}
+                      {userProfile?.barangay || "N/A"}
                     </div>
                   </div>
                 </div>
@@ -318,10 +330,15 @@ export default function AccountPage() {
                         setError("");
                         setSuccessMsg("");
                         // Reset name to original state
-                        setUserProfile((prev) => ({
-                          ...prev,
-                          full_name: currentUser?.full_name || "",
-                        }));
+                        if (currentUser) {
+                          setUserProfile({
+                            id: currentUser.id,
+                            username: currentUser.username,
+                            full_name: currentUser.full_name,
+                            role_type: currentUser.role_type,
+                            barangay: currentUser.barangay,
+                          });
+                        }
                       }}
                       disabled={isSaving}
                       className="px-6 py-3 bg-white border border-border hover:bg-gray-50 text-secondary-foreground rounded-xl text-sm font-bold transition-colors"
@@ -330,7 +347,7 @@ export default function AccountPage() {
                     </button>
                     <button
                       onClick={handleSave}
-                      disabled={isSaving || !userProfile.full_name.trim()}
+                      disabled={isSaving || !userProfile?.full_name?.trim()}
                       className="px-6 py-3 bg-primary hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20 disabled:bg-primary/50 disabled:shadow-none text-white rounded-xl text-sm font-bold transition-all active:scale-95"
                     >
                       {isSaving ? "Saving..." : "Save Changes"}

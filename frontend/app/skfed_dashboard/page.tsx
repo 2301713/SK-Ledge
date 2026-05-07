@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import SideBar from "@/components/dashboard/SideBar";
 import { supabase } from "@/lib/supabase";
-import { UserAccount } from "./types";
 import BroadcastMemoModal from "@/components/dashboard/BroadcastMemoModal";
+import { useAuthStore } from "@/lib/useAuthStore";
 import {
   Building2,
   Megaphone,
@@ -18,9 +18,14 @@ import {
 } from "lucide-react";
 
 export default function SKFederationDashboard() {
-  const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const {
+    currentUser,
+    isLoading,
+    setCurrentUser,
+    setIsLoading,
+    isModalOpen,
+    setIsModalOpen,
+  } = useAuthStore();
   const router = useRouter();
 
   // 1. AUTHENTICATION & ROLE PROTECTION
@@ -69,8 +74,11 @@ export default function SKFederationDashboard() {
       }
     };
 
-    fetchUserProfile();
-  }, [router]);
+    // Only fetch if user not already loaded
+    if (isLoading) {
+      fetchUserProfile();
+    }
+  }, [isLoading, setCurrentUser, setIsLoading, router]);
 
   // UTILITY
   const formatCurrency = (amount: number) => {

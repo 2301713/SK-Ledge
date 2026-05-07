@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import SideBar from "@/components/dashboard/SideBar";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/lib/useAuthStore";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -14,7 +15,6 @@ import {
   Legend,
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
-import { UserAccount } from "./types";
 import {
   Calendar,
   Activity,
@@ -35,8 +35,8 @@ ChartJS.register(
 );
 
 export default function COADashboard() {
-  const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { currentUser, isLoading, setCurrentUser, setIsLoading } =
+    useAuthStore();
   const router = useRouter();
 
   // For the overview chart/KPIs
@@ -67,7 +67,7 @@ export default function COADashboard() {
         }
 
         if (profileData) {
-          // Verify that this user is actually a BMO
+          // Verify that this user is actually a COA
           if (profileData.role_type !== "COA") {
             console.warn("Unauthorized access: User is not a COA");
             router.push("/unauthorized");
@@ -89,8 +89,11 @@ export default function COADashboard() {
       }
     };
 
-    fetchUserProfile();
-  }, [router]);
+    // Only fetch if user not already loaded
+    if (isLoading) {
+      fetchUserProfile();
+    }
+  }, [isLoading, setCurrentUser, setIsLoading, router]);
 
   const chartData = {
     labels: ["Approvals", "Disbursements"],

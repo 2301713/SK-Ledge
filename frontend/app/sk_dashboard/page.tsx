@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import SideBar from "@/components/dashboard/SideBar";
-import { UserAccount } from "./types";
 import { INITIAL_PROJECTS } from "@/lib/dummyData";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/lib/useAuthStore";
 import ProposeProjectModal from "@/components/dashboard/ProposeProjectModal";
 import {
   Plus,
@@ -22,9 +22,14 @@ import {
 } from "lucide-react";
 
 export default function SKDashboard() {
-  const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const {
+    currentUser,
+    isLoading,
+    setCurrentUser,
+    setIsLoading,
+    isModalOpen,
+    setIsModalOpen,
+  } = useAuthStore();
   const router = useRouter();
 
   useEffect(() => {
@@ -76,7 +81,7 @@ export default function SKDashboard() {
     };
 
     fetchUserProfile();
-  }, [router]);
+  }, [router, setCurrentUser, setIsLoading]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-PH", {
