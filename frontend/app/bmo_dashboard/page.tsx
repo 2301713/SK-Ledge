@@ -4,7 +4,6 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/dashboard/SideBar";
 import { useAuthStore } from "@/lib/useAuthStore";
-import { UserAccount } from "./types";
 import { INITIAL_PROJECTS } from "@/lib/dummyData";
 import { supabase } from "@/lib/supabase";
 import {
@@ -46,7 +45,7 @@ export default function BMODashboard() {
 
         if (profileData) {
           if (profileData.role_type !== "BMO") {
-            console.warn("Unauthorized access: User is not a BMO");
+            console.warn("Unauthorized access: User is not a BMO member.");
             router.push("/unauthorized");
             return;
           }
@@ -67,7 +66,7 @@ export default function BMODashboard() {
     };
 
     fetchUserProfile();
-  }, [router]);
+  }, [router, setCurrentUser, setIsLoading]);
 
   const pendingCount = INITIAL_PROJECTS.filter(
     (p) => p.status === "Pending",

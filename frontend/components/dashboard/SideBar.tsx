@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { useAuthStore } from "@/lib/useAuthStore";
+import { useToast } from "@/lib/useToast";
 import {
   LayoutDashboard,
   FolderKanban,
@@ -14,6 +16,10 @@ import {
   PieChart,
   TextSearch,
   Globe,
+  Calculator,
+  Receipt,
+  FileBarChart,
+  ShieldCheck,
   LogOut,
   Activity,
 } from "lucide-react";
@@ -30,13 +36,19 @@ const ROLE_LINKS: Record<
 > = {
   SK_Chairperson: [
     { label: "Overview", href: "/sk_dashboard", icon: LayoutDashboard },
+    { label: "ABYIP Planner", href: "/sk_dashboard/abyip", icon: Calculator },
     { label: "Projects", href: "/sk_dashboard/projects", icon: FolderKanban },
+    { label: "Expenses", href: "/sk_dashboard/expenses", icon: Receipt },
+    { label: "Reports", href: "/sk_dashboard/reports", icon: FileBarChart },
     { label: "Documents", href: "/sk_dashboard/upload", icon: UploadCloud },
     { label: "Account", href: "/sk_dashboard/account", icon: UserCircle },
   ],
   SK_Treasurer: [
     { label: "Overview", href: "/sk_dashboard", icon: LayoutDashboard },
+    { label: "ABYIP Planner", href: "/sk_dashboard/abyip", icon: Calculator },
     { label: "Projects", href: "/sk_dashboard/projects", icon: FolderKanban },
+    { label: "Expenses", href: "/sk_dashboard/expenses", icon: Receipt },
+    { label: "Reports", href: "/sk_dashboard/reports", icon: FileBarChart },
     { label: "Documents", href: "/sk_dashboard/upload", icon: UploadCloud },
     { label: "Account", href: "/sk_dashboard/account", icon: UserCircle },
   ],
@@ -47,6 +59,11 @@ const ROLE_LINKS: Record<
       label: "Disbursements",
       href: "/coa_dashboard/disbursements",
       icon: FileText,
+    },
+    {
+      label: "Auditor Portal",
+      href: "/coa_dashboard/auditor",
+      icon: ShieldCheck,
     },
     { label: "Account", href: "/coa_dashboard/account", icon: UserCircle },
   ],
@@ -78,14 +95,19 @@ export default function Sidebar({
 }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const toast = useToast();
+  const { clearSession } = useAuthStore();
 
   const navLinks = ROLE_LINKS[roleType] || [];
 
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
+      clearSession();
+      toast.success("Logged out successfully!");
       router.push("/login");
     } catch (error) {
+      toast.error("Failed to logout. Please try again.");
       console.error("Error logging out:", error);
     }
   };

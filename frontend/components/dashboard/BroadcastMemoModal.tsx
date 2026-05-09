@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { Priority, Audience, BroadcastMemoModalProps } from "./types";
+import { useFormStore } from "@/lib/useFormStore";
+import { useToast } from "@/lib/useToast";
 import { Send, X, ShieldAlert } from "lucide-react";
 
 export default function BroadcastMemoModal({
@@ -9,13 +11,16 @@ export default function BroadcastMemoModal({
   onClose,
   onSubmitSuccess,
 }: BroadcastMemoModalProps) {
-  const [form, setForm] = useState({
-    title: "",
-    content: "",
-    priority: "standard" as Priority,
-    audience: "all" as Audience,
-    requireAck: false,
-  });
+  const toast = useToast();
+  const {
+    broadcastMemo: { title, content, priority, audience, requireAck },
+    setBroadcastMemoTitle,
+    setBroadcastMemoContent,
+    setBroadcastMemoPriority,
+    setBroadcastMemoAudience,
+    setBroadcastMemoRequireAck,
+    resetBroadcastMemoForm,
+  } = useFormStore();
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -24,26 +29,26 @@ export default function BroadcastMemoModal({
   ) => {
     const { name, value, type } = e.target;
     const checked = (e.target as HTMLInputElement).checked;
-    setForm((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+
+    if (type === "checkbox") {
+      if (name === "requireAck") setBroadcastMemoRequireAck(checked);
+    } else {
+      if (name === "title") setBroadcastMemoTitle(value);
+      else if (name === "content") setBroadcastMemoContent(value);
+      else if (name === "priority") setBroadcastMemoPriority(value as Priority);
+      else if (name === "audience") setBroadcastMemoAudience(value as Audience);
+    }
   };
 
   const submitBroadcast = () => {
-    if (!form.title || !form.content) return;
+    if (!title || !content) return;
 
     // Logic for handling the broadcast data would go here
     // (e.g., Supabase insert)
 
+    toast.success("Broadcast memo sent successfully!");
     onSubmitSuccess();
-    setForm({
-      title: "",
-      content: "",
-      priority: "standard",
-      audience: "all",
-      requireAck: false,
-    });
+    resetBroadcastMemoForm();
     onClose();
   };
 
@@ -85,7 +90,7 @@ export default function BroadcastMemoModal({
               </label>
               <select
                 name="audience"
-                value={form.audience}
+                value={audience}
                 onChange={handleChange}
                 className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500/20"
               >
@@ -99,7 +104,7 @@ export default function BroadcastMemoModal({
               </label>
               <select
                 name="priority"
-                value={form.priority}
+                value={priority}
                 onChange={handleChange}
                 className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500/20"
               >
@@ -114,14 +119,14 @@ export default function BroadcastMemoModal({
           <div className="space-y-6">
             <input
               name="title"
-              value={form.title}
+              value={title}
               onChange={handleChange}
               placeholder="Subject Heading"
               className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-xl text-lg font-black text-slate-900 outline-none focus:border-indigo-500 transition-all"
             />
             <textarea
               name="content"
-              value={form.content}
+              value={content}
               onChange={handleChange}
               placeholder="Message Payload"
               className="w-full px-5 py-5 bg-white border-2 border-slate-100 rounded-xl text-sm font-medium text-slate-800 min-h-40 outline-none focus:border-indigo-500 transition-all resize-none"
@@ -139,7 +144,7 @@ export default function BroadcastMemoModal({
           </button>
           <button
             onClick={submitBroadcast}
-            disabled={!form.title || !form.content}
+            disabled={!title || !content}
             className="flex-1 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-300 text-white py-4 rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-3 shadow-lg shadow-indigo-600/20"
           >
             <Send size={16} /> Authorize & Broadcast

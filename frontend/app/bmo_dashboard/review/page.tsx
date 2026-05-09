@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import SideBar from "@/components/dashboard/SideBar"; // Ensure path is correct
+import SideBar from "@/components/dashboard/SideBar";
 import { INITIAL_PROJECTS } from "@/lib/dummyData";
 import { supabase } from "@/lib/supabase";
 import { UserAccount } from "../types";
@@ -49,6 +49,7 @@ export default function BMOReviewPage() {
 
         if (profileData) {
           if (profileData.role_type !== "BMO") {
+            console.warn("Unauthorized access: User is not a BMO member.");
             router.push("/unauthorized");
             return;
           }

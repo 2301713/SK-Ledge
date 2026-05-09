@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { UserAccount } from "../types";
 import { AlertCircle, UserCircle } from "lucide-react";
 import { useAuthStore } from "@/lib/useAuthStore";
+import { useToast } from "@/lib/useToast";
 
 export default function AccountPage() {
   const {
@@ -24,6 +25,8 @@ export default function AccountPage() {
     setSuccessMsg,
     setUserProfile,
   } = useAuthStore();
+
+  const toast = useToast();
 
   // GET USER DATA
   useEffect(() => {
@@ -75,11 +78,10 @@ export default function AccountPage() {
       }
     };
 
-    // Only fetch if user not already loaded
-    if (isLoading && !currentUser) {
+    if (currentUser && (!userProfile || userProfile.id !== currentUser.id)) {
       fetchUserProfile();
     }
-  }, [isLoading, currentUser, setCurrentUser, setIsLoading, setUserProfile]);
+  }, [currentUser, setCurrentUser, setIsLoading, setUserProfile, userProfile]);
 
   // HANDLERS
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -112,11 +114,13 @@ export default function AccountPage() {
       }
 
       setSuccessMsg("Account details updated successfully.");
+      toast.success("Account details updated successfully!");
       setIsEditing(false);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Failed to update profile.";
       setError(message);
+      toast.error(message);
     } finally {
       setIsSaving(false);
     }

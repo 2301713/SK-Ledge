@@ -44,3 +44,25 @@ export const pendingDisbursements = [
     brgy: "Brgy. San Jose",
   },
 ];
+
+export interface VerifiedTransaction {
+  id: string;
+  amount: number;
+  vendor: string;
+  category: string;
+  date: string;
+  status: "verified" | "pending" | "flagged";
+  blockchainHash: string;
+  receiptCount: number;
+  projectId?: string;
+}
+
+export interface ProjectStatus {
+  id: string;
+  name: string;
+  budget: number;
+  spent: number;
+  status: "active" | "completed" | "on-hold";
+  lastAudit: string;
+  complianceScore: number;
+}

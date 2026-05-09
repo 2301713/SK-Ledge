@@ -6,12 +6,19 @@ import { supabase } from "@/lib/supabase";
 import { ApprovalRequest, UserAccount } from "../types";
 import { dummyApprovals } from "@/lib/dummyData";
 import { Check } from "lucide-react";
+import { useAuthStore } from "@/lib/useAuthStore";
+import { useRouter } from "next/navigation";
 
 export default function ApprovalsPage() {
-  const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const {
+    currentUser,
+    isLoading,
+    setCurrentUser,
+    setIsLoading,
+    setUserProfile,
+  } = useAuthStore();
+  const router = useRouter();
 
-  // DATA STATE
   const [approvalsData, setApprovalsData] =
     useState<ApprovalRequest[]>(dummyApprovals);
 
@@ -22,38 +29,51 @@ export default function ApprovalsPage() {
           data: { user },
           error: authError,
         } = await supabase.auth.getUser();
+
         if (authError || !user) {
-          setIsLoading(false);
+          console.error("No active user session found.");
+          router.push("/login");
           return;
         }
 
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
-          .select("id, username, full_name, role_type, barangay")
+          .select("id, username, role_type, full_name, barangay")
+          .eq("id", user.id)
           .single();
 
         if (profileError) {
           console.error("Error fetching profile:", profileError.message);
+          return;
         }
 
         if (profileData) {
-          setCurrentUser({
+          if (profileData.role_type !== "COA") {
+            console.warn("Unauthorized access: User is not a COA member.");
+            router.push("/unauthorized");
+            return;
+          }
+
+          const profile = {
             id: profileData.id,
             username: profileData.username,
-
             full_name: profileData.full_name || profileData.username,
-            role_type: profileData.role_type as "Chairman" | "Treasurer",
+            role_type: profileData.role_type,
             barangay: profileData.barangay || "No Barangay Assigned",
-          });
+          };
+
+          setCurrentUser(profile as UserAccount);
+          setUserProfile(profile);
         }
       } catch (err) {
-        console.error("Error loading profile", err);
+        console.error("Unexpected error loading profile:", err);
       } finally {
         setIsLoading(false);
       }
     };
+
     fetchUserProfile();
-  }, []);
+  }, [router, setCurrentUser, setIsLoading, setUserProfile]);
 
   const handleApprove = (id: number) => {
     setApprovalsData((prev) =>

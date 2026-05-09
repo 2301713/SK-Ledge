@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
+import { useFormStore } from "@/lib/useFormStore";
+import { useToast } from "@/lib/useToast";
 import {
   CircleAlert,
   Loader2,
@@ -23,19 +24,14 @@ import {
 
 export default function RegisterPage() {
   const router = useRouter();
-
-  const [formData, setFormData] = useState({
-    full_name: "",
-    barangay: "",
-    username: "",
-    password: "",
-    confirmPassword: "",
-    role_type: "SK_Chairperson",
-  });
-
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const toast = useToast();
+  const {
+    register: { formData, showPassword, error, isLoading },
+    setRegisterFormData,
+    setRegisterShowPassword,
+    setRegisterError,
+    setRegisterIsLoading,
+  } = useFormStore();
 
   // Helper boolean to check if the current role requires a barangay
   const isSKRole =
@@ -51,8 +47,8 @@ export default function RegisterPage() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError("");
+    setRegisterIsLoading(true);
+    setRegisterError("");
 
     const {
       full_name,
@@ -65,29 +61,36 @@ export default function RegisterPage() {
 
     // Base validation for fields that EVERYONE needs
     if (!username || !password || !full_name || !role_type) {
-      setError("Please fill out all required fields.");
-      setIsLoading(false);
+      const msg = "Please fill out all required fields.";
+      setRegisterError(msg);
+      toast.warning(msg);
+      setRegisterIsLoading(false);
       return;
     }
 
     // Only require barangay if they are an SK official
     if (isSKRole && !barangay.trim()) {
-      setError("Barangay is required for SK Officials.");
-      setIsLoading(false);
+      const msg = "Barangay is required for SK Officials.";
+      setRegisterError(msg);
+      toast.warning(msg);
+      setRegisterIsLoading(false);
       return;
     }
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match.");
-      setIsLoading(false);
+      const msg = "Passwords do not match.";
+      setRegisterError(msg);
+      toast.error(msg);
+      setRegisterIsLoading(false);
       return;
     }
 
     if (!validatePassword(password)) {
-      setError(
-        "Password must be at least 8 characters and include uppercase, lowercase, number, and special character.",
-      );
-      setIsLoading(false);
+      const msg =
+        "Password must be at least 8 characters and include uppercase, lowercase, number, and special character.";
+      setRegisterError(msg);
+      toast.error(msg);
+      setRegisterIsLoading(false);
       return;
     }
 
@@ -112,13 +115,15 @@ export default function RegisterPage() {
 
       // UX
       console.log("Registration successful!", data);
-      router.push("/login");
+      toast.success("Account created! Redirecting to login...");
+      setTimeout(() => router.push("/login"), 1500);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Failed to register account.";
-      setError(message);
+      setRegisterError(message);
+      toast.error(message);
     } finally {
-      setIsLoading(false);
+      setRegisterIsLoading(false);
     }
   };
 
@@ -178,7 +183,10 @@ export default function RegisterPage() {
                     required
                     value={formData.full_name}
                     onChange={(e) =>
-                      setFormData({ ...formData, full_name: e.target.value })
+                      setRegisterFormData({
+                        ...formData,
+                        full_name: e.target.value,
+                      })
                     }
                     className="w-full bg-slate-50 border-2 border-transparent rounded-2xl pl-12 pr-4 py-4 text-sm font-medium text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none placeholder:text-slate-300"
                     placeholder="Juan Dela Cruz"
@@ -198,7 +206,10 @@ export default function RegisterPage() {
                   <select
                     value={formData.role_type}
                     onChange={(e) =>
-                      setFormData({ ...formData, role_type: e.target.value })
+                      setRegisterFormData({
+                        ...formData,
+                        role_type: e.target.value,
+                      })
                     }
                     className="w-full bg-slate-50 border-2 border-transparent rounded-2xl pl-12 pr-4 py-4 text-sm font-medium text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none cursor-pointer"
                   >
@@ -227,7 +238,10 @@ export default function RegisterPage() {
                     required
                     value={formData.barangay}
                     onChange={(e) =>
-                      setFormData({ ...formData, barangay: e.target.value })
+                      setRegisterFormData({
+                        ...formData,
+                        barangay: e.target.value,
+                      })
                     }
                     className="w-full bg-slate-50 border-2 border-transparent rounded-2xl pl-12 pr-4 py-4 text-sm font-medium text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none placeholder:text-slate-300"
                     placeholder="e.g. Barangay San Jose"
@@ -250,7 +264,10 @@ export default function RegisterPage() {
                   required
                   value={formData.username}
                   onChange={(e) =>
-                    setFormData({ ...formData, username: e.target.value })
+                    setRegisterFormData({
+                      ...formData,
+                      username: e.target.value,
+                    })
                   }
                   className="w-full bg-slate-50 border-2 border-transparent rounded-2xl pl-12 pr-4 py-4 text-sm font-medium text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none placeholder:text-slate-300"
                   placeholder="e.g. juandelacruz123"
@@ -274,14 +291,17 @@ export default function RegisterPage() {
                     required
                     value={formData.password}
                     onChange={(e) =>
-                      setFormData({ ...formData, password: e.target.value })
+                      setRegisterFormData({
+                        ...formData,
+                        password: e.target.value,
+                      })
                     }
                     className="w-full bg-slate-50 border-2 border-transparent rounded-2xl pl-12 pr-12 py-4 text-sm font-medium text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none placeholder:text-slate-300"
                     placeholder="Min. 8 characters"
                   />
                   <button
                     type="button"
-                    onClick={() => setShowPassword(!showPassword)}
+                    onClick={() => setRegisterShowPassword(!showPassword)}
                     className="absolute right-4 inset-y-0 text-primary/60 hover:text-primary transition-colors"
                   >
                     {showPassword ? (
@@ -307,7 +327,7 @@ export default function RegisterPage() {
                     required
                     value={formData.confirmPassword}
                     onChange={(e) =>
-                      setFormData({
+                      setRegisterFormData({
                         ...formData,
                         confirmPassword: e.target.value,
                       })

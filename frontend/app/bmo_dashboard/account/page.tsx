@@ -7,9 +7,11 @@ import { supabase } from "@/lib/supabase";
 import { UserAccount } from "../types";
 import { AlertCircle, UserCircle } from "lucide-react";
 import { useAuthStore } from "@/lib/useAuthStore";
+import { useToast } from "@/lib/useToast";
 
 export default function BMOAccountPage() {
   const router = useRouter();
+  const toast = useToast();
 
   const {
     currentUser,
@@ -56,7 +58,7 @@ export default function BMOAccountPage() {
         if (profileData) {
           // BMO-Specific Protection
           if (profileData.role_type !== "BMO") {
-            console.warn("Unauthorized access: User is not a BMO");
+            console.warn("Unauthorized access: User is not a BMO member.");
             router.push("/unauthorized");
             return;
           }
@@ -79,16 +81,15 @@ export default function BMOAccountPage() {
       }
     };
 
-    // Only fetch if user not already loaded
-    if (isLoading && !currentUser) {
+    if (currentUser && (!userProfile || userProfile.id !== currentUser.id)) {
       fetchUserProfile();
     }
   }, [
-    isLoading,
     currentUser,
     setCurrentUser,
     setIsLoading,
     setUserProfile,
+    userProfile,
     router,
   ]);
 
@@ -123,11 +124,13 @@ export default function BMOAccountPage() {
       }
 
       setSuccessMsg("Account details updated successfully.");
+      toast.success("Account details updated successfully!");
       setIsEditing(false);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Failed to update profile.";
       setError(message);
+      toast.error(message);
     } finally {
       setIsSaving(false);
     }
@@ -187,8 +190,6 @@ export default function BMOAccountPage() {
       <SideBar
         userName={currentUser.full_name}
         roleType={currentUser.role_type}
-        // If your BMO SideBar doesn't accept the 'barangay' prop, delete the line below to avoid TS errors
-        barangay={currentUser.barangay}
       />
 
       {/* MAIN CONTENT AREA */}
@@ -241,7 +242,9 @@ export default function BMOAccountPage() {
                   {userProfile?.full_name || "Unknown BMO User"}
                 </h2>
                 <p className="text-sm font-bold text-tertiary mt-1 uppercase tracking-widest">
-                  {userProfile ? formatRole(userProfile.role_type) : "Unknown Role"}
+                  {userProfile
+                    ? formatRole(userProfile.role_type)
+                    : "Unknown Role"}
                 </p>
                 <div className="mt-4 inline-flex items-center gap-2 bg-gray-50 border border-border px-3 py-1.5 rounded-lg">
                   <span className="w-2.5 h-2.5 rounded-full bg-[#2e7d32]"></span>

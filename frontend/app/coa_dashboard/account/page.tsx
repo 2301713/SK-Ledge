@@ -7,8 +7,10 @@ import { UserAccount } from "../types";
 import { AlertCircle, UserCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/useAuthStore";
+import { useToast } from "@/lib/useToast";
 
 export default function AccountPage() {
+  const toast = useToast();
   const {
     currentUser,
     isLoading,
@@ -55,7 +57,7 @@ export default function AccountPage() {
         if (profileData) {
           // BMO-Specific Protection
           if (profileData.role_type !== "COA") {
-            console.warn("Unauthorized access: User is not a CMO");
+            console.warn("Unauthorized access: User is not a COA member.");
             router.push("/unauthorized");
             return;
           }
@@ -78,16 +80,15 @@ export default function AccountPage() {
       }
     };
 
-    // Only fetch if user not already loaded
-    if (isLoading && !currentUser) {
+    if (currentUser && (!userProfile || userProfile.id !== currentUser.id)) {
       fetchUserProfile();
     }
   }, [
-    isLoading,
     currentUser,
     setCurrentUser,
     setIsLoading,
     setUserProfile,
+    userProfile,
     router,
   ]);
 
@@ -122,11 +123,13 @@ export default function AccountPage() {
       }
 
       setSuccessMsg("Account details updated successfully.");
+      toast.success("Account details updated successfully!");
       setIsEditing(false);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Failed to update profile.";
       setError(message);
+      toast.error(message);
     } finally {
       setIsSaving(false);
     }

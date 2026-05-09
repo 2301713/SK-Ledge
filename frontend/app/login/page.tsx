@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
+import { useFormStore } from "@/lib/useFormStore";
+import { useToast } from "@/lib/useToast";
 import {
   CircleAlert,
   Loader2,
@@ -21,18 +22,19 @@ import {
 
 export default function LoginPage() {
   const router = useRouter();
-  const [credentials, setCredentials] = useState({
-    username: "",
-    password: "",
-  });
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const toast = useToast();
+  const {
+    login: { credentials, showPassword, error, isLoading },
+    setLoginCredentials,
+    setLoginShowPassword,
+    setLoginError,
+    setLoginIsLoading,
+  } = useFormStore();
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError("");
-    setIsLoading(true);
+    setLoginError("");
+    setLoginIsLoading(true);
 
     const cleanUsername = credentials.username.trim().toLowerCase();
     const dummyEmail = `${cleanUsername}@skledge.com`;
@@ -78,15 +80,19 @@ export default function LoginPage() {
         switch (role) {
           case "SK_Chairperson":
           case "SK_Treasurer":
+            toast.success("Login successful! Redirecting...");
             router.push("/sk_dashboard");
             break;
           case "COA":
+            toast.success("Login successful! Redirecting...");
             router.push("/coa_dashboard");
             break;
           case "BMO":
+            toast.success("Login successful! Redirecting...");
             router.push("/bmo_dashboard");
             break;
           case "SK_Federation":
+            toast.success("Login successful! Redirecting...");
             router.push("/skfed_dashboard");
             break;
           default:
@@ -97,9 +103,10 @@ export default function LoginPage() {
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Invalid login credentials.";
-      setError(message);
+      setLoginError(message);
+      toast.error(message);
     } finally {
-      setIsLoading(false);
+      setLoginIsLoading(false);
     }
   };
 
@@ -216,7 +223,10 @@ export default function LoginPage() {
                   required
                   value={credentials.username}
                   onChange={(e) =>
-                    setCredentials({ ...credentials, username: e.target.value })
+                    setLoginCredentials({
+                      ...credentials,
+                      username: e.target.value,
+                    })
                   }
                   className="w-full bg-slate-50 border-2 border-transparent rounded-2xl pl-12 pr-4 py-4 text-sm font-medium text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none placeholder:text-slate-300"
                   placeholder="Enter your username"
@@ -238,14 +248,17 @@ export default function LoginPage() {
                   required
                   value={credentials.password}
                   onChange={(e) =>
-                    setCredentials({ ...credentials, password: e.target.value })
+                    setLoginCredentials({
+                      ...credentials,
+                      password: e.target.value,
+                    })
                   }
                   className="w-full bg-slate-50 border-2 border-transparent rounded-2xl pl-12 pr-12 py-4 text-sm font-medium text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none placeholder:text-slate-300"
                   placeholder="••••••••"
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
+                  onClick={() => setLoginShowPassword(!showPassword)}
                   className="absolute right-4 inset-y-0 text-xs font-bold uppercase text-primary/60 hover:text-primary transition-colors"
                 >
                   {showPassword ? (

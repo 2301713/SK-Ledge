@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { ProposeProjectModalProps } from "./types";
+import { useFormStore } from "@/lib/useFormStore";
+import { useToast } from "@/lib/useToast";
 import {
   X,
   Target,
@@ -18,12 +20,24 @@ export default function ProposeProjectModal({
   onClose,
   onSubmitSuccess,
 }: ProposeProjectModalProps) {
-  const [name, setName] = useState("");
-  const [category, setCategory] = useState("");
-  const [budget, setBudget] = useState("");
-  const [description, setDescription] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const toast = useToast();
+  const {
+    proposeProject: {
+      name,
+      category,
+      budget,
+      description,
+      isSubmitting,
+      errors,
+    },
+    setProposeProjectName,
+    setProposeProjectCategory,
+    setProposeProjectBudget,
+    setProposeProjectDescription,
+    setProposeProjectIsSubmitting,
+    setProposeProjectErrors,
+    resetProposeProjectForm,
+  } = useFormStore();
 
   const categories = [
     "Sports & Development",
@@ -33,16 +47,8 @@ export default function ProposeProjectModal({
     "Governance",
   ];
 
-  // FIXED: Replaced the useEffect with a direct handleClose function
   const handleClose = () => {
-    // 1. Reset all state back to default
-    setName("");
-    setCategory("");
-    setBudget("");
-    setDescription("");
-    setErrors({});
-
-    // 2. Tell the parent component to hide the modal
+    resetProposeProjectForm();
     onClose();
   };
 
@@ -55,25 +61,27 @@ export default function ProposeProjectModal({
       newErrors.budget = "Enter a valid amount.";
     if (description.trim().length < 20)
       newErrors.description = "Min. 20 characters required.";
-    setErrors(newErrors);
+    setProposeProjectErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
-    setIsSubmitting(true);
+    setProposeProjectIsSubmitting(true);
 
     try {
       // TODO: Replace this with your actual Supabase insert logic
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
+      toast.success("Project proposal submitted successfully!");
       onSubmitSuccess();
-      handleClose(); // FIXED: Use our new handleClose to reset and hide
+      handleClose();
     } catch (err) {
+      toast.error("Failed to submit project proposal. Please try again.");
       console.error(err);
     } finally {
-      setIsSubmitting(false);
+      setProposeProjectIsSubmitting(false);
     }
   };
 
@@ -123,7 +131,7 @@ export default function ProposeProjectModal({
                 placeholder="e.g. Community Health Hub 2026"
                 className="w-full p-4 pl-3 bg-transparent outline-none text-sm font-bold text-slate-800 placeholder:text-slate-300"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => setProposeProjectName(e.target.value)}
                 maxLength={100}
               />
             </div>
@@ -147,7 +155,7 @@ export default function ProposeProjectModal({
                 <select
                   className={`w-full p-4 pl-12 border rounded-[1.25rem] outline-none text-sm font-bold text-slate-800 appearance-none cursor-pointer transition-all ${errors.category ? "border-red-200 bg-red-50/20" : "border-slate-200 bg-slate-50/40 focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-600/5"}`}
                   value={category}
-                  onChange={(e) => setCategory(e.target.value)}
+                  onChange={(e) => setProposeProjectCategory(e.target.value)}
                 >
                   <option value="" disabled>
                     Select Segment
@@ -188,7 +196,7 @@ export default function ProposeProjectModal({
                   placeholder="0.00"
                   className="w-full p-4 pl-1 bg-transparent outline-none text-sm font-bold text-slate-800"
                   value={budget}
-                  onChange={(e) => setBudget(e.target.value)}
+                  onChange={(e) => setProposeProjectBudget(e.target.value)}
                 />
               </div>
               {errors.budget && (
@@ -215,7 +223,7 @@ export default function ProposeProjectModal({
                 rows={4}
                 className="w-full p-4 bg-transparent outline-none text-sm font-bold text-slate-800 resize-none placeholder:text-slate-300 leading-relaxed"
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={(e) => setProposeProjectDescription(e.target.value)}
               />
             </div>
             <div className="flex justify-between px-1">

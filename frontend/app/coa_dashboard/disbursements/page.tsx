@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import SideBar from "@/components/dashboard/SideBar";
 import { supabase } from "@/lib/supabase";
 import { UserAccount, pendingDisbursements } from "../types";
+import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -21,6 +22,7 @@ export default function DisbursementsPage() {
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const router = useRouter();
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -29,38 +31,50 @@ export default function DisbursementsPage() {
           data: { user },
           error: authError,
         } = await supabase.auth.getUser();
+
         if (authError || !user) {
-          setIsLoading(false);
+          console.error("No active user session found.");
+          router.push("/login");
           return;
         }
 
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
-          .select("id, username, full_name, role_type, barangay")
+          .select("id, username, role_type, full_name, barangay")
+          .eq("id", user.id)
           .single();
 
         if (profileError) {
           console.error("Error fetching profile:", profileError.message);
+          return;
         }
 
         if (profileData) {
-          setCurrentUser({
+          if (profileData.role_type !== "COA") {
+            console.warn("Unauthorized access: User is not a COA member.");
+            router.push("/unauthorized");
+            return;
+          }
+
+          const profile = {
             id: profileData.id,
             username: profileData.username,
-
             full_name: profileData.full_name || profileData.username,
-            role_type: profileData.role_type as "Chairman" | "Treasurer",
+            role_type: profileData.role_type,
             barangay: profileData.barangay || "No Barangay Assigned",
-          });
+          };
+
+          setCurrentUser(profile as UserAccount);
         }
       } catch (err) {
-        console.error("Error loading profile", err);
+        console.error("Unexpected error loading profile:", err);
       } finally {
         setIsLoading(false);
       }
     };
+
     fetchUserProfile();
-  }, []);
+  }, [router]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-PH", {
