@@ -11,7 +11,7 @@ import {
   Title,
 } from "chart.js";
 import { Pie, Bar } from "react-chartjs-2";
-import { chartColors } from "../data";
+import { chartColors } from "../../app/public_portal/data";
 
 ChartJS.register(
   ArcElement,

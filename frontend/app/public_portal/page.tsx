@@ -2,12 +2,12 @@
 
 import { useState, useMemo } from "react";
 import { projectsData } from "./data";
-import PortalNav from "./components/PortalNav";
-import PortalHero from "./components/PortalHero";
-import MetricsRow from "./components/MetricsRow";
-import AnalyticsSection from "./components/AnalyticsSection";
-import ProjectRegistry from "./components/ProjectRegistry";
-import PortalFooter from "./components/PortalFooter";
+import PortalNav from "../../components/public_portal/PortalNav";
+import PortalHero from "../../components/public_portal/PortalHero";
+import MetricsRow from "../../components/public_portal/MetricsRow";
+import AnalyticsSection from "../../components/public_portal/AnalyticsSection";
+import ProjectRegistry from "../../components/public_portal/ProjectRegistry";
+import PortalFooter from "../../components/public_portal/PortalFooter";
 
 export default function PublicDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -24,7 +24,7 @@ export default function PublicDashboard() {
   }, [searchQuery]);
 
   return (
-    <div className="min-h-screen bg-white text-black selection:bg-primary/30 selection:text-white">
+    <div className="min-h-screen bg-white text-black selection:bg-primary/30">
       <PortalNav />
       <main>
         <PortalHero />

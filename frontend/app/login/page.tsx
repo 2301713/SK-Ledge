@@ -113,7 +113,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-white overflow-hidden selection:bg-tertiary selection:text-primary">
       {/* LEFT SIDE: BRANDING SECTION (Visual Only) */}
-      <section className="hidden lg:flex lg:w-[55%] relative items-center justify-center p-12 overflow-hidden bg-[#0B3B78]">
+      <section className="hidden lg:flex lg:w-[55%] relative items-center justify-center p-12 overflow-hidden bg-primary">
         {/* Background Visual Effects */}
         <div
           className="absolute inset-0 opacity-20 pointer-events-none"
@@ -123,7 +123,7 @@ export default function LoginPage() {
             backgroundSize: "30px 30px",
           }}
         ></div>
-        <div className="absolute top-[-10%] left-[-10%] w-125 h-125 bg-blue-500/20 rounded-full blur-[120px]"></div>
+        <div className="absolute top-[-10%] left-[-10%] w-125 h-125 bg-primary/20 rounded-full blur-[120px]"></div>
         <div className="absolute bottom-[-10%] right-[-10%] w-100 h-100 bg-tertiary/10 rounded-full blur-[120px]"></div>
 
         <div className="relative z-10 max-w-xl w-full">
@@ -131,7 +131,7 @@ export default function LoginPage() {
           <div className="bg-white/5 backdrop-blur-xl p-10 rounded-[2.5rem] shadow-2xl border border-white/10 border-l-8">
             <div className="flex items-center gap-5 mb-8">
               <div className="bg-white p-3 rounded-2xl shadow-xl">
-                <ShieldCheck className="w-12 h-12 text-[#0B3B78]" />
+                <ShieldCheck className="w-12 h-12 text-primary" />
               </div>
               <div>
                 <h1 className="text-white text-5xl font-extrabold tracking-tight">
@@ -143,12 +143,12 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <h2 className="text-4xl font-semibold text-blue-50 leading-tight mb-6">
+            <h2 className="text-4xl font-semibold text-white leading-tight mb-6">
               Smart Financial Transparency for{" "}
               <span className="text-tertiary">Youth Governance</span>
             </h2>
 
-            <p className="text-blue-100/70 leading-relaxed text-lg mb-10 font-light">
+            <p className="text-white/70 leading-relaxed text-lg mb-10 font-light">
               The premier digital backbone for Sangguniang Kabataan auditing and
               resource management. Secure. Transparent. Automated.
             </p>

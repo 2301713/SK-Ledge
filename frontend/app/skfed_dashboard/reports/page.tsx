@@ -210,7 +210,7 @@ export default function SKFederationDashboard() {
 
           {/* 3. COMPLIANCE MATRIX */}
           <div className="bg-white rounded-4xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="p-6 border-b bg-slate-50/50 flex justify-between items-center">
+            <div className="p-6 border-b border-slate-900/20 bg-slate-50/50 flex justify-between items-center">
               <h3 className="font-bold text-slate-800 uppercase text-xs tracking-widest flex items-center gap-2">
                 <ShieldCheck size={18} className="text-green-600" />
                 Barangay Compliance Matrix

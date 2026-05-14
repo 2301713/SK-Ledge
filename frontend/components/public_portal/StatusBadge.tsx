@@ -1,4 +1,4 @@
-import { StatusType } from "../types";
+import { StatusType } from "../../app/public_portal/types";
 
 export default function StatusBadge({ status }: { status: StatusType }) {
   const config = {

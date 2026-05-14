@@ -16,7 +16,6 @@ import {
   PieChart,
   TextSearch,
   Globe,
-  Calculator,
   Receipt,
   FileBarChart,
   ShieldCheck,
@@ -36,7 +35,6 @@ const ROLE_LINKS: Record<
 > = {
   SK_Chairperson: [
     { label: "Overview", href: "/sk_dashboard", icon: LayoutDashboard },
-    { label: "ABYIP Planner", href: "/sk_dashboard/abyip", icon: Calculator },
     { label: "Projects", href: "/sk_dashboard/projects", icon: FolderKanban },
     { label: "Expenses", href: "/sk_dashboard/expenses", icon: Receipt },
     { label: "Reports", href: "/sk_dashboard/reports", icon: FileBarChart },
@@ -45,7 +43,6 @@ const ROLE_LINKS: Record<
   ],
   SK_Treasurer: [
     { label: "Overview", href: "/sk_dashboard", icon: LayoutDashboard },
-    { label: "ABYIP Planner", href: "/sk_dashboard/abyip", icon: Calculator },
     { label: "Projects", href: "/sk_dashboard/projects", icon: FolderKanban },
     { label: "Expenses", href: "/sk_dashboard/expenses", icon: Receipt },
     { label: "Reports", href: "/sk_dashboard/reports", icon: FileBarChart },

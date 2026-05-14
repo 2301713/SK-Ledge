@@ -1,5 +1,5 @@
 import { Search } from "lucide-react";
-import { Project } from "../types";
+import { Project } from "../../app/public_portal/types";
 import StatusBadge from "./StatusBadge";
 
 interface ProjectRegistryProps {
@@ -36,7 +36,7 @@ export default function ProjectRegistry({
                 placeholder="Search project, barangay, category…"
                 value={searchQuery}
                 onChange={(e) => onSearchChange(e.target.value)}
-                className="w-full pl-9 pr-4 py-2.5 bg-secondary border border-black/20 hover:border-black/40 rounded-xl text-xs text-white placeholder:text-slate-600 focus:ring-2 focus:ring-primary/30 focus:border-primary/50 outline-none transition-all"
+                className="w-full pl-9 pr-4 py-2.5 bg-secondary border border-black/20 hover:border-black/40 rounded-xl text-xs placeholder:text-slate-600 focus:ring-2 focus:ring-primary/30 focus:border-primary/50 outline-none transition-all"
               />
             </div>
           </div>

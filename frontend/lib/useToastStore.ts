@@ -8,7 +8,7 @@ export interface Toast {
   id: string;
   type: ToastType;
   message: string;
-  duration?: number; // milliseconds, 0 = persistent
+  duration?: number;
 }
 
 interface ToastState {

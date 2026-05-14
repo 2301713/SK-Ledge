@@ -1,14 +1,6 @@
 import { useToastStore } from "./useToastStore";
 
-/**
- * Convenience hook for displaying toast notifications
- * Usage:
- * const toast = useToast();
- * toast.success("Account updated!");
- * toast.error("Failed to save");
- * toast.warning("Please confirm");
- * toast.info("New feature available");
- */
+/* Hook for displaying toast notifications */
 export function useToast() {
   const { addToast } = useToastStore();
 

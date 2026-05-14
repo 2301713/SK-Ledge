@@ -14,10 +14,8 @@ import {
   CheckCircle2,
   AlertCircle,
   ChevronRight,
-  FileBarChart,
   Receipt,
   TrendingUp,
-  ShieldCheck,
 } from "lucide-react";
 
 interface ReportTemplate {
@@ -41,20 +39,6 @@ const REPORT_TEMPLATES: ReportTemplate[] = [
     name: "Financial Summary",
     description: "Monthly/quarterly budget utilization and remaining funds",
     icon: <TrendingUp className="w-5 h-5" />,
-    required: false,
-  },
-  {
-    id: "audit-trail",
-    name: "Audit Trail Report",
-    description: "Complete transaction history with timestamps",
-    icon: <ShieldCheck className="w-5 h-5" />,
-    required: false,
-  },
-  {
-    id: "project-progress",
-    name: "Project Progress Report",
-    description: "Status updates for all active ABYIP projects",
-    icon: <FileBarChart className="w-5 h-5" />,
     required: false,
   },
 ];
@@ -145,7 +129,7 @@ export default function ReportsPage() {
 
   const toggleReportSelection = (reportId: string) => {
     const template = REPORT_TEMPLATES.find((t) => t.id === reportId);
-    if (template?.required) return; // Can't unselect required reports
+    if (template?.required) return;
 
     setSelectedReports((prev) =>
       prev.includes(reportId)

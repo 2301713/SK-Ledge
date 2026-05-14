@@ -106,7 +106,7 @@ export default function SKFederationDashboard() {
   if (!currentUser) return null;
 
   return (
-    <div className="flex min-h-screen bg-[#f8fafc] selection:bg-blue-200 selection:text-blue-900">
+    <div className="flex min-h-screen bg-secondary selection:bg-tertiary selection:text-primary">
       {/* SIDEBAR */}
       <SideBar
         userName={currentUser.full_name}
@@ -123,7 +123,7 @@ export default function SKFederationDashboard() {
               Federation Command
             </h1>
             <div className="flex items-center gap-2 mt-1 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-              <Calendar className="w-3.5 h-3.5 text-blue-600" />
+              <Calendar className="w-3.5 h-3.5 text-primary" />
               {new Date().toLocaleDateString("en-US", {
                 weekday: "long",
                 year: "numeric",
@@ -135,7 +135,7 @@ export default function SKFederationDashboard() {
           <div className="flex items-center gap-4">
             <button
               onClick={() => setIsModalOpen(true)}
-              className="px-5 py-2.5 rounded-xl bg-blue-50 text-blue-600 font-bold text-xs uppercase tracking-widest hover:bg-blue-100 transition-colors flex items-center gap-2"
+              className="px-5 py-2.5 rounded-xl bg-secondary text-primary font-bold text-xs uppercase tracking-widest hover:bg-slate-100 transition-colors flex items-center gap-2"
             >
               <Megaphone className="w-4 h-4" /> Broadcast Memo
             </button>
@@ -148,10 +148,10 @@ export default function SKFederationDashboard() {
             {/* Metric 1 */}
             <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between">
               <div className="flex justify-between items-start mb-4">
-                <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600">
+                <div className="w-12 h-12 rounded-2xl bg-secondary flex items-center justify-center text-primary">
                   <Building2 className="w-6 h-6" />
                 </div>
-                <span className="px-2.5 py-1 bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase tracking-widest rounded-lg">
+                <span className="px-2.5 py-1 bg-secondary text-primary text-[10px] font-black uppercase tracking-widest rounded-lg">
                   100% Active
                 </span>
               </div>
@@ -168,7 +168,7 @@ export default function SKFederationDashboard() {
             {/* Metric 2 */}
             <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between">
               <div className="flex justify-between items-start mb-4">
-                <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600">
+                <div className="w-12 h-12 rounded-2xl bg-secondary flex items-center justify-center text-primary">
                   <Activity className="w-6 h-6" />
                 </div>
               </div>
@@ -184,11 +184,11 @@ export default function SKFederationDashboard() {
 
             {/* Metric 3 (Spans 2 columns for Budget) */}
             <div className="lg:col-span-2 bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-xl relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/20 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none transition-transform group-hover:scale-110 duration-700"></div>
+              <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none transition-transform group-hover:scale-110 duration-700"></div>
               <div className="relative z-10 flex flex-col justify-between h-full">
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                    <PieChart className="w-4 h-4 text-blue-400" /> Total City
+                    <PieChart className="w-4 h-4 text-primary" /> Total City
                     Youth Budget
                   </h3>
                 </div>
@@ -197,7 +197,7 @@ export default function SKFederationDashboard() {
                     {formatCurrency(35000000)}
                   </p>
                   <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden mt-4">
-                    <div className="h-full bg-blue-500 rounded-full w-[45%] relative">
+                    <div className="h-full bg-primary rounded-full w-[45%] relative">
                       <div className="absolute right-0 top-0 bottom-0 w-10 bg-linear-to-r from-transparent to-white/30 rounded-full"></div>
                     </div>
                   </div>
@@ -222,7 +222,7 @@ export default function SKFederationDashboard() {
                     Monitor constituent performance
                   </p>
                 </div>
-                <button className="text-xs font-black text-blue-600 hover:text-blue-800 transition-colors uppercase tracking-widest flex items-center gap-1 bg-blue-50 px-4 py-2 rounded-xl">
+                <button className="text-xs font-black text-primary hover:text-primary/80 transition-colors uppercase tracking-widest flex items-center gap-1 bg-secondary px-4 py-2 rounded-xl">
                   View Directory <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
@@ -235,7 +235,7 @@ export default function SKFederationDashboard() {
                     className="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-2xl hover:border-slate-300 transition-colors cursor-pointer group"
                   >
                     <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400 font-black shadow-sm group-hover:text-blue-600 transition-colors">
+                      <div className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400 font-black shadow-sm group-hover:text-primary transition-colors">
                         B{i}
                       </div>
                       <div>
@@ -253,7 +253,7 @@ export default function SKFederationDashboard() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <span className="inline-flex px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-600 mb-1">
+                      <span className="inline-flex px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest bg-secondary text-primary mb-1">
                         High Compliance
                       </span>
                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
@@ -270,7 +270,7 @@ export default function SKFederationDashboard() {
               {/* Broadcasts */}
               <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-8 flex-1">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-orange-500">
+                  <div className="w-10 h-10 rounded-xl bg-tertiary/20 flex items-center justify-center text-tertiary">
                     <Megaphone className="w-5 h-5" />
                   </div>
                   <h2 className="text-lg font-black text-slate-900 tracking-tight">
@@ -279,12 +279,12 @@ export default function SKFederationDashboard() {
                 </div>
 
                 <div className="space-y-4">
-                  <div className="p-4 rounded-2xl bg-orange-50/50 border border-orange-100 relative overflow-hidden">
-                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-orange-500"></div>
-                    <p className="text-xs font-black text-orange-800 mb-1">
+                  <div className="p-4 rounded-2xl bg-secondary border border-secondary/70 relative overflow-hidden">
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-tertiary"></div>
+                    <p className="text-xs font-black text-primary mb-1">
                       Q3 Liquidation Deadline
                     </p>
-                    <p className="text-[10px] font-medium text-orange-600/80 leading-relaxed">
+                    <p className="text-[10px] font-medium text-primary/80 leading-relaxed">
                       All SK Treasurers must submit their reports to the BMO
                       portal by Friday.
                     </p>
@@ -293,13 +293,13 @@ export default function SKFederationDashboard() {
               </div>
 
               {/* Resource Vault Quick Access */}
-              <div className="bg-linear-to-br from-blue-600 to-indigo-700 rounded-3xl shadow-lg p-8 relative overflow-hidden group cursor-pointer hover:shadow-xl hover:shadow-blue-600/20 transition-all">
+              <div className="bg-linear-to-br from-primary to-tertiary rounded-3xl shadow-lg p-8 relative overflow-hidden group cursor-pointer hover:shadow-xl hover:shadow-tertiary/20 transition-all">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none group-hover:scale-125 transition-transform duration-700"></div>
                 <FileText className="w-8 h-8 text-white/50 mb-4" />
                 <h2 className="text-lg font-black text-white tracking-tight mb-1">
                   Federation Vault
                 </h2>
-                <p className="text-xs font-medium text-blue-100/70 mb-6">
+                <p className="text-white/70 font-medium text-xs mb-6">
                   Access standard LGU templates, CBYDP forms, and approved
                   resolutions.
                 </p>

@@ -104,12 +104,12 @@ export default function BMODashboard() {
         {/* 1. HEADER SECTION & HIGH-LEVEL METRICS */}
         <header className="mb-12 flex justify-between items-end">
           <div>
-            <h1 className="text-4xl font-black text-[#0B3B78] tracking-tight">
+            <h1 className="text-4xl font-black text-primary tracking-tight">
               BMO Overview
             </h1>
             <p className="text-slate-500 font-medium mt-1">
               Welcome back,{" "}
-              <span className="text-[#0B3B78] font-bold border-b-2 border-tertiary pb-0.5">
+              <span className="text-primary font-bold border-b-2 border-tertiary pb-0.5">
                 {currentUser.full_name}
               </span>
             </p>
@@ -172,10 +172,10 @@ export default function BMODashboard() {
             </p>
             <div className="mt-4">
               <div className="flex items-end justify-between mb-2">
-                <h2 className="text-4xl font-black text-[#0B3B78] tracking-tighter">
+                <h2 className="text-4xl font-black text-primary tracking-tighter">
                   68%
                 </h2>
-                <span className="text-[10px] font-bold text-green-600 mb-1">
+                <span className="text-[10px] font-bold text-tertiary mb-1">
                   LIVE SECURE
                 </span>
               </div>
@@ -191,10 +191,10 @@ export default function BMODashboard() {
           <section className="lg:col-span-2 space-y-6">
             <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
               <div className="p-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
-                <h3 className="text-xl font-black text-[#0B3B78]">
+                <h3 className="text-xl font-black text-primary">
                   Project Review Queue
                 </h3>
-                <button className="text-xs font-bold text-[#0B3B78] bg-blue-50 px-4 py-2 rounded-full hover:bg-blue-100">
+                <button className="text-xs font-bold text-primary bg-secondary px-4 py-2 rounded-full hover:bg-slate-100">
                   View All Pipeline
                 </button>
               </div>
@@ -218,7 +218,7 @@ export default function BMODashboard() {
                           Barangay San Miguel
                         </p>
                       </td>
-                      <td className="px-8 py-6 font-bold text-[#0B3B78]">
+                      <td className="px-8 py-6 font-bold text-primary">
                         ₱150,000
                       </td>
                       <td className="px-8 py-6 flex justify-center gap-2">
@@ -236,7 +236,7 @@ export default function BMODashboard() {
             </div>
 
             {/* 4. LIQUIDATION & DOCUMENT VAULT */}
-            <div className="bg-[#0B3B78] p-8 rounded-[2.5rem] shadow-xl text-white">
+            <div className="bg-primary p-8 rounded-[2.5rem] shadow-xl text-white">
               <div className="flex items-center gap-3 mb-6">
                 <ShieldCheck className="text-tertiary" />
                 <h3 className="text-xl font-black tracking-tight">
@@ -252,12 +252,12 @@ export default function BMODashboard() {
                     <p className="font-bold text-sm tracking-tight">
                       Q2_Liquidation_Report.pdf
                     </p>
-                    <p className="text-xs text-blue-200 opacity-70">
+                    <p className="text-tertiary/80 opacity-70">
                       Awaiting BMO Verification
                     </p>
                   </div>
                 </div>
-                <button className="px-6 py-2 bg-tertiary text-[#0B3B78] font-bold rounded-xl text-sm hover:scale-105 transition-transform">
+                <button className="px-6 py-2 bg-tertiary text-primary font-bold rounded-xl text-sm hover:scale-105 transition-transform">
                   Open Vault
                 </button>
               </div>
@@ -268,7 +268,7 @@ export default function BMODashboard() {
           <section className="space-y-8">
             {/* 3. Barangay Directory */}
             <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
-              <h3 className="text-lg font-black text-[#0B3B78] mb-6 flex items-center gap-2">
+              <h3 className="text-lg font-black text-primary mb-6 flex items-center gap-2">
                 <MapPin size={18} className="text-tertiary" /> Barangay
                 Directory
               </h3>
@@ -290,7 +290,7 @@ export default function BMODashboard() {
 
             {/* 5. Audit Trail */}
             <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
-              <h3 className="text-lg font-black text-[#0B3B78] mb-6 flex items-center gap-2">
+              <h3 className="text-lg font-black text-primary mb-6 flex items-center gap-2">
                 <History size={18} className="text-tertiary" /> Compliance
                 Ledger
               </h3>
