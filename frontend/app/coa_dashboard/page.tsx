@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import SideBar from "@/components/dashboard/SideBar";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
@@ -38,6 +38,7 @@ export default function COADashboard() {
   const { currentUser, isLoading, setCurrentUser, setIsLoading } =
     useAuthStore();
   const router = useRouter();
+  const authAttemptedRef = useRef(false);
 
   // For the overview chart/KPIs
   const pendingApprovalCount = 3;
@@ -89,11 +90,12 @@ export default function COADashboard() {
       }
     };
 
-    // Only fetch if user not already loaded
-    if (isLoading) {
+    // Only fetch once per component mount
+    if (!authAttemptedRef.current) {
+      authAttemptedRef.current = true;
       fetchUserProfile();
     }
-  }, [isLoading, setCurrentUser, setIsLoading, router]);
+  }, [setCurrentUser, setIsLoading, router]);
 
   const chartData = {
     labels: ["Approvals", "Disbursements"],

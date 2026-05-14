@@ -176,8 +176,10 @@ export default function ReportsPage() {
       toast.success(
         "Reports generated successfully! Download links sent to your email.",
       );
-    } catch (error) {
-      toast.error("Failed to generate reports. Please try again.");
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Failed to generate reports.";
+      toast.error(message);
     } finally {
       setIsGenerating(false);
     }

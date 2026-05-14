@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import SideBar from "@/components/dashboard/SideBar";
 import { supabase } from "@/lib/supabase";
@@ -15,6 +15,7 @@ import {
   Calendar,
   ChevronRight,
   TrendingUp,
+  CircleAlert,
 } from "lucide-react";
 
 export default function SKFederationDashboard() {
@@ -27,6 +28,7 @@ export default function SKFederationDashboard() {
     setIsModalOpen,
   } = useAuthStore();
   const router = useRouter();
+  const authAttemptedRef = useRef(false);
 
   // 1. AUTHENTICATION & ROLE PROTECTION
   useEffect(() => {
@@ -50,11 +52,14 @@ export default function SKFederationDashboard() {
 
         if (profileError) {
           console.error("Error fetching profile:", profileError.message);
+          setIsLoading(false);
+          return;
         }
 
         if (profileData) {
           if (profileData.role_type !== "SK_Federation") {
             console.warn("Unauthorized: User is not an SK Federation Official");
+            setIsLoading(false);
             router.push("/unauthorized");
             return;
           }
@@ -66,19 +71,20 @@ export default function SKFederationDashboard() {
             role_type: profileData.role_type,
             barangay: profileData.barangay || "City Wide",
           });
+          setIsLoading(false);
         }
       } catch (err) {
         console.error("Unexpected error loading profile:", err);
-      } finally {
         setIsLoading(false);
       }
     };
 
-    // Only fetch if user not already loaded
-    if (isLoading) {
+    // Only fetch once per component mount
+    if (!authAttemptedRef.current) {
+      authAttemptedRef.current = true;
       fetchUserProfile();
     }
-  }, [isLoading, setCurrentUser, setIsLoading, router]);
+  }, [setCurrentUser, setIsLoading, router]);
 
   // UTILITY
   const formatCurrency = (amount: number) => {
@@ -103,7 +109,32 @@ export default function SKFederationDashboard() {
   }
 
   // UNAUTHORIZED / NULL STATE
-  if (!currentUser) return null;
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
+        <div className="max-w-md w-full bg-white rounded-4xl shadow-xl border border-slate-200 p-10 text-center">
+          <div className="h-16 w-16 bg-danger/10 text-danger rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <span className="text-2xl">
+              <CircleAlert />
+            </span>
+          </div>
+          <h2 className="text-2xl font-black text-primary mb-3 tracking-tight">
+            Access Restricted
+          </h2>
+          <p className="text-sm text-slate-500 mb-8 leading-relaxed">
+            You do not have the required credentials to view the SK Federation
+            Dashboard.
+          </p>
+          <button
+            onClick={() => (window.location.href = "/login")}
+            className="w-full rounded-xl bg-primary py-4 text-sm font-bold text-white transition-all hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20"
+          >
+            Return to Login
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-secondary selection:bg-tertiary selection:text-primary">

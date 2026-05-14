@@ -46,7 +46,8 @@ export default function RequestModal({
               Request Bidding Documents
             </h2>
             <p className="text-sm text-secondary-foreground mt-2">
-              Fill this quick form and our procurement team will send the package.
+              Fill this quick form and our procurement team will send the
+              package.
             </p>
           </div>
           <button
@@ -60,10 +61,11 @@ export default function RequestModal({
 
         <form onSubmit={onSubmit} className="p-6 space-y-5">
           {requestSubmitted ? (
-            <div className="rounded-3xl border border-emerald-500/30 bg-emerald-500/10 p-6 text-emerald-100">
+            <div className="rounded-3xl border border-success/30 bg-success/10 p-6 text-success">
               <p className="text-sm font-black">Request Sent</p>
-              <p className="mt-2 text-sm text-slate-200">
-                Thank you! Our team will reach out to you shortly with the bid package details.
+              <p className="mt-2 text-sm text-slate-700">
+                Thank you! Our team will reach out to you shortly with the bid
+                package details.
               </p>
               <button
                 type="button"
@@ -92,7 +94,9 @@ export default function RequestModal({
                   <input
                     type="text"
                     value={vendorCompany}
-                    onChange={(event) => onVendorCompanyChange(event.target.value)}
+                    onChange={(event) =>
+                      onVendorCompanyChange(event.target.value)
+                    }
                     placeholder="Metro Builders"
                     className="mt-3 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
                     required

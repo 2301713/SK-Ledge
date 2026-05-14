@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/dashboard/SideBar";
 import { useAuthStore } from "@/lib/useAuthStore";
@@ -13,12 +13,14 @@ import {
   FileText,
   CheckCircle2,
   XCircle,
+  CircleAlert,
 } from "lucide-react";
 
 export default function BMODashboard() {
   const { currentUser, isLoading, setCurrentUser, setIsLoading } =
     useAuthStore();
   const router = useRouter();
+  const authAttemptedRef = useRef(false);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -41,11 +43,14 @@ export default function BMODashboard() {
 
         if (profileError) {
           console.error("Error fetching profile:", profileError.message);
+          setIsLoading(false);
+          return;
         }
 
         if (profileData) {
           if (profileData.role_type !== "BMO") {
             console.warn("Unauthorized access: User is not a BMO member.");
+            setIsLoading(false);
             router.push("/unauthorized");
             return;
           }
@@ -57,15 +62,19 @@ export default function BMODashboard() {
             role_type: profileData.role_type as "BMO",
             barangay: profileData.barangay || "No Barangay Assigned",
           });
+          setIsLoading(false);
         }
       } catch (err) {
         console.error("Unexpected error loading profile:", err);
-      } finally {
         setIsLoading(false);
       }
     };
 
-    fetchUserProfile();
+    // Only fetch once per component mount
+    if (!authAttemptedRef.current) {
+      authAttemptedRef.current = true;
+      fetchUserProfile();
+    }
   }, [router, setCurrentUser, setIsLoading]);
 
   const pendingCount = INITIAL_PROJECTS.filter(
@@ -91,7 +100,31 @@ export default function BMODashboard() {
   }
 
   // Prevent rendering if currentUser failed to load
-  if (!currentUser) return null;
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
+        <div className="max-w-md w-full bg-white rounded-4xl shadow-xl border border-slate-200 p-10 text-center">
+          <div className="h-16 w-16 bg-danger/10 text-danger rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <span className="text-2xl">
+              <CircleAlert />
+            </span>
+          </div>
+          <h2 className="text-2xl font-black text-primary mb-3 tracking-tight">
+            Access Restricted
+          </h2>
+          <p className="text-sm text-slate-500 mb-8 leading-relaxed">
+            You do not have the required credentials to view the BMO Dashboard.
+          </p>
+          <button
+            onClick={() => (window.location.href = "/login")}
+            className="w-full rounded-xl bg-primary py-4 text-sm font-bold text-white transition-all hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20"
+          >
+            Return to Login
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-secondary selection:bg-tertiary selection:text-primary">

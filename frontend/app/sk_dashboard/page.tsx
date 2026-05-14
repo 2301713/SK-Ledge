@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import SideBar from "@/components/dashboard/SideBar";
 import { INITIAL_PROJECTS } from "@/lib/dummyData";
 import { supabase } from "@/lib/supabase";
@@ -31,6 +31,7 @@ export default function SKDashboard() {
     setIsModalOpen,
   } = useAuthStore();
   const router = useRouter();
+  const authAttemptedRef = useRef(false);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -80,8 +81,12 @@ export default function SKDashboard() {
       }
     };
 
-    fetchUserProfile();
-  }, [router, setCurrentUser, setIsLoading]);
+    // Only fetch once per component mount
+    if (!authAttemptedRef.current) {
+      authAttemptedRef.current = true;
+      fetchUserProfile();
+    }
+  }, [setCurrentUser, setIsLoading, router]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-PH", {
