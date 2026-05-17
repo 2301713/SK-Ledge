@@ -93,7 +93,7 @@ export default function ProjectRegistry({
                       <td className="px-6 py-4 text-sm text-slate-500">
                         {p.date}
                       </td>
-                      <td className="px-6 py-4 text-sm font-mono font-bold text-right text-white tabular-nums">
+                      <td className="px-6 py-4 text-sm font-mono font-bold text-right text-slate-500 tabular-nums">
                         {p.budget}
                       </td>
                       <td className="px-6 py-4 text-center">

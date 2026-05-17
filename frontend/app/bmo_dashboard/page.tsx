@@ -24,6 +24,12 @@ export default function BMODashboard() {
 
   useEffect(() => {
     const fetchUserProfile = async () => {
+      // If user data is already loaded from login, skip auth check
+      if (currentUser && currentUser.role_type === "BMO") {
+        setIsLoading(false);
+        return;
+      }
+
       try {
         const {
           data: { user },

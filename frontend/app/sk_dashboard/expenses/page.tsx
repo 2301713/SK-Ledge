@@ -9,7 +9,6 @@ import { useToast } from "@/lib/useToast";
 import {
   Receipt,
   Upload,
-  DollarSign,
   Building,
   Tag,
   FileText,
@@ -17,6 +16,7 @@ import {
   CheckCircle2,
   Save,
   X,
+  PhilippinePeso,
 } from "lucide-react";
 
 interface ExpenseForm {
@@ -290,7 +290,7 @@ export default function ExpensesPage() {
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <DollarSign className="h-5 w-5 text-slate-400" />
+                        <PhilippinePeso className="h-5 w-5 text-slate-400" />
                       </div>
                       <input
                         type="number"

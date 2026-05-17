@@ -46,6 +46,12 @@ export default function COADashboard() {
 
   useEffect(() => {
     const fetchUserProfile = async () => {
+      // If user data is already loaded from login, skip auth check
+      if (currentUser && currentUser.role_type === "COA") {
+        setIsLoading(false);
+        return;
+      }
+
       try {
         const {
           data: { user },
@@ -65,13 +71,17 @@ export default function COADashboard() {
 
         if (profileError) {
           console.error("Error fetching profile:", profileError.message);
+          setIsLoading(false);
+          setTimeout(() => router.push("/login"), 100);
+          return;
         }
 
         if (profileData) {
           // Verify that this user is actually a COA
           if (profileData.role_type !== "COA") {
             console.warn("Unauthorized access: User is not a COA");
-            router.push("/unauthorized");
+            setIsLoading(false);
+            setTimeout(() => router.push("/unauthorized"), 100);
             return;
           }
 
@@ -82,11 +92,17 @@ export default function COADashboard() {
             role_type: profileData.role_type as "COA",
             barangay: profileData.barangay || "No Barangay Assigned",
           });
+        } else {
+          // No profile data found
+          console.warn("No profile data found for user");
+          setIsLoading(false);
+          setTimeout(() => router.push("/login"), 100);
+          return;
         }
       } catch (err) {
         console.error("Unexpected error loading profile:", err);
-      } finally {
         setIsLoading(false);
+        setTimeout(() => router.push("/login"), 100);
       }
     };
 
@@ -95,7 +111,7 @@ export default function COADashboard() {
       authAttemptedRef.current = true;
       fetchUserProfile();
     }
-  }, [setCurrentUser, setIsLoading, router]);
+  }, [currentUser, setCurrentUser, setIsLoading, router]);
 
   const chartData = {
     labels: ["Approvals", "Disbursements"],

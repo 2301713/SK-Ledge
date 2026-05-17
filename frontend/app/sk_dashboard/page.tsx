@@ -35,6 +35,16 @@ export default function SKDashboard() {
 
   useEffect(() => {
     const fetchUserProfile = async () => {
+      // If user data is already loaded from login, skip auth check
+      if (
+        currentUser &&
+        (currentUser.role_type === "SK_Chairperson" ||
+          currentUser.role_type === "SK_Treasurer")
+      ) {
+        setIsLoading(false);
+        return;
+      }
+
       try {
         const {
           data: { user },
@@ -54,6 +64,9 @@ export default function SKDashboard() {
 
         if (profileError) {
           console.error("Error fetching profile:", profileError.message);
+          setIsLoading(false);
+          setTimeout(() => router.push("/login"), 100);
+          return;
         }
 
         if (profileData) {
@@ -62,7 +75,8 @@ export default function SKDashboard() {
             profileData.role_type !== "SK_Treasurer"
           ) {
             console.warn("Unauthorized access: User is not an SK Official");
-            router.push("/unauthorized");
+            setIsLoading(false);
+            setTimeout(() => router.push("/unauthorized"), 100);
             return;
           }
 
@@ -73,11 +87,18 @@ export default function SKDashboard() {
             role_type: profileData.role_type,
             barangay: profileData.barangay || "No Barangay Assigned",
           });
+        } else {
+          console.warn("No profile data found");
+          setIsLoading(false);
+          setTimeout(() => router.push("/login"), 100);
         }
       } catch (err) {
         console.error("Unexpected error loading profile:", err);
-      } finally {
         setIsLoading(false);
+        setTimeout(() => router.push("/login"), 100);
+      } finally {
+        // Only set loading to false if we have a valid user
+        // Note: Loading is already set to false in error cases above
       }
     };
 

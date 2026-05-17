@@ -33,6 +33,12 @@ export default function SKFederationDashboard() {
   // 1. AUTHENTICATION & ROLE PROTECTION
   useEffect(() => {
     const fetchUserProfile = async () => {
+      // If user data is already loaded from login, skip auth check
+      if (currentUser && currentUser.role_type === "SK_Federation") {
+        setIsLoading(false);
+        return;
+      }
+
       try {
         const {
           data: { user },
@@ -40,6 +46,7 @@ export default function SKFederationDashboard() {
         } = await supabase.auth.getUser();
 
         if (authError || !user) {
+          console.log("No authenticated user, redirecting to login");
           router.push("/login");
           return;
         }
@@ -53,6 +60,7 @@ export default function SKFederationDashboard() {
         if (profileError) {
           console.error("Error fetching profile:", profileError.message);
           setIsLoading(false);
+          setTimeout(() => router.push("/login"), 100);
           return;
         }
 
@@ -60,7 +68,7 @@ export default function SKFederationDashboard() {
           if (profileData.role_type !== "SK_Federation") {
             console.warn("Unauthorized: User is not an SK Federation Official");
             setIsLoading(false);
-            router.push("/unauthorized");
+            setTimeout(() => router.push("/unauthorized"), 100);
             return;
           }
 
@@ -72,10 +80,15 @@ export default function SKFederationDashboard() {
             barangay: profileData.barangay || "City Wide",
           });
           setIsLoading(false);
+        } else {
+          console.warn("No profile data found");
+          setIsLoading(false);
+          setTimeout(() => router.push("/login"), 100);
         }
       } catch (err) {
         console.error("Unexpected error loading profile:", err);
         setIsLoading(false);
+        setTimeout(() => router.push("/login"), 100);
       }
     };
 

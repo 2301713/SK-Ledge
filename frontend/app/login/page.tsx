@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 import { useFormStore } from "@/lib/useFormStore";
+import { useAuthStore } from "@/lib/useAuthStore";
 import { useToast } from "@/lib/useToast";
 import {
   CircleAlert,
@@ -23,6 +24,7 @@ import {
 export default function LoginPage() {
   const router = useRouter();
   const toast = useToast();
+  const { setCurrentUser, setIsLoading } = useAuthStore();
   const {
     login: { credentials, showPassword, error, isLoading },
     setLoginCredentials,
@@ -54,7 +56,7 @@ export default function LoginPage() {
       if (authData.user) {
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
-          .select("role_type")
+          .select("id, username, full_name, role_type, barangay")
           .eq("id", authData.user.id)
           .single();
 
@@ -74,8 +76,19 @@ export default function LoginPage() {
           );
         }
 
-        // 4. Role-based Routing
+        // 4. Set user data in auth store and role-based routing
         const role = profileData.role_type;
+        const userData = {
+          id: authData.user.id,
+          username: profileData.username,
+          full_name: profileData.full_name || profileData.username,
+          role_type: profileData.role_type,
+          barangay: profileData.barangay || "No Barangay Assigned",
+        };
+
+        // Set user data in auth store
+        setCurrentUser(userData);
+        setIsLoading(false);
 
         switch (role) {
           case "SK_Chairperson":
