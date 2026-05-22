@@ -38,30 +38,32 @@ export default function LoginPage() {
     setLoginError("");
     setLoginIsLoading(true);
 
-    const cleanUsername = credentials.username.trim().toLowerCase();
-    const dummyEmail = `${cleanUsername}@skledge.com`;
-
     try {
       // 1. Authenticate the user
       const { data: authData, error: authError } =
         await supabase.auth.signInWithPassword({
-          email: dummyEmail,
+          email: credentials.email,
           password: credentials.password,
         });
 
       if (authError) {
-        throw new Error("Invalid username or password.");
+        throw new Error(authError.message || "Invalid email or password.");
       }
 
       if (authData.user) {
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
-          .select("id, username, full_name, role_type, barangay")
+          .select("id, username, full_name, role_type, barangay, approval_status")
           .eq("id", authData.user.id)
           .single();
 
         if (profileError) {
           throw new Error("Failed to retrieve user profile data.");
+        }
+
+        if (profileData.approval_status === "pending") {
+          await supabase.auth.signOut();
+          throw new Error("Your account is pending administrator approval.");
         }
 
         const { error: updateError } = await supabase
@@ -81,9 +83,11 @@ export default function LoginPage() {
         const userData = {
           id: authData.user.id,
           username: profileData.username,
+          email: credentials.email,
           full_name: profileData.full_name || profileData.username,
           role_type: profileData.role_type,
           barangay: profileData.barangay || "No Barangay Assigned",
+          approval_status: profileData.approval_status,
         };
 
         // Set user data in auth store
@@ -222,27 +226,27 @@ export default function LoginPage() {
           )}
 
           <form onSubmit={handleLogin} className="space-y-6">
-            {/* USERNAME */}
+            {/* EMAIL */}
             <div className="space-y-2">
               <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
-                Portal Username
+                Email Address
               </label>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-300 group-focus-within:text-primary transition-colors">
                   <User className="w-5 h-5" />
                 </div>
                 <input
-                  type="text"
+                  type="email"
                   required
-                  value={credentials.username}
+                  value={credentials.email}
                   onChange={(e) =>
                     setLoginCredentials({
                       ...credentials,
-                      username: e.target.value,
+                      email: e.target.value,
                     })
                   }
                   className="w-full bg-slate-50 border-2 border-transparent rounded-2xl pl-12 pr-4 py-4 text-sm font-medium text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none placeholder:text-slate-300"
-                  placeholder="Enter your username"
+                  placeholder="Enter your email"
                 />
               </div>
             </div>

@@ -73,6 +73,11 @@ const ROLE_LINKS: Record<
   SK_Federation: [
     { label: "Overview", href: "/skfed_dashboard", icon: Globe },
     {
+      label: "Approvals",
+      href: "/skfed_dashboard/approvals",
+      icon: CheckSquare,
+    },
+    {
       label: "Reports",
       href: "/skfed_dashboard/reports",
       icon: FileText,

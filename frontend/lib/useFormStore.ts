@@ -7,7 +7,7 @@ export type Audience = "all" | "chairpersons" | "treasurers" | "barangays";
 
 export interface LoginForm {
   credentials: {
-    username: string;
+    email: string;
     password: string;
   };
   showPassword: boolean;
@@ -20,6 +20,7 @@ export interface RegisterForm {
     full_name: string;
     barangay: string;
     username: string;
+    email: string;
     password: string;
     confirmPassword: string;
     role_type: string;
@@ -86,7 +87,7 @@ interface FormState {
 
 // INITIAL STATE
 const initialLoginForm: LoginForm = {
-  credentials: { username: "", password: "" },
+  credentials: { email: "", password: "" },
   showPassword: false,
   error: "",
   isLoading: false,
@@ -97,6 +98,7 @@ const initialRegisterForm: RegisterForm = {
     full_name: "",
     barangay: "",
     username: "",
+    email: "",
     password: "",
     confirmPassword: "",
     role_type: "SK_Chairperson",

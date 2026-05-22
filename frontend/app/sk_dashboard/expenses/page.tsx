@@ -233,11 +233,11 @@ export default function ExpensesPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
-        <div className="h-16 w-16 bg-primary rounded-2xl flex items-center justify-center text-tertiary font-black text-xl shadow-xl shadow-primary/30 mb-6 animate-bounce">
+        <div className="h-16 w-16 bg-primary rounded-2xl flex items-center justify-center text-tertiary font-black text-3xl shadow-xl shadow-primary/30 mb-6 animate-bounce">
           SK
         </div>
         <p className="text-xs font-bold text-slate-500 uppercase tracking-widest animate-pulse">
-          Loading Expense Logger...
+          Loading Dashboard...
         </p>
       </div>
     );

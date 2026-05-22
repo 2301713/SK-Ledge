@@ -54,13 +54,14 @@ export default function RegisterPage() {
       full_name,
       barangay,
       username,
+      email,
       password,
       confirmPassword,
       role_type,
     } = formData;
 
     // Base validation for fields that EVERYONE needs
-    if (!username || !password || !full_name || !role_type) {
+    if (!username || !email || !password || !full_name || !role_type) {
       const msg = "Please fill out all required fields.";
       setRegisterError(msg);
       toast.warning(msg);
@@ -94,12 +95,11 @@ export default function RegisterPage() {
       return;
     }
 
-    const dummyEmail = `${username.toLowerCase()}@skledge.com`;
     const finalBarangay = isSKRole ? barangay : "N/A";
 
     try {
       const { data, error: signUpError } = await supabase.auth.signUp({
-        email: dummyEmail,
+        email: email,
         password: password,
         options: {
           data: {
@@ -115,11 +115,13 @@ export default function RegisterPage() {
 
       // UX
       console.log("Registration successful!", data);
-      toast.success("Account created! Redirecting to login...");
-      setTimeout(() => router.push("/login"), 1500);
+      toast.success(
+        "Account created! Pending admin approval. Redirecting to login...",
+      );
+      setTimeout(() => router.push("/login"), 3000);
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Failed to register account.";
+        err instanceof Error ? err.message : "An unexpected error occurred.";
       setRegisterError(message);
       toast.error(message);
     } finally {
@@ -249,6 +251,31 @@ export default function RegisterPage() {
                 </div>
               </div>
             )}
+
+            {/* EMAIL */}
+            <div className="space-y-2">
+              <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                Email Address
+              </label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-300 group-focus-within:text-primary transition-colors">
+                  <User className="w-5 h-5" />
+                </div>
+                <input
+                  type="email"
+                  required
+                  value={formData.email}
+                  onChange={(e) =>
+                    setRegisterFormData({
+                      ...formData,
+                      email: e.target.value,
+                    })
+                  }
+                  className="w-full bg-slate-50 border-2 border-transparent rounded-2xl pl-12 pr-4 py-4 text-sm font-medium text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none placeholder:text-slate-300"
+                  placeholder="e.g. juan@example.com"
+                />
+              </div>
+            </div>
 
             {/* USERNAME */}
             <div className="space-y-2">
