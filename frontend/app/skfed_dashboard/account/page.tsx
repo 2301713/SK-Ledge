@@ -3,10 +3,10 @@
 import { useEffect } from "react";
 import SideBar from "@/components/dashboard/SideBar";
 import { supabase } from "@/lib/supabase";
-import { UserAccount } from "../types";
 import { AlertCircle, UserCircle } from "lucide-react";
-import { useAuthStore } from "@/lib/useAuthStore";
+import { useAuthStore, UserAccount } from "@/lib/useAuthStore";
 import { useToast } from "@/lib/useToast";
+import { useRouter } from "next/navigation";
 
 export default function AccountPage() {
   const {
@@ -27,6 +27,7 @@ export default function AccountPage() {
   } = useAuthStore();
 
   const toast = useToast();
+  const router = useRouter();
 
   // GET USER DATA
   useEffect(() => {
@@ -45,7 +46,9 @@ export default function AccountPage() {
 
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
-          .select("id, username, full_name, role_type, barangay")
+          .select(
+            "id, username, full_name, role_type, barangay, email, approval_status",
+          )
           .eq("id", user.id)
           .single();
 
@@ -54,22 +57,27 @@ export default function AccountPage() {
         }
 
         if (profileData) {
-          setCurrentUser({
+          // BMO-Specific Protection
+          if (profileData.role_type !== "SK_Federation") {
+            console.warn(
+              "Unauthorized access: User is not a SK Federation member.",
+            );
+            router.push("/unauthorized");
+            return;
+          }
+
+          const profile = {
             id: profileData.id,
             username: profileData.username,
             full_name: profileData.full_name || profileData.username,
             role_type: profileData.role_type,
             barangay: profileData.barangay || "No Barangay Assigned",
-          } as UserAccount);
+            email: profileData.email,
+            approval_status: profileData.approval_status,
+          };
 
-          // Set Form State
-          setUserProfile({
-            id: user.id,
-            username: profileData.username,
-            full_name: profileData.full_name || "",
-            role_type: profileData.role_type,
-            barangay: profileData.barangay || "N/A",
-          });
+          setCurrentUser(profile as UserAccount);
+          setUserProfile(profile);
         }
       } catch (err) {
         console.error("Unexpected error loading profile:", err);
@@ -81,7 +89,14 @@ export default function AccountPage() {
     if (currentUser && (!userProfile || userProfile.id !== currentUser.id)) {
       fetchUserProfile();
     }
-  }, [currentUser, setCurrentUser, setIsLoading, setUserProfile, userProfile]);
+  }, [
+    currentUser,
+    setCurrentUser,
+    setIsLoading,
+    setUserProfile,
+    userProfile,
+    router,
+  ]);
 
   // HANDLERS
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -341,6 +356,8 @@ export default function AccountPage() {
                             full_name: currentUser.full_name,
                             role_type: currentUser.role_type,
                             barangay: currentUser.barangay,
+                            email: currentUser.email,
+                            approval_status: currentUser.approval_status,
                           });
                         }
                       }}

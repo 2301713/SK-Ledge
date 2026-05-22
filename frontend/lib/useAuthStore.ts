@@ -7,8 +7,8 @@ export interface UserAccount {
   barangay: string;
   full_name: string;
   username: string;
-  email: string;
-  approval_status: string;
+  email?: string;
+  approval_status?: string;
   id: string;
 }
 
@@ -18,7 +18,8 @@ export interface UserProfile {
   full_name: string;
   role_type: string;
   barangay: string;
-  approval_status: string;
+  email?: string;
+  approval_status?: string;
 }
 
 interface AuthState {

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import SideBar from "@/components/dashboard/SideBar";
 import { supabase } from "@/lib/supabase";
-import { UserAccount } from "../types";
+import { UserAccount } from "@/lib/useAuthStore";
 import { useToast } from "@/lib/useToast";
 import {
   Receipt,
@@ -82,7 +82,9 @@ export default function ExpensesPage() {
 
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
-          .select("id, username, role_type, full_name, barangay")
+          .select(
+            "id, username, role_type, full_name, barangay, email, approval_status",
+          )
           .eq("id", user.id)
           .single();
 
@@ -108,6 +110,8 @@ export default function ExpensesPage() {
             full_name: profileData.full_name || profileData.username,
             role_type: profileData.role_type,
             barangay: profileData.barangay || "No Barangay Assigned",
+            email: profileData.email,
+            approval_status: profileData.approval_status,
           };
 
           setCurrentUser(profile as UserAccount);

@@ -13,7 +13,8 @@ export interface UserAccount {
   full_name: string;
   role_type: string;
   barangay: string;
-  account_status?: boolean;
+  email: string;
+  approval_status?: string;
 }
 
 export interface LegendItemProps {
@@ -27,4 +28,14 @@ export interface BroadcastMemoModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmitSuccess: () => void;
+}
+
+export interface PendingUser {
+  id: string;
+  username: string;
+  full_name: string;
+  role_type: string;
+  barangay: string;
+  created_at: string;
+  approval_status: string;
 }

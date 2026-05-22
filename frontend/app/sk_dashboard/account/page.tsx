@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import SideBar from "@/components/dashboard/SideBar";
 import { supabase } from "@/lib/supabase";
-import { UserAccount } from "../types";
+import { UserAccount } from "@/lib/useAuthStore";
 import { AlertCircle, UserCircle } from "lucide-react";
 import { useAuthStore } from "@/lib/useAuthStore";
 import { useToast } from "@/lib/useToast";
@@ -44,7 +44,9 @@ export default function AccountPage() {
 
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
-          .select("id, username, full_name, role_type, barangay")
+          .select(
+            "id, username, full_name, role_type, barangay, email, approval_status",
+          )
           .eq("id", user.id)
           .single();
 
@@ -59,6 +61,8 @@ export default function AccountPage() {
             full_name: profileData.full_name || profileData.username,
             role_type: profileData.role_type as "Chairman" | "Treasurer",
             barangay: profileData.barangay || "No Barangay Assigned",
+            email: profileData.email,
+            approval_status: profileData.approval_status,
           } as UserAccount);
 
           // Set Form State
@@ -340,6 +344,8 @@ export default function AccountPage() {
                             full_name: currentUser.full_name,
                             role_type: currentUser.role_type,
                             barangay: currentUser.barangay,
+                            email: currentUser.email,
+                            approval_status: currentUser.approval_status,
                           });
                         }
                       }}

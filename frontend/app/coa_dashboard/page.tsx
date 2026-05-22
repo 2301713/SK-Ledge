@@ -65,7 +65,9 @@ export default function COADashboard() {
 
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
-          .select("id, username, full_name, role_type, barangay")
+          .select(
+            "id, username, full_name, role_type, barangay,email, approval_status",
+          )
           .eq("id", user.id)
           .single();
 
@@ -91,6 +93,8 @@ export default function COADashboard() {
             full_name: profileData.full_name || profileData.username,
             role_type: profileData.role_type as "COA",
             barangay: profileData.barangay || "No Barangay Assigned",
+            email: profileData.email,
+            approval_status: profileData.approval_status,
           });
         } else {
           // No profile data found

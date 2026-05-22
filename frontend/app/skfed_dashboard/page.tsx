@@ -97,7 +97,7 @@ export default function SKFederationDashboard() {
       authAttemptedRef.current = true;
       fetchUserProfile();
     }
-  }, [setCurrentUser, setIsLoading, router]);
+  }, [setCurrentUser, setIsLoading, router, currentUser]);
 
   // UTILITY
   const formatCurrency = (amount: number) => {

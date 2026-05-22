@@ -43,7 +43,9 @@ export default function BMODashboard() {
 
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
-          .select("id, username, full_name, role_type, barangay")
+          .select(
+            "id, username, full_name, role_type, barangay, email, approval_status",
+          )
           .eq("id", user.id)
           .single();
 
@@ -67,6 +69,8 @@ export default function BMODashboard() {
             full_name: profileData.full_name || profileData.username,
             role_type: profileData.role_type as "BMO",
             barangay: profileData.barangay || "No Barangay Assigned",
+            email: profileData.email,
+            approval_status: profileData.approval_status,
           });
           setIsLoading(false);
         }
@@ -81,7 +85,7 @@ export default function BMODashboard() {
       authAttemptedRef.current = true;
       fetchUserProfile();
     }
-  }, [router, setCurrentUser, setIsLoading]);
+  }, [router, setCurrentUser, setIsLoading, currentUser]);
 
   const pendingCount = INITIAL_PROJECTS.filter(
     (p) => p.status === "Pending",

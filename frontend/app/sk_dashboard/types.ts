@@ -13,5 +13,6 @@ export interface UserAccount {
   full_name: string;
   role_type: "Chairman" | "Treasurer";
   barangay: string;
-  account_status?: boolean;
+  email: string;
+  approval_status?: string;
 }

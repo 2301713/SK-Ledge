@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import SideBar from "@/components/dashboard/SideBar";
 import { supabase } from "@/lib/supabase";
-import { UserAccount } from "../types";
+import { UserAccount } from "@/lib/useAuthStore";
 import {
   Project,
   ProjectStatus,
@@ -74,6 +74,8 @@ export default function ProjectsPage() {
             full_name: profile.full_name || profile.username,
             role_type: profile.role_type,
             barangay: profile.barangay || "N/A",
+            email: profile.email,
+            approval_status: profile.approval_status,
           });
         }
       } catch (error) {
