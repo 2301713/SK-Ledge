@@ -30,12 +30,11 @@ export interface BroadcastMemoModalProps {
   onSubmitSuccess: () => void;
 }
 
-export interface PendingUser {
+export type PendingEntry = {
   id: string;
-  username: string;
-  full_name: string;
+  display_name: string;
+  sub_label: string;
   role_type: string;
   barangay: string;
-  created_at: string;
-  approval_status: string;
-}
+  source: "profiles" | "vendors";
+};

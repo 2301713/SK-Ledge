@@ -6,7 +6,7 @@ import SideBar from "@/components/dashboard/SideBar";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/lib/useAuthStore";
 import { useToast } from "@/lib/useToast";
-import { PendingUser } from "../types";
+import { PendingEntry } from "../types";
 import {
   CheckSquare,
   CheckCircle2,
@@ -19,79 +19,110 @@ export default function ApprovalsPage() {
   const { currentUser, isLoading: authLoading } = useAuthStore();
   const router = useRouter();
   const toast = useToast();
-
-  const [pendingUsers, setPendingUsers] = useState<PendingUser[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [pendingEntries, setPendingEntries] = useState<PendingEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchPendingUsers = async () => {
+    if (authLoading) return;
+
+    if (!currentUser || currentUser.role_type !== "SK_Federation") {
+      router.push("/login");
+      return;
+    }
+
+    const fetchPendingEntries = async () => {
       setIsLoading(true);
       try {
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("approval_status", "pending")
-          .order("created_at", { ascending: false });
+        const [profilesResult, vendorsResult] = await Promise.all([
+          supabase
+            .from("profiles")
+            .select(
+              "id, full_name, username, role_type, barangay, approval_status",
+            )
+            .eq("approval_status", "pending")
+            .order("created_at", { ascending: false }),
+          supabase
+            .from("vendors")
+            .select("id, company_name, email, role, approval_status")
+            .eq("approval_status", "pending")
+            .order("created_at", { ascending: false }),
+        ]);
 
-        if (error) throw error;
-        setPendingUsers(data || []);
+        if (profilesResult.error) throw profilesResult.error;
+        if (vendorsResult.error) throw vendorsResult.error;
+
+        // Normalize profiles rows
+        const fromProfiles: PendingEntry[] = (profilesResult.data || []).map(
+          (u) => ({
+            id: u.id,
+            display_name: u.full_name,
+            sub_label: `@${u.username}`,
+            role_type: u.role_type,
+            barangay: u.barangay || "N/A",
+            source: "profiles",
+          }),
+        );
+
+        // Normalize vendors rows
+        const fromVendors: PendingEntry[] = (vendorsResult.data || []).map(
+          (v) => ({
+            id: v.id,
+            display_name: v.company_name,
+            sub_label: v.email,
+            role_type: "Vendor",
+            barangay: "—",
+            source: "vendors",
+          }),
+        );
+
+        setPendingEntries([...fromProfiles, ...fromVendors]);
       } catch (error) {
-        console.error("Error fetching pending users:", error);
-        toast.error("Failed to load pending users.");
+        console.error("Full error:", JSON.stringify(error, null, 2));
+        toast.error("Failed to load pending accounts.");
       } finally {
         setIsLoading(false);
       }
     };
 
-    if (
-      !authLoading &&
-      (!currentUser || currentUser.role_type !== "SK_Federation")
-    ) {
-      router.push("/login");
-      return;
-    }
+    fetchPendingEntries();
+  }, [currentUser, authLoading, router]);
 
-    if (currentUser) {
-      fetchPendingUsers();
-    }
-  }, [currentUser, authLoading, router, toast]);
-
-  const handleApprove = async (id: string, fullName: string) => {
-    setActionLoadingId(id);
+  const handleApprove = async (entry: PendingEntry) => {
+    setActionLoadingId(entry.id);
     try {
       const { error } = await supabase
-        .from("profiles")
+        .from(entry.source)
         .update({ approval_status: "approved" })
-        .eq("id", id);
+        .eq("id", entry.id);
 
       if (error) throw error;
 
-      toast.success(`${fullName} has been approved.`);
-      setPendingUsers((prev) => prev.filter((user) => user.id !== id));
+      toast.success(`${entry.display_name} has been approved.`);
+      setPendingEntries((prev) => prev.filter((e) => e.id !== entry.id));
     } catch (error) {
-      console.error("Error approving user:", error);
-      toast.error("Failed to approve user.");
+      console.error("Error approving entry:", error);
+      toast.error("Failed to approve account.");
     } finally {
       setActionLoadingId(null);
     }
   };
 
-  const handleReject = async (id: string, fullName: string) => {
-    setActionLoadingId(id);
+  const handleReject = async (entry: PendingEntry) => {
+    setActionLoadingId(entry.id);
     try {
       const { error } = await supabase
-        .from("profiles")
+        .from(entry.source)
         .update({ approval_status: "rejected" })
-        .eq("id", id);
+        .eq("id", entry.id);
 
       if (error) throw error;
 
-      toast.success(`${fullName} has been rejected.`);
-      setPendingUsers((prev) => prev.filter((user) => user.id !== id));
+      toast.success(`${entry.display_name} has been rejected.`);
+      setPendingEntries((prev) => prev.filter((e) => e.id !== entry.id));
     } catch (error) {
-      console.error("Error rejecting user:", error);
-      toast.error("Failed to reject user.");
+      console.error("Error rejecting entry:", error);
+      toast.error("Failed to reject account.");
     } finally {
       setActionLoadingId(null);
     }
@@ -129,7 +160,7 @@ export default function ApprovalsPage() {
                   Pending Accounts
                 </h2>
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
-                  {pendingUsers.length} users awaiting approval
+                  {pendingEntries.length} users awaiting approval
                 </p>
               </div>
             </div>
@@ -142,7 +173,7 @@ export default function ApprovalsPage() {
                     Loading accounts...
                   </p>
                 </div>
-              ) : pendingUsers.length === 0 ? (
+              ) : pendingEntries.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
                   <CheckSquare className="w-12 h-12 mb-4 text-slate-300" />
                   <p className="text-sm font-bold uppercase tracking-widest text-slate-500">
@@ -154,9 +185,9 @@ export default function ApprovalsPage() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {pendingUsers.map((user) => (
+                  {pendingEntries.map((entry) => (
                     <div
-                      key={user.id}
+                      key={entry.id}
                       className="flex flex-col sm:flex-row sm:items-center justify-between p-5 bg-slate-50 border border-slate-100 rounded-2xl hover:border-primary/30 transition-colors group gap-4"
                     >
                       <div className="flex items-center gap-4">
@@ -165,10 +196,10 @@ export default function ApprovalsPage() {
                         </div>
                         <div>
                           <p className="text-sm font-black text-slate-900">
-                            {user.full_name}
+                            {entry.display_name}
                           </p>
                           <p className="text-xs text-slate-500 mt-0.5">
-                            @{user.username}
+                            {entry.sub_label}
                           </p>
                         </div>
                       </div>
@@ -179,7 +210,7 @@ export default function ApprovalsPage() {
                             Role
                           </p>
                           <p className="font-semibold text-slate-700">
-                            {user.role_type.replace("_", " ")}
+                            {entry.role_type.replace("_", " ")}
                           </p>
                         </div>
                         <div>
@@ -187,19 +218,17 @@ export default function ApprovalsPage() {
                             Barangay
                           </p>
                           <p className="font-semibold text-slate-700">
-                            {user.barangay}
+                            {entry.barangay}
                           </p>
                         </div>
 
                         <div className="flex items-center gap-2 mt-2 sm:mt-0">
                           <button
-                            onClick={() =>
-                              handleApprove(user.id, user.full_name)
-                            }
-                            disabled={actionLoadingId === user.id}
+                            onClick={() => handleApprove(entry)}
+                            disabled={actionLoadingId === entry.id}
                             className="flex items-center gap-1.5 px-4 py-2 bg-green-500/10 hover:bg-green-500/20 text-green-700 font-bold rounded-xl transition-colors disabled:opacity-50"
                           >
-                            {actionLoadingId === user.id ? (
+                            {actionLoadingId === entry.id ? (
                               <Loader2 className="w-4 h-4 animate-spin" />
                             ) : (
                               <CheckCircle2 className="w-4 h-4" />
@@ -207,10 +236,8 @@ export default function ApprovalsPage() {
                             Approve
                           </button>
                           <button
-                            onClick={() =>
-                              handleReject(user.id, user.full_name)
-                            }
-                            disabled={actionLoadingId === user.id}
+                            onClick={() => handleReject(entry)}
+                            disabled={actionLoadingId === entry.id}
                             className="flex items-center gap-1.5 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-700 font-bold rounded-xl transition-colors disabled:opacity-50"
                           >
                             <XCircle className="w-4 h-4" />

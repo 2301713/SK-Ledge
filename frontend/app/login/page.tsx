@@ -53,7 +53,9 @@ export default function LoginPage() {
       if (authData.user) {
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
-          .select("id, username, full_name, role_type, barangay, approval_status")
+          .select(
+            "id, username, full_name, role_type, barangay, approval_status",
+          )
           .eq("id", authData.user.id)
           .single();
 
@@ -90,7 +92,6 @@ export default function LoginPage() {
           approval_status: profileData.approval_status,
         };
 
-        // Set user data in auth store
         setCurrentUser(userData);
         setIsLoading(false);
 
