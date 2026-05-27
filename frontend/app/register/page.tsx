@@ -120,7 +120,18 @@ export default function RegisterPage() {
       toast.success(
         "Account created! Pending admin approval. Redirecting to login...",
       );
-      setTimeout(() => router.push("/login"), 3000);
+
+      setRegisterFormData({
+        full_name: "",
+        barangay: "",
+        username: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+        role_type: "SK_Chairperson",
+      });
+
+      setTimeout(() => router.push("/login"), 1000);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "An unexpected error occurred.";
@@ -382,7 +393,7 @@ export default function RegisterPage() {
                   </>
                 ) : (
                   <>
-                    <span className="text-lg">Create Account</span>
+                    <span className="text-lg">Submit Request</span>
                     <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                   </>
                 )}

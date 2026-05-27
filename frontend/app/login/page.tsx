@@ -39,7 +39,6 @@ export default function LoginPage() {
     setLoginIsLoading(true);
 
     try {
-      // 1. Authenticate the user
       const { data: authData, error: authError } =
         await supabase.auth.signInWithPassword({
           email: credentials.email,
@@ -80,7 +79,6 @@ export default function LoginPage() {
           );
         }
 
-        // 4. Set user data in auth store and role-based routing
         const role = profileData.role_type;
         const userData = {
           id: authData.user.id,
@@ -94,6 +92,11 @@ export default function LoginPage() {
 
         setCurrentUser(userData);
         setIsLoading(false);
+
+        setLoginCredentials({
+          email: "",
+          password: "",
+        });
 
         switch (role) {
           case "SK_Chairperson":
