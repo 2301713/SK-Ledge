@@ -3,9 +3,8 @@
 import { useEffect } from "react";
 import SideBar from "@/components/dashboard/SideBar";
 import { supabase } from "@/lib/supabase";
-import { UserAccount } from "@/lib/useAuthStore";
+import { useAuthStore, UserAccount } from "@/lib/useAuthStore";
 import { AlertCircle, UserCircle } from "lucide-react";
-import { useAuthStore } from "@/lib/useAuthStore";
 import { useToast } from "@/lib/useToast";
 
 export default function AccountPage() {

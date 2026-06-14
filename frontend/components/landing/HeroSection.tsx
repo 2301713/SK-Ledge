@@ -25,10 +25,8 @@ export default function HeroSection() {
 
             {/* Headline */}
             <div>
-              <h1 className="text-6xl sm:text-7xl lg:text-8xl font-extrabold text-white tracking-tighter leading-[0.95] mb-6">
-                Modern
-                <br />
-                <span className="text-tertiary">SK</span>
+              <h1 className="text-6xl sm:text-7xl font-extrabold text-white tracking-tighter leading-[0.95] mb-6">
+                Modern <span className="text-tertiary">SK</span>
                 <br />
                 Governance.
               </h1>

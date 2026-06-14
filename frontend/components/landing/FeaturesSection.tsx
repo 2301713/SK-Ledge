@@ -35,9 +35,9 @@ export default function FeaturesSection() {
         </div>
 
         {/* Bento Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-11 gap-4">
           {/* Card 1: Project Management — wide */}
-          <div className="md:col-span-7 p-8 rounded-2xl bg-slate-900 border border-white/8 group hover:border-primary/30 transition-all duration-300 flex flex-col justify-between min-h-70">
+          <div className="md:col-span-6 p-8 rounded-2xl bg-slate-900 border border-white/8 group hover:border-primary/30 transition-all duration-300 flex flex-col justify-between min-h-70">
             <div>
               <div className="flex items-start justify-between mb-6">
                 <div className="w-11 h-11 rounded-xl bg-tertiary/15 flex items-center justify-center">
@@ -107,7 +107,7 @@ export default function FeaturesSection() {
           </div>
 
           {/* Card 3: Public Transparency — narrow */}
-          <div className="md:col-span-5 p-8 rounded-2xl bg-slate-900 border border-white/8 group hover:border-primary/30 transition-all duration-300 flex flex-col justify-between min-h-65">
+          <div className="md:col-span-4 p-8 rounded-2xl bg-slate-900 border border-white/8 group hover:border-primary/30 transition-all duration-300 flex flex-col justify-between min-h-65">
             <div>
               <div className="flex items-start justify-between mb-6">
                 <div className="w-11 h-11 rounded-xl bg-slate-800 flex items-center justify-center">

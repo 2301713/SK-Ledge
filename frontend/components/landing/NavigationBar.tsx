@@ -39,15 +39,9 @@ export default function NavBar() {
           <div className="hidden md:flex items-center gap-2">
             <Link
               href="/login"
-              className="text-xs font-semibold text-slate-400 hover:text-white px-3.5 py-2 rounded-xl hover:bg-white/8 transition-all"
-            >
-              Sign In
-            </Link>
-            <Link
-              href="/public_portal"
               className="px-4 py-2 bg-primary text-white text-xs font-bold rounded-xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/25"
             >
-              Dashboard →
+              Sign In
             </Link>
           </div>
 
@@ -82,15 +76,9 @@ export default function NavBar() {
               <div className="h-px bg-white/8 my-1" />
               <Link
                 href="/login"
-                className="text-sm font-semibold text-slate-400 hover:text-white hover:bg-white/8 px-4 py-3 rounded-xl transition-all"
-              >
-                Sign In
-              </Link>
-              <Link
-                href="/login"
                 className="text-center px-4 py-3 bg-primary text-white text-sm font-bold rounded-xl hover:bg-primary/90 transition-all"
               >
-                Dashboard
+                Sign In
               </Link>
             </div>
           </div>

@@ -2,9 +2,10 @@
 
 @theme {
   /* Core Brand Colors */
-  --color-primary: #003366;
-  --color-secondary: #F8FAFC;
-  --color-tertiary: #FFCC00;
+  --color-primary: #0138A8;
+  --color-secondary: #F3F4F3;
+  --color-tertiary: #FBD219;
+  --color-quaternary: #CE1226;
 
   /* Status Colors */
   --color-success: #10B981;

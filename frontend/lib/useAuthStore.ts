@@ -3,16 +3,6 @@ import { devtools } from "zustand/middleware";
 
 // TYPES
 export interface UserAccount {
-  role_type: string;
-  barangay: string;
-  full_name: string;
-  username: string;
-  email?: string;
-  approval_status?: string;
-  id: string;
-}
-
-export interface UserProfile {
   id: string;
   username: string;
   full_name: string;
@@ -32,7 +22,7 @@ interface AuthState {
   isSaving: boolean;
   error: string;
   successMsg: string;
-  userProfile: UserProfile | null;
+  userProfile: UserAccount | null; // Changed to UserAccount
 
   // Modal State
   isModalOpen: boolean;
@@ -47,7 +37,7 @@ interface AuthState {
   setIsSaving: (saving: boolean) => void;
   setError: (error: string) => void;
   setSuccessMsg: (msg: string) => void;
-  setUserProfile: (profile: UserProfile | null) => void;
+  setUserProfile: (profile: UserAccount | null) => void; // Changed to UserAccount
 
   // ACTIONS - Modal
   setIsModalOpen: (open: boolean) => void;
@@ -55,7 +45,7 @@ interface AuthState {
 
   // ACTIONS - Combined
   resetAccountState: () => void;
-  updateUserProfile: (profile: UserProfile) => void;
+  updateUserProfile: (profile: UserAccount) => void; // Changed to UserAccount
 }
 
 // STORE
@@ -110,8 +100,9 @@ export const useAuthStore = create<AuthState>()(
       updateUserProfile: (profile) =>
         set((state) => ({
           userProfile: profile,
+          // Since the types are identical, you can safely spread or directly map
           currentUser: state.currentUser
-            ? { ...state.currentUser, full_name: profile.full_name }
+            ? { ...state.currentUser, ...profile }
             : null,
         })),
     }),
