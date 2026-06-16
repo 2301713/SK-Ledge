@@ -168,62 +168,88 @@ export default function BMODashboard() {
           </div>
         </header>
 
+        {/* WELCOME BANNER (Compact, engaging) */}
+        <section className="relative overflow-hidden rounded-4xl border border-primary/30 bg-primary/95 p-6 md:p-8 text-white shadow-lg shadow-primary/15 mb-10">
+          <div className="absolute top-0 right-0 w-full h-full overflow-hidden pointer-events-none z-0">
+            <div className="absolute -top-20 -right-12 w-24 h-24 bg-white/10 rounded-full blur-3xl"></div>
+            <div className="absolute -bottom-28 right-12 w-20 h-20 bg-tertiary/10 rounded-full blur-3xl"></div>
+          </div>
+
+          <div className="relative z-10 grid gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,0.9fr)] items-start">
+            <div className="space-y-4">
+              <p className="text-tertiary font-semibold uppercase tracking-[0.3em] text-[10px]">
+                Barangay {currentUser.barangay}
+              </p>
+              <h2 className="text-2xl md:text-3xl font-black tracking-tight leading-snug">
+                Welcome back, <br /> {currentUser.full_name.split(" ")[0]}!
+              </h2>
+              <p className="max-w-xl text-sm text-white/80 leading-relaxed">
+                You have{" "}
+                <strong className="text-white">
+                  1 project pending approval
+                </strong>
+                , and the current budget is in a healthy position.
+              </p>
+            </div>
+          </div>
+        </section>
+
         {/* METRICS GRID */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10">
           {/* Card 1: Pending Alignment */}
-          <div className="relative group bg-white p-8 rounded-4xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 overflow-hidden transition-all hover:shadow-xl">
-            <div className="absolute top-0 left-0 w-2 h-full bg-tertiary"></div>
-            <div className="flex justify-between items-start">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+          <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
+            <div className="absolute inset-y-0 left-0 w-1 bg-tertiary"></div>
+            <div className="flex items-start justify-between gap-4">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                 Pending Alignment
               </p>
               {pendingCount > 0 && (
-                <span className="flex h-3 w-3">
+                <span className="relative inline-flex h-3 w-3">
                   <span className="animate-ping absolute inline-flex h-3 w-3 rounded-full bg-red-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
                 </span>
               )}
             </div>
-            <h2 className="text-5xl font-black text-[#0B3B78] mt-4 tracking-tighter">
+            <h2 className="mt-4 text-4xl font-black text-[#0B3B78] tracking-tight">
               {pendingCount}
             </h2>
-            <p className="text-[11px] font-bold text-slate-400 mt-2 uppercase">
+            <p className="mt-2 text-xs uppercase tracking-wider text-slate-400">
               Requests awaiting review
             </p>
           </div>
 
           {/* Card 2: Total Managed */}
-          <div className="bg-white p-8 rounded-4xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 transition-all hover:shadow-xl">
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
               Total Managed
             </p>
-            <div className="flex items-baseline gap-1 mt-4">
-              <span className="text-2xl font-bold text-[#0B3B78]">₱</span>
-              <h2 className="text-5xl font-black text-[#0B3B78] tracking-tighter">
+            <div className="mt-4 flex items-baseline gap-2">
+              <span className="text-xl font-bold text-[#0B3B78]">₱</span>
+              <h2 className="text-4xl font-black text-[#0B3B78] tracking-tight">
                 {totalValue.toLocaleString()}
               </h2>
             </div>
-            <p className="text-[11px] font-bold text-slate-400 mt-2 uppercase tracking-tighter">
+            <p className="mt-2 text-xs uppercase tracking-wider text-slate-400">
               Overall LGU Youth Budget
             </p>
           </div>
 
-          {/* Card 3: System Status (With Utilization Logic placeholder) */}
-          <div className="bg-white/70 backdrop-blur-md p-8 rounded-4xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white transition-all hover:shadow-xl flex flex-col justify-between">
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+          {/* Card 3: System Status */}
+          <div className="rounded-3xl border border-slate-200 bg-white/95 p-6 shadow-sm transition hover:shadow-md">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
               Utilization Rate
             </p>
             <div className="mt-4">
-              <div className="flex items-end justify-between mb-2">
-                <h2 className="text-4xl font-black text-primary tracking-tighter">
+              <div className="flex items-end justify-between gap-2">
+                <h2 className="text-4xl font-black text-primary tracking-tight">
                   68%
                 </h2>
-                <span className="text-[10px] font-bold text-tertiary mb-1">
-                  LIVE SECURE
+                <span className="rounded-full bg-tertiary/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.25em] text-tertiary">
+                  Live
                 </span>
               </div>
-              <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                <div className="h-full bg-green-500 w-[68%] transition-all"></div>
+              <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                <div className="h-full w-[68%] rounded-full bg-green-500 transition-all"></div>
               </div>
             </div>
           </div>
@@ -295,12 +321,12 @@ export default function BMODashboard() {
                     <p className="font-bold text-sm tracking-tight">
                       Q2_Liquidation_Report.pdf
                     </p>
-                    <p className="text-tertiary/80 opacity-70">
+                    <p className="text-[10px] text-slate-300 uppercase font-medium tracking-wider">
                       Awaiting BMO Verification
                     </p>
                   </div>
                 </div>
-                <button className="px-6 py-2 bg-tertiary text-primary font-bold rounded-xl text-sm hover:scale-105 transition-transform">
+                <button className="px-6 py-2 bg-tertiary text-primary font-bold rounded-xl text-sm hover:scale-103 transition-transform cursor-pointer">
                   Open Vault
                 </button>
               </div>

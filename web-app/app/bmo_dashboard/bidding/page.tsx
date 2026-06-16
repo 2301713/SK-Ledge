@@ -113,17 +113,17 @@ export default function BMOReviewPage() {
       <main className="flex-1">
         <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row">
           {/* LEFT PANEL */}
-          <div className="w-full md:w-100 bg-white border-r border-slate-200 flex flex-col h-screen overflow-hidden shrink-0">
-            <div className="p-6 border-b border-slate-100 bg-white sticky top-0 z-10">
-              <h1 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-                <Gavel className="w-6 h-6 text-indigo-600" />
+          <div className="w-full md:w-80 bg-white border-r border-slate-200 flex flex-col h-screen overflow-hidden shrink-0">
+            <div className="p-4 border-b border-slate-100 bg-white sticky top-0 z-10">
+              <h1 className="text-lg font-black text-slate-900 tracking-tight flex items-center gap-2">
+                <Gavel className="w-5 h-5 text-primary" />
                 BAC Control Room
               </h1>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mt-1">
                 Procurement Management
               </p>
 
-              <div className="mt-6 flex items-center bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+              <div className="mt-4 flex items-center bg-slate-50 border border-slate-200 rounded-xl px-2 py-2">
                 <Search className="w-4 h-4 text-slate-400 mr-2" />
                 <input
                   type="text"
@@ -132,27 +132,27 @@ export default function BMOReviewPage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
-                <Filter className="w-4 h-4 text-slate-400 cursor-pointer hover:text-indigo-600 transition" />
+                <Filter className="w-4 h-4 text-slate-400 cursor-pointer hover:text-primary transition" />
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            <div className="flex-1 overflow-y-auto p-3 space-y-2">
               {procurementProjects.map((project) => (
                 <div
                   key={project.id}
                   onClick={() => setSelectedProject(project)}
-                  className={`p-4 rounded-2xl cursor-pointer transition-all border ${
+                  className={`p-3 rounded-xl cursor-pointer transition-all border ${
                     selectedProject.id === project.id
-                      ? "bg-indigo-50 border-indigo-200 shadow-sm"
+                      ? "bg-primary/5 border-primary/10 shadow-sm"
                       : "bg-white border-slate-100 hover:border-slate-300 hover:bg-slate-50"
                   }`}
                 >
-                  <div className="flex justify-between items-start mb-2">
-                    <span className="text-xs font-black text-slate-400 uppercase tracking-widest">
+                  <div className="flex justify-between items-start mb-1">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                       {project.id}
                     </span>
                     <span
-                      className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-md ${
+                      className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${
                         project.status === "Evaluation"
                           ? "bg-orange-100 text-orange-600"
                           : "bg-green-100 text-green-600"
@@ -164,15 +164,15 @@ export default function BMOReviewPage() {
                   <h3 className="text-sm font-black text-slate-900 leading-tight mb-1">
                     {project.title}
                   </h3>
-                  <p className="text-xs font-bold text-slate-500 mb-3">
-                    {project.barangay}
-                  </p>
-                  <div className="flex justify-between items-center border-t border-slate-100 pt-3 mt-1">
-                    <div className="text-xs font-bold text-slate-400 flex items-center gap-1">
-                      <Clock className="w-3 h-3" /> {project.deadline}
-                    </div>
-                    <div className="text-xs font-black text-slate-700">
-                      {formatCurrency(project.abc)}
+                  <div className="flex items-center justify-between text-[12px] text-slate-500">
+                    <span>{project.barangay}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="flex items-center gap-1 text-[11px] text-slate-400">
+                        <Clock className="w-3 h-3" /> {project.deadline}
+                      </span>
+                      <span className="text-[12px] font-bold text-slate-700">
+                        {formatCurrency(project.abc)}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -181,26 +181,26 @@ export default function BMOReviewPage() {
           </div>
 
           {/* RIGHT PANEL */}
-          <div className="flex-1 h-screen overflow-y-auto bg-slate-50/50 p-8">
-            <div className="max-w-5xl mx-auto space-y-8">
+          <div className="flex-1 h-screen overflow-y-auto bg-slate-50/50 p-6">
+            <div className="max-w-5xl mx-auto space-y-6">
               {/* Header Card */}
-              <div className="bg-white rounded-3xl border border-slate-200 p-8 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+              <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-black uppercase tracking-widest rounded-lg">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="px-2 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-black uppercase tracking-widest rounded-lg">
                       {selectedProject.id}
                     </span>
-                    <span className="px-3 py-1 bg-indigo-50 text-indigo-600 text-xs font-black uppercase tracking-widest rounded-lg flex items-center gap-1">
+                    <span className="px-2 py-0.5 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-lg flex items-center gap-1">
                       <Building2 className="w-3 h-3" />{" "}
                       {selectedProject.barangay}
                     </span>
                   </div>
-                  <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+                  <h2 className="text-xl font-black text-slate-900 tracking-tight">
                     {selectedProject.title}
                   </h2>
-                  <p className="text-sm font-bold text-slate-500 mt-1 flex items-center gap-2">
+                  <p className="text-sm font-medium text-slate-500 mt-1 flex items-center gap-2">
                     Approved Budget (ABC):{" "}
-                    <span className="text-slate-900">
+                    <span className="text-slate-900 font-black">
                       {formatCurrency(selectedProject.abc)}
                     </span>
                   </p>
@@ -223,7 +223,7 @@ export default function BMOReviewPage() {
 
               {/* Vendor Bids Table */}
               <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-                <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
                   <div>
                     <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">
                       Vendor Submissions
@@ -236,17 +236,17 @@ export default function BMOReviewPage() {
 
                 <div className="overflow-x-auto">
                   <table className="w-full text-left">
-                    <thead className="bg-white border-b border-slate-100 text-xs font-black text-slate-400 uppercase tracking-widest">
+                    <thead className="bg-white border-b border-slate-100 text-[11px] font-black text-slate-400 uppercase tracking-widest">
                       <tr>
-                        <th className="px-6 py-4">Vendor Name</th>
-                        <th className="px-6 py-4">Date Submitted</th>
-                        <th className="px-6 py-4">Bid Amount</th>
-                        <th className="px-6 py-4">Variance from ABC</th>
-                        <th className="px-6 py-4 text-center">Docs</th>
-                        <th className="px-6 py-4 text-right">Action</th>
+                        <th className="px-4 py-3">Vendor</th>
+                        <th className="px-4 py-3">Date</th>
+                        <th className="px-4 py-3">Bid</th>
+                        <th className="px-4 py-3">Variance</th>
+                        <th className="px-4 py-3 text-center">Docs</th>
+                        <th className="px-4 py-3 text-right">Action</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-slate-100 text-sm">
                       {selectedProject.bids
                         .sort((a, b) => a.bidAmount - b.bidAmount)
                         .map((bid, index) => {
@@ -258,9 +258,9 @@ export default function BMOReviewPage() {
                           return (
                             <tr
                               key={bid.id}
-                              className={`hover:bg-slate-50 transition-colors ${isLowestEligible ? "bg-indigo-50/30" : ""}`}
+                              className={`hover:bg-slate-50 transition-colors ${isLowestEligible ? "bg-primary/5" : ""}`}
                             >
-                              <td className="px-6 py-5">
+                              <td className="px-4 py-3">
                                 <p className="font-black text-sm text-slate-900 flex items-center gap-2">
                                   {bid.vendorName}
                                   {isLowestEligible && (
@@ -273,54 +273,41 @@ export default function BMOReviewPage() {
                                   )}
                                 </p>
                               </td>
-                              <td className="px-6 py-5 text-sm font-bold text-slate-500">
+                              <td className="px-4 py-3 text-sm font-bold text-slate-500">
                                 {bid.dateSubmitted}
                               </td>
-                              <td className="px-6 py-5">
+                              <td className="px-4 py-3">
                                 <p
                                   className={`font-black text-sm ${isOverBudget ? "text-red-600" : "text-slate-900"}`}
                                 >
                                   {formatCurrency(bid.bidAmount)}
                                 </p>
                               </td>
-                              <td className="px-6 py-5">
+                              <td className="px-4 py-3">
                                 <span
-                                  className={`text-xs font-black px-2.5 py-1 rounded-lg uppercase tracking-widest ${
-                                    isOverBudget
-                                      ? "bg-red-50 text-red-600"
-                                      : "bg-emerald-50 text-emerald-600"
-                                  }`}
+                                  className={`text-[11px] font-black px-2 py-0.5 rounded-lg uppercase tracking-widest ${isOverBudget ? "bg-red-50 text-red-600" : "bg-emerald-50 text-emerald-600"}`}
                                 >
                                   {isOverBudget
                                     ? "Over Budget"
                                     : `-${formatCurrency(variance)}`}
                                 </span>
                               </td>
-                              <td className="px-6 py-5 text-center">
+                              <td className="px-4 py-3 text-center">
                                 <button
-                                  className={`p-2 rounded-lg transition-colors ${
-                                    bid.documentsValid
-                                      ? "bg-blue-50 text-blue-600 hover:bg-blue-100"
-                                      : "bg-slate-100 text-slate-400"
-                                  }`}
+                                  className={`p-2 rounded-lg transition-colors ${bid.documentsValid ? "bg-blue-50 text-blue-600 hover:bg-blue-100" : "bg-slate-100 text-slate-400"}`}
                                 >
                                   <FileText className="w-4 h-4 mx-auto" />
                                 </button>
                               </td>
-                              <td className="px-6 py-5 text-right">
+                              <td className="px-4 py-3 text-right">
                                 <button
                                   disabled={
                                     isOverBudget ||
                                     selectedProject.status !== "Evaluation"
                                   }
-                                  className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-colors ${
-                                    selectedProject.status === "Evaluation" &&
-                                    !isOverBudget
-                                      ? "bg-indigo-600 text-white hover:bg-indigo-700 shadow-md shadow-indigo-600/20"
-                                      : "bg-slate-100 text-slate-400 cursor-not-allowed"
-                                  }`}
+                                  className={`px-3 py-1 rounded-md text-xs font-black uppercase tracking-widest transition-colors ${selectedProject.status === "Evaluation" && !isOverBudget ? "bg-primary text-white hover:bg-primary/90 shadow" : "bg-slate-100 text-slate-400 cursor-not-allowed"}`}
                                 >
-                                  Award Contract
+                                  Award
                                 </button>
                               </td>
                             </tr>
@@ -329,7 +316,7 @@ export default function BMOReviewPage() {
                     </tbody>
                   </table>
                   {selectedProject.bids.length === 0 && (
-                    <div className="p-8 text-center text-slate-400 text-sm font-bold">
+                    <div className="p-6 text-center text-slate-400 text-sm font-bold">
                       No bids submitted yet.
                     </div>
                   )}
