@@ -9,8 +9,6 @@ import { useAuthStore } from "@/lib/useAuthStore";
 import ProposeProjectModal from "@/components/dashboard/ProposeProjectModal";
 import {
   Plus,
-  Wallet,
-  TrendingUp,
   ChevronRight,
   Activity,
   CheckCircle2,
@@ -192,123 +190,69 @@ export default function SKDashboard() {
           </div>
         </header>
 
-        <div className="px-10 pb-12 space-y-8 max-w-350 mx-auto w-full">
-          {/* WELCOME BANNER (Massive, engaging) */}
-          <section className="bg-primary rounded-[2.5rem] p-12 relative overflow-hidden text-white shadow-xl shadow-primary/20 border border-primary">
+        <div className="px-8 pb-12 space-y-8 max-w-7xl mx-auto w-full">
+          {/* WELCOME BANNER (Compact, engaging) */}
+          <section className="bg-primary rounded-4xl p-8 md:p-10 relative overflow-hidden text-white shadow-xl shadow-primary/20 border border-primary">
             {/* Abstract Decorative Elements */}
             <div className="absolute top-0 right-0 w-full h-full overflow-hidden pointer-events-none z-0">
-              <div className="absolute -top-32 -right-20 w-125 h-125 bg-white/5 rounded-full blur-3xl"></div>
-              <div className="absolute -bottom-40 right-20 w-100 h-100 bg-tertiary/10 rounded-full blur-3xl"></div>
+              <div className="absolute -top-28 -right-16 w-28 h-28 bg-white/5 rounded-full blur-3xl"></div>
+              <div className="absolute -bottom-32 right-16 w-24 h-24 bg-tertiary/10 rounded-full blur-3xl"></div>
             </div>
 
-            <div className="relative z-10 w-full lg:w-2/3">
-              <p className="text-tertiary font-bold tracking-widest uppercase text-xs mb-3">
-                Barangay {currentUser.barangay}
-              </p>
-              <h2 className="text-4xl md:text-5xl font-black mb-4 tracking-tight leading-tight">
-                Welcome back, <br /> {currentUser.full_name.split(" ")[0]}!
-              </h2>
-              <p className="text-white/70 text-lg leading-relaxed max-w-xl">
-                You have{" "}
-                <strong className="text-white">
-                  3 projects pending approval
-                </strong>{" "}
-                and the fiscal year budget is currently operating at optimal
-                capacity.
-              </p>
+            <div className="relative z-10 grid gap-8 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,0.9fr)] items-center">
+              <div>
+                <p className="text-tertiary font-bold tracking-widest uppercase text-[11px] mb-3">
+                  Barangay {currentUser.barangay}
+                </p>
+                <h2 className="text-3xl md:text-4xl font-black mb-4 tracking-tight leading-tight">
+                  Welcome back, <br /> {currentUser.full_name.split(" ")[0]}!
+                </h2>
+                <p className="text-white/75 text-base md:text-lg leading-relaxed max-w-xl">
+                  You have{" "}
+                  <strong className="text-white">
+                    3 projects pending approval
+                  </strong>{" "}
+                  and the fiscal year budget is currently operating at optimal
+                  capacity.
+                </p>
 
-              <div className="mt-10 flex flex-wrap gap-4">
-                <button
-                  onClick={() => setIsModalOpen(true)}
-                  className="bg-blue-600 text-white px-8 py-4 rounded-2xl text-sm font-black tracking-wide hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-600/20 transition-all active:scale-95 flex items-center gap-3"
-                >
-                  <Plus className="w-5 h-5" />
-                  Propose New Project
-                </button>
-                <button className="bg-white/10 backdrop-blur-md border border-white/20 text-white px-8 py-4 rounded-2xl text-sm font-bold tracking-wide hover:bg-white/20 transition-all active:scale-95 flex items-center gap-3">
-                  <FileText className="w-5 h-5" />
-                  View Ledger
-                </button>
+                <div className="mt-8 flex flex-wrap gap-3">
+                  <button
+                    onClick={() => setIsModalOpen(true)}
+                    className="bg-blue-600 text-white px-6 py-3 rounded-2xl text-sm font-black tracking-wide hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-600/20 transition-all active:scale-95 flex items-center gap-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Propose New Project
+                  </button>
+                  <button className="bg-white/10 backdrop-blur-md border border-white/20 text-white px-6 py-3 rounded-2xl text-sm font-bold tracking-wide hover:bg-white/20 transition-all active:scale-95 flex items-center gap-2">
+                    <FileText className="w-4 h-4" />
+                    View Ledger
+                  </button>
+                </div>
               </div>
-            </div>
-          </section>
 
-          {/* METRICS GRID */}
-          <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* LARGE BUDGET CARD (Span 2 cols) */}
-            <div className="lg:col-span-2 bg-white rounded-4xl p-8 border border-slate-200 shadow-sm flex flex-col justify-between">
-              <div className="flex justify-between items-start mb-12">
-                <div>
-                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
-                    Total Allocated Budget (FY 2024)
-                  </h3>
-                  <p className="text-4xl md:text-5xl font-black text-primary tracking-tight">
+              <div className="grid gap-4">
+                <div className="rounded-4xl border border-white/15 bg-white/10 p-5 shadow-inner shadow-white/10">
+                  <p className="text-xs uppercase tracking-[0.3em] text-white/60 mb-3">
+                    Current Fiscal Summary
+                  </p>
+                  <p className="text-3xl font-black text-white">
                     {formatCurrency(totalAllocated)}
                   </p>
+                  <p className="text-sm text-white/75 mt-2">
+                    {percentageSpent.toFixed(0)}% used •{" "}
+                    {formatCurrency(totalAllocated - totalSpent)} remaining
+                  </p>
                 </div>
-                <div className="w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center border border-slate-100">
-                  <Wallet className="w-6 h-6 text-tertiary" />
+                <div className="rounded-4xl border border-white/15 bg-white/10 p-5 shadow-inner shadow-white/10">
+                  <p className="text-xs uppercase tracking-[0.3em] text-white/60 mb-3">
+                    Approval Queue
+                  </p>
+                  <p className="text-3xl font-black text-white">4 pending</p>
+                  <p className="text-sm text-white/75 mt-2">
+                    Projects in the review queue are ready for your next action.
+                  </p>
                 </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between items-end mb-3">
-                  <span className="text-sm font-bold text-slate-600">
-                    Budget Utilization
-                  </span>
-                  <span className="text-xl font-black text-primary">
-                    {percentageSpent.toFixed(1)}%
-                  </span>
-                </div>
-                <div className="w-full h-4 bg-slate-100 rounded-full overflow-hidden border border-slate-200/50">
-                  <div
-                    className="h-full bg-primary rounded-full relative"
-                    style={{ width: `${percentageSpent}%` }}
-                  >
-                    <div className="absolute right-0 top-0 bottom-0 w-10 bg-linear-to-r from-transparent to-white/30 rounded-full"></div>
-                  </div>
-                </div>
-                <div className="mt-3 flex justify-between text-xs font-bold text-slate-400">
-                  <span>{formatCurrency(totalSpent)} Spent</span>
-                  <span>
-                    {formatCurrency(totalAllocated - totalSpent)} Remaining
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* QUICK STATS STACK */}
-            <div className="flex flex-col gap-8">
-              <div className="bg-white rounded-4xl p-8 border border-slate-200 shadow-sm flex-1 flex flex-col justify-center group hover:border-primary/30 transition-all">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 rounded-2xl bg-primary/5 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                    <Activity className="w-5 h-5" />
-                  </div>
-                  <span className="px-3 py-1 bg-success/10 text-success text-[10px] font-black uppercase tracking-widest rounded-lg">
-                    On Track
-                  </span>
-                </div>
-                <p className="text-3xl font-black text-primary tracking-tight mb-1">
-                  12
-                </p>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-                  Active Projects
-                </p>
-              </div>
-
-              <div className="bg-slate-900 rounded-4xl p-8 shadow-sm flex-1 flex flex-col justify-center relative overflow-hidden group">
-                <div className="absolute -right-6 -bottom-6 w-32 h-32 bg-tertiary/20 rounded-full blur-2xl group-hover:bg-tertiary/40 transition-colors"></div>
-                <div className="flex items-center justify-between mb-4 relative z-10">
-                  <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-tertiary">
-                    <TrendingUp className="w-5 h-5" />
-                  </div>
-                </div>
-                <p className="text-3xl font-black text-white tracking-tight mb-1 relative z-10">
-                  4
-                </p>
-                <p className="text-xs font-bold text-white/50 uppercase tracking-widest relative z-10">
-                  Awaiting Approval
-                </p>
               </div>
             </div>
           </section>
