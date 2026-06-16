@@ -145,7 +145,7 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-white overflow-hidden selection:bg-tertiary selection:text-primary">
       {/* LEFT SIDE */}
-      <section className="w-full lg:w-[55%] flex flex-col items-center justify-center p-8 sm:p-16 lg:p-20 bg-white relative z-10 order-2 lg:order-1">
+      <section className="w-full lg:w-[45%] flex flex-col items-center justify-center p-8 sm:p-16 lg:p-20 bg-white relative z-10 order-2 lg:order-1">
         <div className="w-full max-w-lg">
           {/* Mobile Branding Header */}
           <div className="lg:hidden mb-10 flex flex-col items-center text-center">
@@ -432,7 +432,7 @@ export default function RegisterPage() {
       </section>
 
       {/* RIGHT SIDE */}
-      <section className="hidden lg:flex lg:w-[45%] relative items-center justify-center p-12 overflow-hidden bg-primary order-1 lg:order-2">
+      <section className="hidden lg:flex lg:w-[55%] relative items-center justify-center p-12 overflow-hidden bg-primary order-1 lg:order-2">
         <div
           className="absolute inset-0 opacity-20 pointer-events-none"
           style={{
@@ -444,7 +444,7 @@ export default function RegisterPage() {
         <div className="absolute top-[-10%] right-[-10%] w-125 h-125 bg-primary/20 rounded-full blur-[120px]" />
         <div className="absolute bottom-[-10%] left-[-10%] w-100 h-100 bg-tertiary/10 rounded-full blur-[120px]" />
 
-        <div className="relative z-10 max-w-md w-full">
+        <div className="relative z-10 max-w-xl w-full">
           {/* Glassmorphism Card — identical structure to login */}
           <div className="bg-white/5 backdrop-blur-xl p-10 rounded-[2.5rem] shadow-2xl border border-white/10 border-r-8">
             <div className="flex items-center gap-5 mb-8">

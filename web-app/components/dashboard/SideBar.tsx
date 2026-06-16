@@ -192,7 +192,7 @@ export default function Sidebar({
               <p className="text-[10px] text-tertiary uppercase tracking-widest font-bold truncate">
                 {formatRole(roleType)}
               </p>
-              {barangay && (
+              {barangay && barangay !== "N/A" && (
                 <p className="text-[10px] text-foreground">{barangay}</p>
               )}
             </div>
