@@ -178,7 +178,6 @@ export default function AuditorPage() {
         <SideBar
           userName={currentUser.full_name}
           roleType={currentUser.role_type}
-          barangay={currentUser.barangay}
         />
       )}
 
@@ -198,184 +197,167 @@ export default function AuditorPage() {
               </p>
             </div>
           </div>
-
-          <div className="grid gap-2 text-right">
-            <span className="text-xs uppercase tracking-[0.3em] text-slate-400 font-semibold">
-              Current role
-            </span>
-            <p className="text-sm font-black text-slate-900">
-              {currentUser?.role_type.replace(/_/g, " ")}
-            </p>
-            <p className="text-xs text-slate-500">{currentUser?.barangay}</p>
-          </div>
         </header>
 
         <div className="flex-1 overflow-y-auto p-8">
-          <div className="max-w-7xl mx-auto space-y-8">
-            <section className="grid gap-4 xl:grid-cols-[1.8fr_0.9fr]">
-              <div className="rounded-3xl border border-slate-200 bg-white shadow-sm p-6">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+          <div className="max-w-7xl mx-auto space-y-6">
+            <section className="grid gap-3 lg:grid-cols-[1.6fr_0.9fr] items-start">
+              <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-4 min-h-40 h-full flex flex-col">
+                <div className="flex items-start justify-between gap-3 mb-4">
                   <div>
-                    <p className="text-xs uppercase tracking-[0.3em] text-slate-500 font-bold">
+                    <p className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">
                       Audit readiness
                     </p>
-                    <h2 className="text-2xl font-black text-slate-900 mt-2">
-                      Transaction integrity overview
+                    <h2 className="text-lg font-extrabold text-slate-900 mt-1">
+                      Transaction integrity
                     </h2>
                   </div>
-                  <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700">
+                  <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
                     <ShieldCheck className="w-4 h-4" />
-                    Verified by blockchain
+                    Verified
                   </div>
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-3">
-                  <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
-                    <p className="text-xs uppercase tracking-[0.25em] text-slate-500 font-bold">
-                      Verified cases
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 min-h-27.5 flex flex-col justify-between">
+                    <p className="text-[10px] uppercase text-slate-500 font-bold">
+                      Verified
                     </p>
-                    <p className="mt-4 text-3xl font-black text-slate-900">
+                    <p className="mt-2 text-2xl font-black text-slate-900">
                       2,150
                     </p>
-                    <p className="text-sm text-slate-500 mt-2">
-                      Completed review cycles with compliant receipts.
+                    <p className="text-xs text-slate-500 mt-1">
+                      Completed review cycles
                     </p>
                   </div>
-                  <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
-                    <p className="text-xs uppercase tracking-[0.25em] text-slate-500 font-bold">
-                      Flagged issues
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 min-h-27.5 flex flex-col justify-between">
+                    <p className="text-[10px] uppercase text-slate-500 font-bold">
+                      Flagged
                     </p>
-                    <p className="mt-4 text-3xl font-black text-amber-700">
+                    <p className="mt-2 text-2xl font-black text-amber-700">
                       18
                     </p>
-                    <p className="text-sm text-slate-500 mt-2">
-                      Transactions requiring follow-up or clarification.
+                    <p className="text-xs text-slate-500 mt-1">
+                      Require follow-up
                     </p>
                   </div>
-                  <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
-                    <p className="text-xs uppercase tracking-[0.25em] text-slate-500 font-bold">
-                      Projects audited
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 min-h-27.5 flex flex-col justify-between">
+                    <p className="text-[10px] uppercase text-slate-500 font-bold">
+                      Projects
                     </p>
-                    <p className="mt-4 text-3xl font-black text-slate-900">
+                    <p className="mt-2 text-2xl font-black text-slate-900">
                       12
                     </p>
-                    <p className="text-sm text-slate-500 mt-2">
-                      Active project reviews currently in progress.
+                    <p className="text-xs text-slate-500 mt-1">
+                      Active reviews
                     </p>
                   </div>
                 </div>
               </div>
 
-              <aside className="space-y-4">
-                <div className="rounded-3xl border border-slate-200 bg-white shadow-sm p-6">
-                  <div className="flex items-center justify-between gap-4">
+              <aside className="space-y-3 self-stretch h-full">
+                <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-4 flex flex-col justify-between h-full">
+                  <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-xs uppercase tracking-[0.3em] text-slate-500 font-bold">
-                        Auditor profile
+                      <p className="text-[11px] uppercase text-slate-500 font-semibold">
+                        Auditor
                       </p>
-                      <h3 className="text-xl font-black text-slate-900 mt-3">
+                      <h3 className="text-sm font-black text-slate-900 mt-1">
                         {currentUser?.full_name}
                       </h3>
-                      <p className="mt-2 text-sm text-slate-500">
+                      <p className="text-xs text-slate-500">
                         {currentUser?.role_type.replace(/_/g, " ")}
                       </p>
                     </div>
-                    <div className="rounded-2xl bg-slate-100 px-4 py-3 text-slate-700 text-sm font-semibold">
-                      COA Access
+                    <div className="rounded-lg bg-slate-100 px-3 py-1 text-slate-700 text-xs font-semibold">
+                      COA
                     </div>
                   </div>
 
-                  <div className="mt-6 space-y-3">
-                    <div className="rounded-2xl bg-slate-50 p-4">
-                      <p className="text-xs uppercase tracking-[0.25em] text-slate-500 font-bold">
+                  <div className="mt-3 grid gap-2">
+                    <div className="rounded-lg bg-slate-50 p-2 text-sm">
+                      <p className="text-[10px] uppercase text-slate-500 font-bold">
                         Barangay
                       </p>
-                      <p className="mt-2 text-sm font-semibold text-slate-900">
+                      <p className="mt-1 text-sm font-semibold text-slate-900">
                         {currentUser?.barangay}
                       </p>
                     </div>
-                    <div className="rounded-2xl bg-slate-50 p-4">
-                      <p className="text-xs uppercase tracking-[0.25em] text-slate-500 font-bold">
-                        Access level
+                    <div className="rounded-lg bg-slate-50 p-2 text-sm">
+                      <p className="text-[10px] uppercase text-slate-500 font-bold">
+                        Access
                       </p>
-                      <p className="mt-2 text-sm font-semibold text-slate-900">
-                        Full audit review
+                      <p className="mt-1 text-sm font-semibold text-slate-900">
+                        Full review
                       </p>
                     </div>
-                  </div>
-                </div>
-
-                <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
-                  <p className="text-xs uppercase tracking-[0.3em] text-slate-500 font-bold">
-                    Quick actions
-                  </p>
-                  <div className="mt-4 space-y-3">
-                    <button className="w-full rounded-2xl bg-slate-900 px-4 py-3 text-sm font-bold text-white hover:bg-slate-800 transition-colors">
-                      Start new audit review
-                    </button>
-                    <button className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 transition-colors">
-                      Export audit summary
-                    </button>
                   </div>
                 </div>
               </aside>
             </section>
 
-            <div className="flex gap-2 mb-6">
-              <button
-                onClick={() => setActiveTab("transactions")}
-                className={`px-6 py-3 rounded-2xl text-sm font-bold transition-colors ${
-                  activeTab === "transactions"
-                    ? "bg-slate-900 text-white"
-                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                }`}
-              >
-                Transaction Audit
-              </button>
-              <button
-                onClick={() => setActiveTab("projects")}
-                className={`px-6 py-3 rounded-2xl text-sm font-bold transition-colors ${
-                  activeTab === "projects"
-                    ? "bg-slate-900 text-white"
-                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                }`}
-              >
-                Project Oversight
-              </button>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setActiveTab("transactions")}
+                  className={`px-4 py-2 rounded-xl text-sm font-bold transition ${activeTab === "transactions" ? "bg-primary text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
+                >
+                  Transactions
+                </button>
+                <button
+                  onClick={() => setActiveTab("projects")}
+                  className={`px-4 py-2 rounded-xl text-sm font-bold transition ${activeTab === "projects" ? "bg-primary text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
+                >
+                  Projects
+                </button>
+              </div>
+
+              <div className="rounded-xl bg-slate-50 px-3 py-2 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  className="px-4 py-2 rounded-xl text-sm font-bold bg-primary text-white hover:bg-primary/80"
+                >
+                  Start audit
+                </button>
+                <button
+                  type="button"
+                  className="px-4 py-2 rounded-xl text-sm font-bold bg-slate-100 text-slate-700 hover:bg-slate-200"
+                >
+                  Export
+                </button>
+              </div>
             </div>
 
             {activeTab === "transactions" && (
-              <section className="rounded-3xl border border-slate-200 bg-white shadow-sm p-6">
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+              <section className="rounded-xl border border-slate-200 bg-white shadow-sm p-4">
+                <div className="flex items-center justify-between gap-3 mb-4">
                   <div>
-                    <h2 className="text-xl font-black text-slate-900">
+                    <h2 className="text-lg font-extrabold text-slate-900">
                       Audit stream
                     </h2>
-                    <p className="text-sm text-slate-500 mt-2">
-                      Filter and review the latest transactions with compliance
-                      status.
+                    <p className="text-xs text-slate-500 mt-1">
+                      Filter latest transactions
                     </p>
                   </div>
-                  <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                  <div className="flex items-center gap-2 w-full max-w-lg">
                     <div className="relative flex-1">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Search className="h-5 w-5 text-slate-400" />
+                        <Search className="h-4 w-4 text-slate-400" />
                       </div>
                       <input
                         type="text"
-                        placeholder="Search transactions..."
+                        placeholder="Search..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm font-medium text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10"
+                        className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm text-slate-900 outline-none"
                       />
                     </div>
-
                     <select
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value)}
-                      className="w-full sm:w-56 rounded-2xl border border-slate-200 bg-white py-3 px-4 text-sm font-medium text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10"
+                      className="rounded-lg border border-slate-200 bg-white py-2 px-3 text-sm"
                     >
-                      <option value="all">All statuses</option>
+                      <option value="all">All</option>
                       <option value="verified">Verified</option>
                       <option value="pending">Pending</option>
                       <option value="flagged">Flagged</option>
@@ -383,62 +365,35 @@ export default function AuditorPage() {
                   </div>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {filteredTransactions.map((tx) => (
                     <div
                       key={tx.id}
-                      className="rounded-3xl border border-slate-200 bg-slate-50 p-5 shadow-sm"
+                      className="rounded-lg border border-slate-200 bg-slate-50 p-3 flex items-center justify-between gap-3"
                     >
-                      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs uppercase tracking-[0.3em] text-slate-500 font-semibold">
-                            {tx.category}
-                          </p>
-                          <h3 className="text-lg font-black text-slate-900 mt-2 truncate">
-                            {tx.vendor}
-                          </h3>
-                          <p className="text-sm text-slate-500 mt-2">
-                            Transaction date:{" "}
-                            {new Date(tx.date).toLocaleDateString()}
-                          </p>
-                        </div>
-
-                        <div className="flex flex-wrap items-center gap-3">
-                          <span
-                            className={`rounded-full px-3 py-1 text-xs font-bold ${getStatusColor(
-                              tx.status,
-                            )}`}
-                          >
-                            {tx.status.charAt(0).toUpperCase() +
-                              tx.status.slice(1)}
-                          </span>
-                          <div className="rounded-2xl bg-white border border-slate-200 px-3 py-1 text-sm text-slate-700">
-                            ₱{tx.amount.toLocaleString()}
-                          </div>
-                        </div>
+                      <div className="min-w-0">
+                        <p className="text-[10px] uppercase text-slate-500 font-semibold">
+                          {tx.category}
+                        </p>
+                        <h3 className="text-sm font-black text-slate-900 truncate">
+                          {tx.vendor}
+                        </h3>
+                        <p className="text-xs text-slate-500">
+                          {new Date(tx.date).toLocaleDateString()}
+                        </p>
                       </div>
-
-                      <div className="mt-4 grid gap-3 sm:grid-cols-3 text-sm text-slate-600">
-                        <div className="rounded-2xl bg-white border border-slate-200 p-3">
-                          <p className="font-semibold text-slate-900">
-                            Receipt files
-                          </p>
-                          <p className="mt-2">{tx.receiptCount}</p>
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`rounded-full px-3 py-1 text-xs font-bold ${getStatusColor(tx.status)}`}
+                        >
+                          {tx.status}
                         </div>
-                        <div className="rounded-2xl bg-white border border-slate-200 p-3">
-                          <p className="font-semibold text-slate-900">
-                            Project ID
-                          </p>
-                          <p className="mt-2">{tx.projectId || "Unassigned"}</p>
+                        <div className="text-sm font-black text-slate-900">
+                          ₱{tx.amount.toLocaleString()}
                         </div>
-                        <div className="rounded-2xl bg-white border border-slate-200 p-3">
-                          <p className="font-semibold text-slate-900">
-                            Blockchain hash
-                          </p>
-                          <p className="mt-2 font-mono text-xs break-all">
-                            {tx.blockchainHash}
-                          </p>
-                        </div>
+                        <button className="px-2 py-1 bg-primary text-white rounded-md text-xs font-bold hover:bg-primary/90 transition-colors">
+                          Review
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -447,79 +402,53 @@ export default function AuditorPage() {
             )}
 
             {activeTab === "projects" && (
-              <section className="rounded-3xl border border-slate-200 bg-white shadow-sm p-6">
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+              <section className="rounded-xl border border-slate-200 bg-white shadow-sm p-4">
+                <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h2 className="text-xl font-black text-slate-900">
+                    <h2 className="text-lg font-extrabold text-slate-900">
                       Project oversight
                     </h2>
-                    <p className="text-sm text-slate-500 mt-2">
-                      Review current project compliance and budget progress.
+                    <p className="text-xs text-slate-500 mt-1">
+                      Review project compliance and budgets
                     </p>
                   </div>
-                  <button className="rounded-2xl bg-slate-900 px-5 py-3 text-sm font-bold text-white hover:bg-slate-800 transition-colors">
-                    Export project audit
+                  <button className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-bold text-white">
+                    Export
                   </button>
                 </div>
 
-                <div className="grid gap-4 xl:grid-cols-2">
+                <div className="grid gap-3 md:grid-cols-2">
                   {projects.map((project) => (
                     <div
                       key={project.id}
-                      className="rounded-3xl border border-slate-200 bg-slate-50 p-6"
+                      className="rounded-lg border border-slate-200 bg-slate-50 p-3"
                     >
-                      <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-start justify-between">
                         <div>
-                          <p className="text-xs uppercase tracking-[0.3em] text-slate-500 font-bold">
+                          <p className="text-[10px] uppercase text-slate-500 font-bold">
                             {project.status.replace(/-/g, " ")}
                           </p>
-                          <h3 className="mt-3 text-lg font-black text-slate-900">
+                          <h3 className="mt-2 text-sm font-black text-slate-900">
                             {project.name}
                           </h3>
                         </div>
-                        <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-700">
-                          {project.complianceScore}% compliant
+                        <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-bold text-blue-700">
+                          {project.complianceScore}%
                         </span>
                       </div>
 
-                      <div className="mt-5 space-y-4 text-sm text-slate-600">
-                        <div className="grid gap-3 sm:grid-cols-2">
-                          <div className="rounded-2xl bg-white border border-slate-200 p-4">
-                            <p className="font-semibold text-slate-900">
-                              Budget
-                            </p>
-                            <p className="mt-2">
-                              ₱{project.budget.toLocaleString()}
-                            </p>
-                          </div>
-                          <div className="rounded-2xl bg-white border border-slate-200 p-4">
-                            <p className="font-semibold text-slate-900">
-                              Spent
-                            </p>
-                            <p className="mt-2">
-                              ₱{project.spent.toLocaleString()}
-                            </p>
-                          </div>
+                      <div className="mt-3 text-sm text-slate-600 grid gap-2 sm:grid-cols-2">
+                        <div className="rounded-lg bg-white border border-slate-200 p-2">
+                          <p className="font-semibold text-slate-900">Budget</p>
+                          <p className="mt-1">
+                            ₱{project.budget.toLocaleString()}
+                          </p>
                         </div>
-
-                        <div>
-                          <div className="flex items-center justify-between text-xs text-slate-500 font-semibold mb-2">
-                            <span>Utilization</span>
-                            <span>
-                              {Math.round(
-                                (project.spent / project.budget) * 100,
-                              )}
-                              %
-                            </span>
-                          </div>
-                          <div className="h-2 rounded-full bg-slate-200 overflow-hidden">
-                            <div
-                              className="h-full rounded-full bg-blue-600"
-                              style={{
-                                width: `${(project.spent / project.budget) * 100}%`,
-                              }}
-                            />
-                          </div>
+                        <div className="rounded-lg bg-white border border-slate-200 p-2">
+                          <p className="font-semibold text-slate-900">Spent</p>
+                          <p className="mt-1">
+                            ₱{project.spent.toLocaleString()}
+                          </p>
                         </div>
                       </div>
                     </div>

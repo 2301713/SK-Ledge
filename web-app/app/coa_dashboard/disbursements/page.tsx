@@ -159,7 +159,7 @@ export default function DisbursementsPage() {
                 <span className="text-slate-500 font-bold text-[10px] uppercase tracking-widest mr-2">
                   Quick Views:
                 </span>
-                <button className="px-3 py-1.5 bg-slate-800 text-white rounded-md text-xs font-bold">
+                <button className="px-3 py-1.5 bg-primary text-white rounded-md text-xs font-bold">
                   All Pending
                 </button>
                 <button className="px-3 py-1.5 bg-white border border-slate-200 text-rose-600 hover:bg-rose-50 rounded-md text-xs font-bold flex items-center gap-1">
@@ -168,81 +168,76 @@ export default function DisbursementsPage() {
               </div>
             </div>
 
-            {/* AUDIT TABLE CONTAINER */}
+            {/* AUDIT TABLE CONTAINER (modern compact) */}
             <section className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+                <table className="min-w-full divide-y divide-slate-100">
                   <thead className="bg-slate-50/80 border-b border-slate-200">
                     <tr>
-                      <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                      <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 text-left">
                         DV Reference
                       </th>
-                      <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                      <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 text-left">
                         Payee / Entity
                       </th>
-                      <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                      <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500">
                         Category
                       </th>
-                      <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">
+                      <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">
                         Amount
                       </th>
-                      <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500 text-center">
+                      <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 text-center">
                         Docs Status
                       </th>
-                      <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">
+                      <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">
                         Audit Action
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="bg-white divide-y divide-slate-100">
                     {pendingDisbursements.map((item) => (
                       <tr
                         key={item.id}
-                        className="hover:bg-slate-50/80 transition-colors group"
+                        className="hover:bg-slate-50 transition-colors duration-150"
                       >
-                        {/* Column 1: DV Info */}
-                        <td className="px-6 py-4">
+                        <td className="px-4 py-4 align-middle">
                           <div className="flex items-center gap-3">
-                            <div className="p-2 bg-slate-100 rounded text-slate-500 group-hover:text-emerald-600 transition-colors">
+                            <div className="p-2 bg-slate-100 rounded text-slate-500">
                               <FileText size={16} />
                             </div>
                             <div>
                               <p className="font-black text-slate-900 text-sm tracking-tight">
                                 {item.id}
                               </p>
-                              <p className="text-[10px] font-bold text-slate-400 mt-0.5">
+                              <p className="text-[11px] text-slate-400 font-semibold">
                                 {item.dateSubmitted}
                               </p>
                             </div>
                           </div>
                         </td>
 
-                        {/* Column 2: Payee */}
-                        <td className="px-6 py-4">
+                        <td className="px-4 py-4 align-middle">
                           <p className="font-bold text-slate-800 text-sm">
                             {item.payee}
                           </p>
-                          <p className="text-[10px] font-bold text-slate-500 mt-0.5 flex items-center gap-1">
+                          <p className="text-[11px] text-slate-500 mt-0.5">
                             {item.brgy}
                           </p>
                         </td>
 
-                        {/* Column 3: Category */}
-                        <td className="px-6 py-4">
+                        <td className="px-4 py-4 align-middle">
                           <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest bg-slate-100 text-slate-600">
                             {item.category}
                           </span>
                         </td>
 
-                        {/* Column 4: Amount */}
-                        <td className="px-6 py-4 text-right">
+                        <td className="px-4 py-4 align-middle text-right">
                           <span className="font-black text-slate-900 tracking-tight text-sm">
                             {formatCurrency(item.amount)}
                           </span>
                         </td>
 
-                        {/* Column 5: Compliance Status */}
-                        <td className="px-6 py-4 text-center">
+                        <td className="px-4 py-4 align-middle text-center">
                           {item.compliance === "Clean" && (
                             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-black uppercase tracking-widest border border-emerald-200">
                               <CheckCircle2 size={12} /> Clean
@@ -260,9 +255,8 @@ export default function DisbursementsPage() {
                           )}
                         </td>
 
-                        {/* Column 6: Actions */}
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <td className="px-4 py-4 align-middle text-right">
+                          <div className="flex items-center justify-end gap-3">
                             <button
                               className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors"
                               title="Review Vouchers"
@@ -272,7 +266,7 @@ export default function DisbursementsPage() {
                             <button className="p-1.5 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-md transition-colors">
                               <MoreHorizontal size={18} />
                             </button>
-                            <button className="ml-2 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors shadow-sm">
+                            <button className="px-3 py-1.5 bg-primary hover:bg-primary/90 text-white rounded-md text-[10px] font-black uppercase tracking-widest transition-colors shadow-sm">
                               Audit
                             </button>
                           </div>
@@ -281,6 +275,7 @@ export default function DisbursementsPage() {
                     ))}
                   </tbody>
                 </table>
+
                 {pendingDisbursements.length === 0 && (
                   <div className="p-12 text-center flex flex-col items-center justify-center border-t border-slate-100">
                     <ShieldCheck size={40} className="text-slate-300 mb-3" />

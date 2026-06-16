@@ -141,84 +141,87 @@ export default function ApprovalsPage() {
 
         <div className="flex-1 overflow-y-auto p-10 z-10">
           <div className="max-w-6xl mx-auto">
-            <section className="bg-white border border-slate-200 shadow-[0_1px_3px_rgba(0,0,0,0.1)] rounded-sm overflow-hidden">
-              <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/30">
+            <section className="bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/30">
                 <div>
                   <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest">
                     Awaiting Authorization
                   </h2>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tight">
-                    System Live
-                  </span>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Latest requests awaiting COA review
+                  </p>
                 </div>
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="bg-white border-b border-slate-200">
-                      <th className="px-8 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">
+                <table className="min-w-full divide-y divide-slate-100">
+                  <thead className="bg-white">
+                    <tr>
+                      <th className="px-4 py-3 text-[11px] font-black uppercase tracking-widest text-slate-400 text-left">
                         Department
                       </th>
-                      <th className="px-8 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">
-                        Purpose & Justification
+                      <th className="px-4 py-3 text-[11px] font-black uppercase tracking-widest text-slate-400 text-left">
+                        Purpose
                       </th>
-                      <th className="px-8 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">
+                      <th className="px-4 py-3 text-[11px] font-black uppercase tracking-widest text-slate-400 text-left">
                         Amount
                       </th>
-                      <th className="px-8 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right">
-                        Verification
+                      <th className="px-4 py-3 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right">
+                        Status
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="bg-white divide-y divide-slate-100">
                     {approvalsData.map((item) => (
                       <tr
                         key={item.id}
-                        className="hover:bg-slate-50/80 transition-all duration-200 group"
+                        className="hover:bg-slate-50 transition-colors duration-150"
                       >
-                        <td className="px-8 py-6">
+                        <td className="px-4 py-4 align-middle">
                           <div className="flex flex-col">
                             <span className="font-black text-slate-900 text-sm tracking-tight uppercase">
                               {item.department}
                             </span>
-                            <span className="text-[10px] text-slate-400 font-bold">
+                            <span className="text-[11px] text-slate-400 font-semibold">
                               Ref: #00{item.id}
                             </span>
                           </div>
                         </td>
-                        <td className="px-8 py-6">
-                          <span className="text-sm font-semibold text-slate-600 leading-relaxed">
+                        <td className="px-4 py-4 align-middle max-w-xl">
+                          <span className="text-sm font-medium text-slate-600 leading-tight line-clamp-2">
                             {item.purpose}
                           </span>
                         </td>
-                        <td className="px-8 py-6">
+                        <td className="px-4 py-4 align-middle">
                           <span className="text-base font-black text-primary tabular-nums">
                             {item.amount}
                           </span>
                         </td>
-                        <td className="px-8 py-6 text-right">
-                          <button
-                            onClick={() => handleApprove(item.id)}
-                            disabled={item.status === "Approved"}
-                            className={`inline-flex items-center px-6 py-2.5 text-[11px] rounded-lg font-black uppercase tracking-widest transition-all duration-300 border-2 ${
-                              item.status === "Approved"
-                                ? "bg-transparent text-emerald-500 border-emerald-500/20 cursor-not-allowed"
-                                : "bg-slate-900 text-white border-slate-900 hover:bg-primary hover:border-primary active:translate-y-0.5"
-                            }`}
-                          >
-                            {item.status === "Approved" ? (
-                              <span className="flex items-center gap-2">
-                                <Check className="w-4 h-4" strokeWidth={3} />
-                                Released
-                              </span>
-                            ) : (
-                              "Authorize"
-                            )}
-                          </button>
+                        <td className="px-4 py-4 align-middle text-right">
+                          <div className="flex items-center justify-end gap-3">
+                            <span
+                              className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${item.status === "Approved" ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600"}`}
+                            >
+                              {item.status === "Approved"
+                                ? "Approved"
+                                : "Pending"}
+                            </span>
+
+                            <button
+                              onClick={() => handleApprove(item.id)}
+                              disabled={item.status === "Approved"}
+                              className={`inline-flex items-center px-3 py-1.5 text-[11px] rounded-md font-black uppercase tracking-widest transition-colors duration-150 border-2 ${item.status === "Approved" ? "bg-transparent text-emerald-500 border-emerald-500/20 cursor-not-allowed" : "bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 shadow-sm"}`}
+                            >
+                              {item.status === "Approved" ? (
+                                <span className="flex items-center gap-2">
+                                  <Check className="w-4 h-4" strokeWidth={3} />
+                                  Released
+                                </span>
+                              ) : (
+                                "Authorize"
+                              )}
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -226,7 +229,7 @@ export default function ApprovalsPage() {
                 </table>
               </div>
 
-              <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex justify-between">
+              <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-between text-sm">
                 <p className="text-[10px] font-bold text-slate-400 uppercase">
                   sk-ledge // Internal Audit v2.4
                 </p>
