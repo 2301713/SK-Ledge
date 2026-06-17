@@ -1,36 +1,24 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SK-Ledge: A Blockchain-based for Secure SK Fund Tracking an Automated Audit Reporting
 
-## Getting Started
+## Project Overview
 
-First, run the development server:
+SK-Ledge is a specialized financial management system designed to modernize how the Sangguniang Kabataan (SK) handles its 10% annual budget allocation. By transitioning from manual, paper-based bookkeeping to a digital ledger, the platform ensures that every peso spent on community programs is recorded in a secure, unalterable format. The system serves as a bridge between SK officials, oversight agencies, and youth constituents, providing a "single source of truth" for barangay-level expenditures.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Project Objectives
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The project objectives focus on transforming Sangguniang Kabataan financial processes into a high-integrity digital ecosystem through four key phases. First, the development begins with an empirical analysis of existing workflows to identify the specific reporting "pain points" and transparency gaps affecting both officials and youth constituents. Following this, the project aims to design a decentralized architecture and a user-friendly React interface that simplifies complex data into an accessible dashboard. The core development phase involves engineering a secure ledger system using Python and Solidity to track fund expenditures, ensuring every transaction is tamper-proof and permanently auditable. Finally, the system’s effectiveness will be validated through expert testing and user feedback to ensure it meets the highest standards of security, usability, and government compliance.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Problems Found
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Vulnerability of Records:** Reliance on physical ledgers or spreadsheets creates a "single point of failure" where data can be easily edited, lost, or deleted.
+- **Manual Audit Delays:** Oversight agencies face pressure to verify reports manually, leading to a significant time gap between fund disbursement and official auditing.
+- **Administrative Burden:** SK officials struggle to balance community program management with the complex task of preparing mandated monthly and quarterly financial reports.
+- **Limited Transparency:** Financial disclosures are often restricted to physical boards in barangay offices, making them inaccessible to the broader youth community.
+- **Procurement Gaps:** Difficulty in tracking vendor payments and verifying the legitimacy of supplier transactions in a transparent manner.
 
-## Learn More
+## Core Features
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Immutable Ledger:** Uses Blockchain technology to ensure transactions are immutable once confirmed.
+- **Automated Report Generation:** One-click creation of financial reports compliant with COA and DILG requirements.
+- **Public Transparency Dashboard:** A portal for youth constituents to view real-time fund utilization.
+- **Supplier & Procurement Module:** Dedicated logging for vendor-related expenses to ensure clarity in procurement activities.
