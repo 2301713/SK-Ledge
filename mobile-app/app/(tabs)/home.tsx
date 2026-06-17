@@ -3,7 +3,6 @@ import {
   Briefcase,
   ChevronRight,
   CircleDollarSign,
-  Sparkles,
   Trophy,
 } from "lucide-react-native";
 import React, { useEffect, useState } from "react";
@@ -88,7 +87,6 @@ export default function HomePage() {
         {/* Recent Opportunities Section */}
         <View style={styles.sectionHeader}>
           <View style={styles.sectionTitleRow}>
-            <Sparkles size={20} color="#FFCC00" />
             <Text style={styles.sectionTitle}>New Opportunities</Text>
           </View>
           <TouchableOpacity activeOpacity={0.6}>
@@ -165,7 +163,7 @@ const styles = StyleSheet.create({
   },
   headerBackground: {
     backgroundColor: "#003366",
-    paddingBottom: 60,
+    paddingBottom: 40,
     borderBottomLeftRadius: 32,
     borderBottomRightRadius: 32,
     backdropFilter: "blur(20px)",
@@ -175,7 +173,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 24,
-    paddingTop: 40,
+    paddingTop: 10,
   },
   greetingText: {
     fontSize: 16,
@@ -267,6 +265,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   sectionTitle: {
+    marginLeft: 6,
     fontSize: 20,
     fontWeight: "800",
     color: "#1E293B",
