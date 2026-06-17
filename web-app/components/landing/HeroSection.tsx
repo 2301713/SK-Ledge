@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, ShieldCheck, Wallet, ChevronRight } from "lucide-react";
+import Image from "next/image";
 
 export default function HeroSection() {
   return (
@@ -7,8 +8,17 @@ export default function HeroSection() {
       id="home"
       className="relative min-h-screen flex flex-col justify-center overflow-hidden bg-slate-950 px-6"
     >
-      {/* Background grid */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-size-[64px_64px] pointer-events-none" />
+      {/* Blockchain GIF Background */}
+      <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
+        <Image
+          src="/gifs/chain-hologram.gif"
+          alt="blockchain background"
+          className="w-full h-full opacity-25 object-cover"
+          width={1920}
+          height={1080}
+          unoptimized
+        />
+      </div>
 
       {/* Glow orb */}
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-150 h-150 rounded-full bg-primary/8 blur-[120px] pointer-events-none" />

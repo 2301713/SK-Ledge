@@ -35,41 +35,41 @@ const TEAM = [
 
 export default function TeamSection() {
   return (
-    <section id="team" className="py-32 bg-white px-6 animate-fadein">
+    <section id="team" className="py-16 bg-white px-6 animate-fadein">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-16 pb-10 border-b border-slate-100">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-10 pb-8 border-b border-slate-100">
           <div>
-            <p className="text-xs font-bold text-primary uppercase tracking-[0.2em] mb-4">
+            <p className="text-xs font-bold text-primary uppercase tracking-[0.2em] mb-3">
               Our Team
             </p>
-            <h2 className="text-5xl md:text-6xl font-extrabold text-slate-900 tracking-tight leading-none">
+            <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
               The minds
               <br />
               behind <span className="text-primary">SK-Ledge.</span>
             </h2>
           </div>
-          <p className="text-slate-400 max-w-xs text-base leading-relaxed md:text-right">
+          <p className="text-slate-400 max-w-xs text-sm leading-relaxed md:text-right">
             Passionate developers bringing modern technology to local
             governance.
           </p>
         </div>
 
         {/* Team grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {TEAM.map((member, idx) => (
             <div
               key={idx}
-              className="group flex items-center gap-5 p-5 rounded-2xl border border-slate-100 hover:border-slate-200 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 cursor-pointer bg-white"
+              className="group flex items-center gap-3 p-4 rounded-lg border border-slate-100 hover:border-slate-200 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 cursor-pointer bg-white"
             >
               {/* Avatar */}
-              <div className="w-15 h-15 shrink-0 rounded-xl overflow-hidden border border-slate-100">
+              <div className="w-14 h-14 shrink-0 rounded-lg overflow-hidden border border-slate-100">
                 <Image
                   src={member.image}
                   alt={`${member.name} Profile`}
                   className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500 scale-105 group-hover:scale-100"
-                  width={60}
-                  height={60}
+                  width={56}
+                  height={56}
                 />
               </div>
 
