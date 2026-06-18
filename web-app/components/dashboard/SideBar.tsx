@@ -21,6 +21,7 @@ import {
   ShieldCheck,
   LogOut,
   Activity,
+  ChartPie,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -36,6 +37,7 @@ const ROLE_LINKS: Record<
   SK_Chairperson: [
     { label: "Overview", href: "/sk_dashboard", icon: LayoutDashboard },
     { label: "Projects", href: "/sk_dashboard/projects", icon: FolderKanban },
+    { label: "ABYIP", href: "/sk_dashboard/abyip", icon: ChartPie },
     { label: "Expenses", href: "/sk_dashboard/expenses", icon: Receipt },
     { label: "Reports", href: "/sk_dashboard/reports", icon: FileBarChart },
     { label: "Documents", href: "/sk_dashboard/upload", icon: UploadCloud },
@@ -44,6 +46,7 @@ const ROLE_LINKS: Record<
   SK_Treasurer: [
     { label: "Overview", href: "/sk_dashboard", icon: LayoutDashboard },
     { label: "Projects", href: "/sk_dashboard/projects", icon: FolderKanban },
+    { label: "ABYIP", href: "/sk_dashboard/abyip", icon: ChartPie },
     { label: "Expenses", href: "/sk_dashboard/expenses", icon: Receipt },
     { label: "Reports", href: "/sk_dashboard/reports", icon: FileBarChart },
     { label: "Documents", href: "/sk_dashboard/upload", icon: UploadCloud },
