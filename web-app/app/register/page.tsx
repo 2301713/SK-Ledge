@@ -1,143 +1,46 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 import { useFormStore } from "@/lib/useFormStore";
 import { useToast } from "@/lib/useToast";
 import {
-  CircleAlert,
-  Loader2,
   ShieldCheck,
   CheckCircle2,
   BarChart3,
   Lock,
   Landmark,
-  User,
-  KeyRound,
-  EyeOff,
-  Eye,
-  ArrowRight,
-  ChevronRight,
-  MapPin,
-  UserCog,
 } from "lucide-react";
 
 export default function RegisterPage() {
-  const router = useRouter();
   const toast = useToast();
   const {
-    register: { formData, showPassword, error, isLoading },
-    setRegisterFormData,
-    setRegisterShowPassword,
+    register: { isLoading },
     setRegisterError,
     setRegisterIsLoading,
   } = useFormStore();
 
-  // Helper boolean to check if the current role requires a barangay
-  const isSKRole =
-    formData.role_type === "SK_Chairperson" ||
-    formData.role_type === "SK_Treasurer";
-
-  // Password requires at least 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char
-  const validatePassword = (password: string) => {
-    const regex =
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-    return regex.test(password);
-  };
-
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleGoogleSignIn = async () => {
     setRegisterIsLoading(true);
     setRegisterError("");
 
-    const {
-      full_name,
-      barangay,
-      username,
-      email,
-      password,
-      confirmPassword,
-      role_type,
-    } = formData;
-
-    // Base validation for fields that EVERYONE needs
-    if (!username || !email || !password || !full_name || !role_type) {
-      const msg = "Please fill out all required fields.";
-      setRegisterError(msg);
-      toast.warning(msg);
-      setRegisterIsLoading(false);
-      return;
-    }
-
-    // Only require barangay if they are an SK official
-    if (isSKRole && !barangay.trim()) {
-      const msg = "Barangay is required for SK Officials.";
-      setRegisterError(msg);
-      toast.warning(msg);
-      setRegisterIsLoading(false);
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      const msg = "Passwords do not match.";
-      setRegisterError(msg);
-      toast.error(msg);
-      setRegisterIsLoading(false);
-      return;
-    }
-
-    if (!validatePassword(password)) {
-      const msg =
-        "Password must be at least 8 characters and include uppercase, lowercase, number, and special character.";
-      setRegisterError(msg);
-      toast.error(msg);
-      setRegisterIsLoading(false);
-      return;
-    }
-
-    const finalBarangay = isSKRole ? barangay : "N/A";
-
     try {
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email: email,
-        password: password,
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
         options: {
-          data: {
-            username: username,
-            role_type: role_type,
-            full_name: full_name,
-            barangay: finalBarangay,
-            email: email,
-            approval_status: "pending",
+          redirectTo: `${typeof window !== "undefined" ? window.location.origin : ""}/auth/callback`,
+          queryParams: {
+            access_type: "offline",
+            prompt: "consent",
           },
         },
       });
 
-      if (signUpError) throw signUpError;
-
-      // UX
-      console.log("Registration successful!", data);
-      toast.success(
-        "Account created! Pending admin approval. Redirecting to login...",
-      );
-
-      setRegisterFormData({
-        full_name: "",
-        barangay: "",
-        username: "",
-        email: "",
-        password: "",
-        confirmPassword: "",
-        role_type: "SK_Chairperson",
-      });
-
-      setTimeout(() => router.push("/login"), 1000);
+      if (error) throw error;
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "An unexpected error occurred.";
+        err instanceof Error ? err.message : "Google sign-in failed";
       setRegisterError(message);
       toast.error(message);
-    } finally {
       setRegisterIsLoading(false);
     }
   };
@@ -169,257 +72,34 @@ export default function RegisterPage() {
             </p>
           </header>
 
-          {/* ERROR ALERT */}
-          {error && (
-            <div className="mb-6 rounded-2xl bg-danger/10 p-4 border border-danger/20 flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
-              <span className="text-danger mt-0.5">
-                <CircleAlert className="w-5 h-5" />
-              </span>
-              <p className="text-sm font-semibold text-danger leading-snug">
-                {error}
-              </p>
-            </div>
-          )}
-
-          <form onSubmit={handleRegister} className="space-y-5">
-            {/* ROW 1: Full Name + Role — side by side */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              {/* FULL NAME */}
-              <div className="space-y-2">
-                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
-                  Full Name
-                </label>
-                <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-300 group-focus-within:text-primary transition-colors">
-                    <User className="w-5 h-5" />
-                  </div>
-                  <input
-                    type="text"
-                    required
-                    value={formData.full_name}
-                    onChange={(e) =>
-                      setRegisterFormData({
-                        ...formData,
-                        full_name: e.target.value,
-                      })
-                    }
-                    className="w-full bg-slate-50 border-2 border-transparent rounded-2xl pl-12 pr-4 py-4 text-sm font-medium text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none placeholder:text-slate-300"
-                    placeholder="Juan Dela Cruz"
-                  />
-                </div>
-              </div>
-
-              {/* ROLE */}
-              <div className="space-y-2">
-                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
-                  Role
-                </label>
-                <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-300 group-focus-within:text-primary transition-colors">
-                    <UserCog className="w-5 h-5" />
-                  </div>
-                  <select
-                    value={formData.role_type}
-                    onChange={(e) =>
-                      setRegisterFormData({
-                        ...formData,
-                        role_type: e.target.value,
-                      })
-                    }
-                    className="w-full bg-slate-50 border-2 border-transparent rounded-2xl pl-12 pr-4 py-4 text-sm font-medium text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none cursor-pointer"
-                  >
-                    <option value="SK_Chairperson">SK Chairperson</option>
-                    <option value="SK_Treasurer">SK Treasurer</option>
-                    <option value="BMO">BMO</option>
-                    <option value="SK_Federation">SK Federation</option>
-                    <option value="COA">COA</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            {/* BARANGAY */}
-            {isSKRole && (
-              <div className="space-y-2">
-                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
-                  Barangay
-                </label>
-                <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-300 group-focus-within:text-primary transition-colors">
-                    <MapPin className="w-5 h-5" />
-                  </div>
-                  <input
-                    type="text"
-                    required
-                    value={formData.barangay}
-                    onChange={(e) =>
-                      setRegisterFormData({
-                        ...formData,
-                        barangay: e.target.value,
-                      })
-                    }
-                    className="w-full bg-slate-50 border-2 border-transparent rounded-2xl pl-12 pr-4 py-4 text-sm font-medium text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none placeholder:text-slate-300"
-                    placeholder="e.g. Barangay San Jose"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* EMAIL */}
-            <div className="space-y-2">
-              <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
-                Email Address
-              </label>
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-300 group-focus-within:text-primary transition-colors">
-                  <User className="w-5 h-5" />
-                </div>
-                <input
-                  type="email"
-                  required
-                  value={formData.email}
-                  onChange={(e) =>
-                    setRegisterFormData({
-                      ...formData,
-                      email: e.target.value,
-                    })
-                  }
-                  className="w-full bg-slate-50 border-2 border-transparent rounded-2xl pl-12 pr-4 py-4 text-sm font-medium text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none placeholder:text-slate-300"
-                  placeholder="e.g. juan@example.com"
+          {/* GOOGLE SIGN-IN SECTION */}
+          <div className="mb-8 space-y-4">
+            <button
+              type="button"
+              onClick={handleGoogleSignIn}
+              disabled={isLoading}
+              className="w-full bg-white hover:bg-gray-50 text-gray-800 font-bold py-4 px-4 rounded-2xl shadow-md border-2 border-gray-200 hover:border-gray-300 transform transition active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center gap-3 group"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24">
+                <path
+                  fill="#EA4335"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
                 />
-              </div>
-            </div>
-
-            {/* USERNAME */}
-            <div className="space-y-2">
-              <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
-                Portal Username
-              </label>
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-300 group-focus-within:text-primary transition-colors">
-                  <User className="w-5 h-5" />
-                </div>
-                <input
-                  type="text"
-                  required
-                  value={formData.username}
-                  onChange={(e) =>
-                    setRegisterFormData({
-                      ...formData,
-                      username: e.target.value,
-                    })
-                  }
-                  className="w-full bg-slate-50 border-2 border-transparent rounded-2xl pl-12 pr-4 py-4 text-sm font-medium text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none placeholder:text-slate-300"
-                  placeholder="e.g. juandelacruz123"
+                <path
+                  fill="#34A853"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
                 />
-              </div>
-            </div>
-
-            {/* ROW 2 */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              {/* PASSWORD */}
-              <div className="space-y-2">
-                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
-                  Secure Password
-                </label>
-                <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-300 group-focus-within:text-primary transition-colors">
-                    <KeyRound className="w-5 h-5" />
-                  </div>
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    required
-                    value={formData.password}
-                    onChange={(e) =>
-                      setRegisterFormData({
-                        ...formData,
-                        password: e.target.value,
-                      })
-                    }
-                    className="w-full bg-slate-50 border-2 border-transparent rounded-2xl pl-12 pr-12 py-4 text-sm font-medium text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none placeholder:text-slate-300"
-                    placeholder="Min. 8 characters"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setRegisterShowPassword(!showPassword)}
-                    className="absolute right-4 inset-y-0 text-primary/60 hover:text-primary transition-colors"
-                  >
-                    {showPassword ? (
-                      <EyeOff className="w-5 h-5" />
-                    ) : (
-                      <Eye className="w-5 h-5" />
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              {/* CONFIRM PASSWORD */}
-              <div className="space-y-2">
-                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
-                  Confirm Password
-                </label>
-                <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-300 group-focus-within:text-primary transition-colors">
-                    <KeyRound className="w-5 h-5" />
-                  </div>
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    required
-                    value={formData.confirmPassword}
-                    onChange={(e) =>
-                      setRegisterFormData({
-                        ...formData,
-                        confirmPassword: e.target.value,
-                      })
-                    }
-                    className="w-full bg-slate-50 border-2 border-transparent rounded-2xl pl-12 pr-4 py-4 text-sm font-medium text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none placeholder:text-slate-300"
-                    placeholder="Re-enter password"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* SUBMIT BUTTON */}
-            <div className="pt-2">
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-5 rounded-2xl shadow-2xl shadow-primary/20 transform transition active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center gap-3 group"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="animate-spin h-5 w-5 text-white" />
-                    <span className="text-lg">Creating Account...</span>
-                  </>
-                ) : (
-                  <>
-                    <span className="text-lg">Submit Request</span>
-                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
-
-          {/* LOGIN PROMPT */}
-          <div className="mt-12 pt-8 border-t border-slate-100">
-            <div className="bg-slate-50 p-6 rounded-4xl border border-dashed border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="text-center sm:text-left">
-                <p className="text-slate-500 text-sm font-medium">
-                  Already have an account?
-                </p>
-                <p className="text-primary font-extrabold tracking-tight">
-                  Sign In Instead
-                </p>
-              </div>
-              <button
-                onClick={() => router.push("/login")}
-                className="flex items-center gap-2 px-6 py-3 bg-white text-primary font-bold rounded-xl shadow-md hover:shadow-lg transition-all border border-slate-100 group whitespace-nowrap"
-              >
-                Go to Login{" "}
-                <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </button>
-            </div>
+                <path
+                  fill="#FBBC05"
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                />
+                <path
+                  fill="#4285F4"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                />
+              </svg>
+              <span className="text-base">Sign Up with Google</span>
+            </button>
           </div>
 
           <footer className="mt-12 text-center">

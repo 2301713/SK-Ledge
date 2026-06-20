@@ -89,6 +89,8 @@ export default function SKDashboard() {
             email: profileData.email,
             approval_status: profileData.approval_status,
           });
+
+          setIsLoading(false);
         } else {
           console.warn("No profile data found");
           setIsLoading(false);
