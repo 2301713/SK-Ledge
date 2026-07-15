@@ -12,7 +12,9 @@ import {
   MapPin,
   UserCog,
   ArrowRight,
+  ChevronDown,
 } from "lucide-react";
+import { BATANGAS_BARANGAYS } from "@/lib/batangasBarangays";
 
 export default function CompleteProfilePage() {
   const router = useRouter();
@@ -20,6 +22,8 @@ export default function CompleteProfilePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [userEmail, setUserEmail] = useState("");
+  const [isSessionReady, setIsSessionReady] = useState(false);
+  const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
   const [formData, setFormData] = useState({
     username: "",
     role_type: "SK_Chairperson",
@@ -27,21 +31,49 @@ export default function CompleteProfilePage() {
   });
 
   useEffect(() => {
-    // Get the current user's email
-    const getUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+    let isMounted = true;
+    let attempts = 0;
 
-      if (!user) {
-        router.push("/register");
+    const getUser = async () => {
+      while (attempts < 6) {
+        attempts += 1;
+
+        const {
+          data: { user },
+          error,
+        } = await supabase.auth.getUser();
+
+        if (!isMounted) return;
+
+        if (user) {
+          setUserEmail(user.email || "");
+          setIsSessionReady(true);
+          setHasCheckedAuth(true);
+          return;
+        }
+
+        if (error) {
+          console.warn("Auth session not ready yet:", error.message);
+        }
+
+        if (attempts < 6) {
+          await new Promise((resolve) => setTimeout(resolve, 400));
+          continue;
+        }
+
+        setHasCheckedAuth(true);
+        setError(
+          "We could not load your Google session yet. Please go back and try the sign-in step again.",
+        );
         return;
       }
-
-      setUserEmail(user.email || "");
     };
 
     getUser();
+
+    return () => {
+      isMounted = false;
+    };
   }, [router]);
 
   const isSKRole =
@@ -119,7 +151,7 @@ export default function CompleteProfilePage() {
       toast.success(
         "Profile completed! Pending admin approval. Redirecting...",
       );
-      setTimeout(() => router.push("/login"), 1500);
+      setTimeout(() => router.replace("/login"), 1500);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "An unexpected error occurred";
@@ -129,6 +161,47 @@ export default function CompleteProfilePage() {
       setIsLoading(false);
     }
   };
+
+  if (!isSessionReady && !hasCheckedAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white px-6">
+        <div className="text-center">
+          <Loader2 className="mx-auto mb-4 h-10 w-10 animate-spin text-primary" />
+          <p className="text-lg font-semibold text-slate-700">
+            Preparing your Google sign-in session...
+          </p>
+          <p className="mt-2 text-sm text-slate-500">
+            Please wait a moment while we load your profile form.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isSessionReady && hasCheckedAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white px-6">
+        <div className="max-w-md rounded-3xl border border-slate-200 bg-slate-50 p-8 text-center shadow-sm">
+          <p className="mb-3 text-sm font-black uppercase tracking-[0.3em] text-primary">
+            Session issue
+          </p>
+          <h2 className="mb-3 text-2xl font-black text-slate-900">
+            We could not load your account session
+          </h2>
+          <p className="mb-6 text-sm text-slate-600">
+            Please return to the sign-in page and try Google sign-in again.
+          </p>
+          <button
+            type="button"
+            onClick={() => router.replace("/login")}
+            className="rounded-2xl bg-primary px-5 py-3 text-sm font-bold text-white"
+          >
+            Back to login
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-white overflow-hidden selection:bg-tertiary selection:text-primary">
@@ -212,6 +285,7 @@ export default function CompleteProfilePage() {
                   <option value="BMO">BMO</option>
                   <option value="SK_Federation">SK Federation</option>
                   <option value="COA">COA</option>
+                  <option value="Admin">Admin</option>
                 </select>
               </div>
             </div>
@@ -220,14 +294,13 @@ export default function CompleteProfilePage() {
             {isSKRole && (
               <div className="space-y-2">
                 <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
-                  Barangay
+                  Barangay / Municipality
                 </label>
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-300 group-focus-within:text-primary transition-colors">
                     <MapPin className="w-5 h-5" />
                   </div>
-                  <input
-                    type="text"
+                  <select
                     required
                     value={formData.barangay}
                     onChange={(e) =>
@@ -236,9 +309,20 @@ export default function CompleteProfilePage() {
                         barangay: e.target.value,
                       })
                     }
-                    className="w-full bg-slate-50 border-2 border-transparent rounded-2xl pl-12 pr-4 py-4 text-sm font-medium text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none placeholder:text-slate-300"
-                    placeholder="e.g. Barangay San Jose"
-                  />
+                    className="w-full appearance-none bg-slate-50 border-2 border-transparent rounded-2xl pl-12 pr-12 py-4 text-sm font-medium text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none cursor-pointer"
+                  >
+                    <option value="" disabled>
+                      Select your barangay or municipality
+                    </option>
+                    {BATANGAS_BARANGAYS.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-slate-400">
+                    <ChevronDown className="h-5 w-5" />
+                  </div>
                 </div>
               </div>
             )}

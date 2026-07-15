@@ -1,5 +1,7 @@
 "use client";
 
+import { Suspense, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 import { useFormStore } from "@/lib/useFormStore";
 import { useToast } from "@/lib/useToast";
@@ -11,13 +13,34 @@ import {
   Landmark,
 } from "lucide-react";
 
-export default function RegisterPage() {
+function RegisterPageContent() {
+  const searchParams = useSearchParams();
   const toast = useToast();
-  const {
-    register: { isLoading },
-    setRegisterError,
-    setRegisterIsLoading,
-  } = useFormStore();
+  const isLoading = useFormStore((state) => state.register.isLoading);
+  const setRegisterError = useFormStore((state) => state.setRegisterError);
+  const setRegisterIsLoading = useFormStore(
+    (state) => state.setRegisterIsLoading,
+  );
+
+  useEffect(() => {
+    const queryError =
+      searchParams.get("error") || searchParams.get("error_description");
+    const hash = window.location.hash.replace(/^#/, "");
+    const hashParams = new URLSearchParams(hash);
+    const hashError =
+      hashParams.get("error") ||
+      hashParams.get("error_description") ||
+      hashParams.get("error_code");
+    const reason = queryError || hashError;
+
+    if (!reason) {
+      return;
+    }
+
+    const message = decodeURIComponent((reason || "").replace(/\+/g, " "));
+    setRegisterError(message);
+    toast.error(message);
+  }, [searchParams, toast, setRegisterError]);
 
   const handleGoogleSignIn = async () => {
     setRegisterIsLoading(true);
@@ -171,5 +194,26 @@ export default function RegisterPage() {
         </div>
       </section>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-slate-50 selection:bg-tertiary selection:text-primary">
+          <div className="text-center">
+            <h2 className="text-3xl font-black text-primary tracking-tight">
+              SK-Ledge
+            </h2>
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400 mt-3 animate-pulse">
+              Loading Registration...
+            </p>
+          </div>
+        </div>
+      }
+    >
+      <RegisterPageContent />
+    </Suspense>
   );
 }

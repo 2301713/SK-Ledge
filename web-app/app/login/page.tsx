@@ -1,6 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 import { useFormStore } from "@/lib/useFormStore";
 import { useAuthStore } from "@/lib/useAuthStore";
@@ -21,17 +22,44 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-export default function LoginPage() {
+function LoginPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const toast = useToast();
   const { setCurrentUser, setIsLoading } = useAuthStore();
+  const isLoading = useFormStore((state) => state.login.isLoading);
+  const setLoginError = useFormStore((state) => state.setLoginError);
   const {
-    login: { credentials, showPassword, error, isLoading },
+    login: { credentials, showPassword, error },
     setLoginCredentials,
     setLoginShowPassword,
-    setLoginError,
     setLoginIsLoading,
   } = useFormStore();
+
+  useEffect(() => {
+    const queryError =
+      searchParams.get("error") || searchParams.get("error_description");
+    const hash = window.location.hash.replace(/^#/, "");
+    const hashParams = new URLSearchParams(hash);
+    const hashError =
+      hashParams.get("error") || hashParams.get("error_description");
+    const reason = queryError || hashError;
+
+    if (!reason) {
+      return;
+    }
+
+    const message = decodeURIComponent((reason || "").replace(/\+/g, " "));
+    setLoginError(message);
+
+    if (message.toLowerCase().includes("database error saving new user")) {
+      toast.error(
+        "Supabase could not create the new Google account. This usually means the Supabase Auth tables need to be reset/reinitialized before sign-up can work again.",
+      );
+    } else {
+      toast.error(message);
+    }
+  }, [searchParams, setLoginError]);
 
   const handleGoogleSignIn = async () => {
     setLoginIsLoading(true);
@@ -142,6 +170,10 @@ export default function LoginPage() {
             toast.success("Login successful! Redirecting...");
             router.push("/skfed_dashboard");
             break;
+          case "Admin":
+            toast.success("Login successful! Redirecting...");
+            router.push("/admin_dashboard");
+            break;
           default:
             router.push("/dashboard");
             break;
@@ -218,7 +250,7 @@ export default function LoginPage() {
         </div>
       </section>
 
-      {/* RIGHT SIDE: LOGIN FORM (Your Logic Integrated) */}
+      {/* RIGHT SIDE: LOGIN FORM */}
       <section className="w-full lg:w-[45%] flex flex-col items-center justify-center p-8 sm:p-16 lg:p-24 bg-white relative z-10">
         <div className="w-full max-w-md">
           {/* Mobile Branding Header */}
@@ -393,6 +425,7 @@ export default function LoginPage() {
                 </p>
               </div>
               <button
+                type="button"
                 onClick={() => router.push("/register")}
                 className="flex items-center gap-2 px-6 py-3 bg-white text-primary font-bold rounded-xl shadow-md hover:shadow-lg transition-all border border-slate-100 group whitespace-nowrap"
               >
@@ -411,5 +444,29 @@ export default function LoginPage() {
         </div>
       </section>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-slate-50 selection:bg-tertiary selection:text-primary">
+          <div className="text-center">
+            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-primary text-tertiary shadow-2xl animate-pulse">
+              <ShieldCheck className="w-10 h-10" />
+            </div>
+            <h2 className="text-3xl font-black text-primary tracking-tight">
+              SK-Ledge
+            </h2>
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400 mt-3 animate-pulse">
+              Loading Secure Portal...
+            </p>
+          </div>
+        </div>
+      }
+    >
+      <LoginPageContent />
+    </Suspense>
   );
 }

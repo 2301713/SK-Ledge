@@ -3,32 +3,32 @@ import Image from "next/image";
 const TEAM = [
   {
     name: "Carl Aldouz D. Bicol",
-    role: "Project Manager & Backend Developer",
+    role: "Project Manager & Blockchain Developer",
     image: "/team-profile/bicol.jpg",
   },
   {
     name: "Johnrey M. Lualhati",
-    role: "Backend Developer",
+    role: "Blockchain Developer",
     image: "/team-profile/lualhati.jpg",
   },
   {
     name: "William Ed M. Perez",
-    role: "Backend Developer",
+    role: "Blockchain Developer",
     image: "/team-profile/perez.jpg",
   },
   {
     name: "Jhon Luis D. Valderama",
-    role: "Project Manager & Frontend Developer",
+    role: "Project Manager & Automation Developer",
     image: "/team-profile/valderama.png",
   },
   {
     name: "Tristan Jay G. Mirano",
-    role: "Frontend Developer",
+    role: "Automation Developer",
     image: "/team-profile/mirano.png",
   },
   {
     name: "Michael Dave B. Arellano",
-    role: "Frontend Developer",
+    role: "Automation Developer",
     image: "/team-profile/arellano.png",
   },
 ];

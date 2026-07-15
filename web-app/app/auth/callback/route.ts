@@ -73,15 +73,42 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // 2. Fetch the user's profile data
-  const { data: profileData, error: profileError } = await supabase
-    .from("profiles")
-    .select("role_type, approval_status")
-    .eq("id", authData.user.id)
-    .single();
+  interface ProfileResponse {
+    id: string;
+    username: string | null;
+    full_name: string | null;
+    role_type: string | null;
+    barangay: string | null;
+    email: string | null;
+    approval_status: string | null;
+  }
 
-  // 3. If no profile exists, they are genuinely new. Send to complete-profile.
-  if (profileError || !profileData) {
+  let profileData: ProfileResponse | null = null;
+  let profileError: unknown = null;
+
+  try {
+    const result = await supabase
+      .from("profiles")
+      .select(
+        "id, username, full_name, role_type, barangay, email, approval_status",
+      )
+      .eq("id", authData.user.id)
+      .maybeSingle();
+
+    profileData = result.data as ProfileResponse | null;
+    profileError = result.error;
+  } catch (error) {
+    profileError = error;
+  }
+
+  // 3. If there is no profile row yet, keep the user on the completion form.
+  if (
+    !profileData ||
+    profileError ||
+    profileData.role_type === "pending" ||
+    profileData.barangay === null
+  ) {
+    console.warn("Profile is incomplete; sending to complete-profile");
     return NextResponse.redirect(
       new URL("/auth/complete-profile", request.url),
     );
@@ -115,6 +142,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL("/bmo_dashboard", request.url));
     case "SK_Federation":
       return NextResponse.redirect(new URL("/skfed_dashboard", request.url));
+    case "Admin":
+      return NextResponse.redirect(new URL("/admin_dashboard", request.url));
     default:
       return NextResponse.redirect(new URL("/dashboard", request.url));
   }

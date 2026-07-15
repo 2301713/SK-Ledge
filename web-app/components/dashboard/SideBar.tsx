@@ -32,62 +32,170 @@ interface SidebarProps {
 
 const ROLE_LINKS: Record<
   string,
-  { label: string; href: string; icon: React.ElementType }[]
+  { id: string; label: string; href: string; icon: React.ElementType }[]
 > = {
   SK_Chairperson: [
-    { label: "Overview", href: "/sk_dashboard", icon: LayoutDashboard },
-    { label: "Projects", href: "/sk_dashboard/projects", icon: FolderKanban },
-    { label: "ABYIP", href: "/sk_dashboard/abyip", icon: ChartPie },
-    { label: "Expenses", href: "/sk_dashboard/expenses", icon: Receipt },
-    { label: "Reports", href: "/sk_dashboard/reports", icon: FileBarChart },
-    { label: "Documents", href: "/sk_dashboard/upload", icon: UploadCloud },
-    { label: "Account", href: "/sk_dashboard/account", icon: UserCircle },
+    {
+      id: "id_1",
+      label: "Overview",
+      href: "/sk_dashboard",
+      icon: LayoutDashboard,
+    },
+    {
+      id: "id_2",
+      label: "Projects",
+      href: "/sk_dashboard/projects",
+      icon: FolderKanban,
+    },
+    { id: "id_3", label: "ABYIP", href: "/sk_dashboard/abyip", icon: ChartPie },
+    {
+      id: "id_4",
+      label: "Expenses",
+      href: "/sk_dashboard/expenses",
+      icon: Receipt,
+    },
+    {
+      id: "id_5",
+      label: "Reports",
+      href: "/sk_dashboard/reports",
+      icon: FileBarChart,
+    },
+    {
+      id: "id_6",
+      label: "Documents",
+      href: "/sk_dashboard/upload",
+      icon: UploadCloud,
+    },
+    {
+      id: "id_7",
+      label: "Account",
+      href: "/sk_dashboard/account",
+      icon: UserCircle,
+    },
   ],
   SK_Treasurer: [
-    { label: "Overview", href: "/sk_dashboard", icon: LayoutDashboard },
-    { label: "Projects", href: "/sk_dashboard/projects", icon: FolderKanban },
-    { label: "ABYIP", href: "/sk_dashboard/abyip", icon: ChartPie },
-    { label: "Expenses", href: "/sk_dashboard/expenses", icon: Receipt },
-    { label: "Reports", href: "/sk_dashboard/reports", icon: FileBarChart },
-    { label: "Documents", href: "/sk_dashboard/upload", icon: UploadCloud },
-    { label: "Account", href: "/sk_dashboard/account", icon: UserCircle },
+    {
+      id: "id_8",
+      label: "Overview",
+      href: "/sk_dashboard",
+      icon: LayoutDashboard,
+    },
+    {
+      id: "id_9",
+      label: "Projects",
+      href: "/sk_dashboard/projects",
+      icon: FolderKanban,
+    },
+    {
+      id: "id_10",
+      label: "ABYIP",
+      href: "/sk_dashboard/abyip",
+      icon: ChartPie,
+    },
+    {
+      id: "id_11",
+      label: "Expenses",
+      href: "/sk_dashboard/expenses",
+      icon: Receipt,
+    },
+    {
+      id: "id_12",
+      label: "Reports",
+      href: "/sk_dashboard/reports",
+      icon: FileBarChart,
+    },
+    {
+      id: "id_13",
+      label: "Documents",
+      href: "/sk_dashboard/upload",
+      icon: UploadCloud,
+    },
+    {
+      id: "id_14",
+      label: "Account",
+      href: "/sk_dashboard/account",
+      icon: UserCircle,
+    },
   ],
   COA: [
-    { label: "Overview", href: "/coa_dashboard", icon: TrendingUp },
-    { label: "Approvals", href: "/coa_dashboard/approvals", icon: CheckSquare },
     {
+      id: "id_15",
+      label: "Overview",
+      href: "/coa_dashboard",
+      icon: TrendingUp,
+    },
+    {
+      id: "id_16",
+      label: "Approvals",
+      href: "/coa_dashboard/approvals",
+      icon: CheckSquare,
+    },
+    {
+      id: "id_17",
       label: "Disbursements",
       href: "/coa_dashboard/disbursements",
       icon: FileText,
     },
     {
+      id: "id_18",
       label: "Auditor Portal",
       href: "/coa_dashboard/auditor",
       icon: ShieldCheck,
     },
-    { label: "Account", href: "/coa_dashboard/account", icon: UserCircle },
+    {
+      id: "id_19",
+      label: "Account",
+      href: "/coa_dashboard/account",
+      icon: UserCircle,
+    },
   ],
   BMO: [
-    { label: "Overview", href: "/bmo_dashboard", icon: PieChart },
-    { label: "Budget Review", href: "/bmo_dashboard/review", icon: TextSearch },
-    { label: "Bidding", href: "/bmo_dashboard/bidding", icon: Activity },
-    { label: "Account", href: "/bmo_dashboard/account", icon: UserCircle },
-  ],
-  SK_Federation: [
-    { label: "Overview", href: "/skfed_dashboard", icon: Globe },
+    { id: "id_20", label: "Overview", href: "/bmo_dashboard", icon: PieChart },
     {
-      label: "Approvals",
-      href: "/skfed_dashboard/approvals",
-      icon: CheckSquare,
+      id: "id_21",
+      label: "Budget Review",
+      href: "/bmo_dashboard/review",
+      icon: TextSearch,
     },
     {
+      id: "id_22",
+      label: "Bidding",
+      href: "/bmo_dashboard/bidding",
+      icon: Activity,
+    },
+    {
+      id: "id_23",
+      label: "Account",
+      href: "/bmo_dashboard/account",
+      icon: UserCircle,
+    },
+  ],
+  SK_Federation: [
+    { id: "id_24", label: "Overview", href: "/skfed_dashboard", icon: Globe },
+    {
+      id: "id_25",
       label: "Reports",
       href: "/skfed_dashboard/reports",
       icon: FileText,
     },
     {
+      id: "id_26",
       label: "Account",
       href: "/skfed_dashboard/account",
+      icon: UserCircle,
+    },
+  ],
+  Admin: [
+    {
+      id: "id_27",
+      label: "Overview",
+      href: "/admin_dashboard",
+      icon: LayoutDashboard,
+    },
+    {
+      id: "id_28",
+      label: "Accounts",
+      href: "/admin_dashboard/accounts",
       icon: UserCircle,
     },
   ],
@@ -149,7 +257,7 @@ export default function Sidebar({
 
             return (
               <Link
-                key={link.href}
+                key={link.id}
                 href={link.href}
                 className={`relative flex items-center px-4 py-3.5 rounded-xl text-sm font-bold transition-all group overflow-hidden ${
                   isActive
