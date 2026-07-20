@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Layers, Menu, X } from "lucide-react";
+// 1. I-import ang ConnectButton mula sa RainbowKit
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 export default function NavBar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -36,10 +38,13 @@ export default function NavBar() {
           </nav>
 
           {/* Desktop CTAs */}
-          <div className="hidden md:flex items-center gap-2">
+          <div className="hidden md:flex items-center gap-3">
+            {/* 2. Inilagay ang ConnectButton sa tabi ng Sign In */}
+            <ConnectButton showBalance={false} chainStatus="icon" accountStatus="avatar" />
+            
             <Link
               href="/login"
-              className="px-4 py-2 bg-primary text-white text-xs font-bold rounded-xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/25"
+              className="px-4 py-2 bg-white/10 text-white text-xs font-bold rounded-xl hover:bg-white/20 transition-all border border-white/10"
             >
               Sign In
             </Link>
@@ -62,7 +67,7 @@ export default function NavBar() {
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
           <div className="md:hidden mt-2 bg-slate-900/98 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl overflow-hidden">
-            <div className="flex flex-col p-3 gap-1">
+            <div className="flex flex-col p-3 gap-2">
               {["Features", "Contact"].map((item) => (
                 <Link
                   key={item}
@@ -74,6 +79,12 @@ export default function NavBar() {
                 </Link>
               ))}
               <div className="h-px bg-white/8 my-1" />
+              
+              {/* 3. Inilagay din ang ConnectButton sa Mobile Menu para sa mga naka-smartphone */}
+              <div className="flex justify-center py-1">
+                <ConnectButton showBalance={false} />
+              </div>
+
               <Link
                 href="/login"
                 className="text-center px-4 py-3 bg-primary text-white text-sm font-bold rounded-xl hover:bg-primary/90 transition-all"
