@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import RootLayoutWrapper from "./RootLayoutWrapper";
+import { Providers } from "./providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -22,7 +23,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={`h-full antialiased ${inter.className}`}>
       <body className="min-h-full flex flex-col">
-        <RootLayoutWrapper>{children}</RootLayoutWrapper>
+        <Providers>
+          <RootLayoutWrapper>{children}</RootLayoutWrapper>
+        </Providers>
       </body>
     </html>
   );
