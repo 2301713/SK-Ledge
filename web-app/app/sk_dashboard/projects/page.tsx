@@ -8,7 +8,6 @@ import {
   Project,
   ProjectStatus,
   PROJECT_CATEGORIES,
-  INITIAL_PROJECTS,
 } from "@/lib/dummyData";
 import { Plus, CheckCircle2, X, AlertCircle, Wallet } from "lucide-react";
 
@@ -35,9 +34,10 @@ export default function ProjectsPage() {
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const [projects, setProjects] = useState<Project[]>(INITIAL_PROJECTS);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [successMsg, setSuccessMsg] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formName, setFormName] = useState("");
   const [formCategory, setFormCategory] = useState("");
@@ -48,9 +48,47 @@ export default function ProjectsPage() {
     budget?: string;
   }>({});
 
-  // FETCH USER DATA ON MOUNT
+  // FETCH ALLOCATIONS FROM SUPABASE
+  const fetchAllocations = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("allocations")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching allocations:", error);
+        return;
+      }
+
+      if (data) {
+        // Map Supabase allocation fields to UI Project type
+        const mappedProjects: Project[] = data.map((item) => ({
+          id: String(item.id),
+          name: item.purpose || "Unnamed Allocation",
+          category: item.category || "General Fund",
+          status: (item.status as ProjectStatus) || "Pending",
+          budget: Number(item.amount) || 0,
+          proposedBy: item.barangay || "SK Official",
+          dateProposed: item.created_at
+            ? new Date(item.created_at).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })
+            : "N/A",
+        }));
+
+        setProjects(mappedProjects);
+      }
+    } catch (err) {
+      console.error("Unexpected fetch error:", err);
+    }
+  };
+
+  // FETCH USER DATA & ALLOCATIONS ON MOUNT
   useEffect(() => {
-    const fetchUser = async () => {
+    const fetchUserAndData = async () => {
       try {
         const {
           data: { session },
@@ -78,6 +116,9 @@ export default function ProjectsPage() {
             approval_status: profile.approval_status,
           });
         }
+
+        // Fetch records from allocations
+        await fetchAllocations();
       } catch (error) {
         console.error("Error fetching user session:", error);
       } finally {
@@ -85,7 +126,7 @@ export default function ProjectsPage() {
       }
     };
 
-    fetchUser();
+    fetchUserAndData();
   }, []);
 
   // VARIABLES
@@ -94,7 +135,7 @@ export default function ProjectsPage() {
   const pendingCount = projects.filter((p) => p.status === "Pending").length;
 
   // HANDLERS
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const newErrors: typeof errors = {};
     if (!formName.trim()) newErrors.name = "Project name is required.";
     if (!formCategory) newErrors.category = "Please select a category.";
@@ -107,28 +148,42 @@ export default function ProjectsPage() {
       return;
     }
 
-    const newProject: Project = {
-      id: String(projects.length + 1),
-      name: formName.trim(),
-      category: formCategory,
-      status: "Pending",
-      budget: budgetNum,
-      proposedBy: currentUser?.full_name || "Unknown User",
-      dateProposed: new Date().toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      }),
-    };
+    setIsSubmitting(true);
 
-    setProjects([newProject, ...projects]);
-    setFormName("");
-    setFormCategory("");
-    setFormBudget("");
-    setErrors({});
-    setShowForm(false);
-    setSuccessMsg(true);
-    setTimeout(() => setSuccessMsg(false), 4000);
+    try {
+      // Save to Supabase 'allocations' table
+      const { error } = await supabase.from("allocations").insert([
+        {
+          user_id: currentUser?.id,
+          barangay: currentUser?.barangay,
+          amount: budgetNum,
+          purpose: formName.trim(),
+          category: formCategory,
+          status: "Pending",
+        },
+      ]);
+
+      if (error) {
+        console.error("Error saving project:", error);
+        alert("Failed to submit proposal: " + error.message);
+        return;
+      }
+
+      // Refresh UI data
+      await fetchAllocations();
+
+      setFormName("");
+      setFormCategory("");
+      setFormBudget("");
+      setErrors({});
+      setShowForm(false);
+      setSuccessMsg(true);
+      setTimeout(() => setSuccessMsg(false), 4000);
+    } catch (err) {
+      console.error("Submit error:", err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleCancel = () => {
@@ -336,9 +391,10 @@ export default function ProjectsPage() {
                   <div className="flex items-center gap-3 pt-1">
                     <button
                       onClick={handleSubmit}
-                      className="bg-primary text-white px-6 py-2.5 rounded-xl text-sm font-bold tracking-wide hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20 transition-all active:scale-95"
+                      disabled={isSubmitting}
+                      className="bg-primary text-white px-6 py-2.5 rounded-xl text-sm font-bold tracking-wide hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20 transition-all active:scale-95 disabled:opacity-50"
                     >
-                      Submit Proposal
+                      {isSubmitting ? "Submitting..." : "Submit Proposal"}
                     </button>
                     <button
                       onClick={handleCancel}
@@ -436,7 +492,7 @@ export default function ProjectsPage() {
                             {p.name}
                           </p>
                           <p className="text-xs text-secondary-foreground mt-0.5 font-medium">
-                            ID: PRJ-{p.id.padStart(4, "0")}
+                            ID: PRJ-{p.id.length > 8 ? p.id.slice(0, 8).toUpperCase() : p.id.padStart(4, "0")}
                           </p>
                         </td>
                         <td className="px-6 py-4">
