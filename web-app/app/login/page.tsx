@@ -59,7 +59,7 @@ function LoginPageContent() {
     } else {
       toast.error(message);
     }
-  }, [searchParams, setLoginError]);
+  }, [searchParams, setLoginError, toast]);
 
   const handleGoogleSignIn = async () => {
     setLoginIsLoading(true);

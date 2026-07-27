@@ -7,7 +7,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "SK-Ledge",
   description:
-    "A Blockchain-Based for Secure SK Fund Tracking and Automated Audit Reporting",
+    "A Blockchain-Based Platform for Secure SK Fund Tracking and Automated Audit Reporting",
 };
 
 const inter = Inter({

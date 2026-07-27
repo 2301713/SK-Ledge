@@ -62,14 +62,19 @@ export default function Toast({
 
   return (
     <div
+      role="alert"
+      aria-live={type === "error" ? "assertive" : "polite"}
       className={`${config.bg} border ${config.border} rounded-xl p-4 flex items-center gap-3 shadow-lg shadow-slate-900/10 animate-in slide-in-from-right-4 duration-300`}
     >
       <div className="shrink-0">{config.icon}</div>
-      <p className={`text-sm font-bold ${config.textColor} flex-1`}>
+
+      <p className={`text-sm font-medium ${config.textColor} flex-1`}>
         {message}
       </p>
+
       <button
         onClick={() => removeToast(id)}
+        aria-label="Close notification"
         className={`shrink-0 p-1 rounded-lg hover:bg-black/5 transition-colors ${config.textColor}`}
       >
         <X className="w-4 h-4" />

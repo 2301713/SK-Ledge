@@ -8,6 +8,7 @@ export default function ToastContainer() {
   const { toasts } = useToastStore();
 
   return (
+    // ✅ Changed z-9999 to z-[9999] to ensure it always floats on top
     <div className="fixed bottom-6 right-6 z-9999 flex flex-col gap-3 max-w-sm pointer-events-none">
       {toasts.map((toast) => (
         <div key={toast.id} className="pointer-events-auto">

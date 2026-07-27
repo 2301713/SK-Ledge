@@ -13,7 +13,7 @@ export default function BroadcastMemoModal({
 }: BroadcastMemoModalProps) {
   const toast = useToast();
   const {
-    broadcastMemo: { title, content, priority, audience, requireAck },
+    broadcastMemo: { title, content, priority, audience },
     setBroadcastMemoTitle,
     setBroadcastMemoContent,
     setBroadcastMemoPriority,

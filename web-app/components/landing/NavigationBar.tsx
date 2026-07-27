@@ -3,8 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Layers, Menu, X } from "lucide-react";
-// 1. I-import ang ConnectButton mula sa RainbowKit
-import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { ConnectButton } from "../ConnectButton";
 
 export default function NavBar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -39,9 +38,8 @@ export default function NavBar() {
 
           {/* Desktop CTAs */}
           <div className="hidden md:flex items-center gap-3">
-            {/* 2. Inilagay ang ConnectButton sa tabi ng Sign In */}
-            <ConnectButton showBalance={false} chainStatus="icon" accountStatus="avatar" />
-            
+            <ConnectButton />
+
             <Link
               href="/login"
               className="px-4 py-2 bg-white/10 text-white text-xs font-bold rounded-xl hover:bg-white/20 transition-all border border-white/10"
@@ -79,10 +77,10 @@ export default function NavBar() {
                 </Link>
               ))}
               <div className="h-px bg-white/8 my-1" />
-              
+
               {/* 3. Inilagay din ang ConnectButton sa Mobile Menu para sa mga naka-smartphone */}
               <div className="flex justify-center py-1">
-                <ConnectButton showBalance={false} />
+                <ConnectButton />
               </div>
 
               <Link
