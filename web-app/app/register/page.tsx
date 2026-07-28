@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 import { useFormStore } from "@/lib/useFormStore";
 import { useToast } from "@/lib/useToast";
@@ -11,9 +11,11 @@ import {
   BarChart3,
   Lock,
   Landmark,
+  ChevronRight,
 } from "lucide-react";
 
 function RegisterPageContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const toast = useToast();
   const isLoading = useFormStore((state) => state.register.isLoading);
@@ -123,6 +125,28 @@ function RegisterPageContent() {
               </svg>
               <span className="text-base">Sign Up with Google</span>
             </button>
+          </div>
+
+          {/* REGISTER PROMPT */}
+          <div className="mt-12 pt-8 border-t border-slate-100">
+            <div className="bg-slate-50 p-6 rounded-4xl border border-dashed border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="text-center sm:text-left">
+                <p className="text-slate-500 text-sm font-medium">
+                  Already have an official account?
+                </p>
+                <p className="text-primary font-extrabold tracking-tight">
+                  Access Dashboard
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => router.push("/login")}
+                className="flex items-center gap-2 px-6 py-3 bg-white text-primary font-bold rounded-xl shadow-md hover:shadow-lg transition-all border border-slate-100 group whitespace-nowrap"
+              >
+                Login Now{" "}
+                <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </button>
+            </div>
           </div>
 
           <footer className="mt-12 text-center">

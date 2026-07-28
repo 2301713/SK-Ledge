@@ -194,8 +194,8 @@ const ROLE_LINKS: Record<
     },
     {
       id: "id_28",
-      label: "Accounts",
-      href: "/admin_dashboard/accounts",
+      label: "Approval",
+      href: "/admin_dashboard/approval",
       icon: UserCircle,
     },
   ],

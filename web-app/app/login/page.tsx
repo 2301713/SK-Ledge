@@ -1,24 +1,16 @@
 "use client";
 
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "../../lib/supabase";
-import { useFormStore } from "@/lib/useFormStore";
-import { useAuthStore } from "@/lib/useAuthStore";
 import { useToast } from "@/lib/useToast";
 import {
   CircleAlert,
-  Loader2,
   ShieldCheck,
   CheckCircle2,
   BarChart3,
   Lock,
   Landmark,
-  User,
-  KeyRound,
-  EyeOff,
-  ArrowRight,
-  Eye,
   ChevronRight,
 } from "lucide-react";
 
@@ -26,44 +18,43 @@ function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const toast = useToast();
-  const { setCurrentUser, setIsLoading } = useAuthStore();
-  const isLoading = useFormStore((state) => state.login.isLoading);
-  const setLoginError = useFormStore((state) => state.setLoginError);
-  const {
-    login: { credentials, showPassword, error },
-    setLoginCredentials,
-    setLoginShowPassword,
-    setLoginIsLoading,
-  } = useFormStore();
-
-  useEffect(() => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(() => {
     const queryError =
       searchParams.get("error") || searchParams.get("error_description");
-    const hash = window.location.hash.replace(/^#/, "");
+    const hash =
+      typeof window !== "undefined"
+        ? window.location.hash.replace(/^#/, "")
+        : "";
     const hashParams = new URLSearchParams(hash);
     const hashError =
       hashParams.get("error") || hashParams.get("error_description");
     const reason = queryError || hashError;
 
     if (!reason) {
+      return "";
+    }
+
+    return decodeURIComponent((reason || "").replace(/\+/g, " "));
+  });
+
+  useEffect(() => {
+    if (!error) {
       return;
     }
 
-    const message = decodeURIComponent((reason || "").replace(/\+/g, " "));
-    setLoginError(message);
-
-    if (message.toLowerCase().includes("database error saving new user")) {
+    if (error.toLowerCase().includes("database error saving new user")) {
       toast.error(
         "Supabase could not create the new Google account. This usually means the Supabase Auth tables need to be reset/reinitialized before sign-up can work again.",
       );
     } else {
-      toast.error(message);
+      toast.error(error);
     }
-  }, [searchParams, setLoginError, toast]);
+  }, [error, toast]);
 
   const handleGoogleSignIn = async () => {
-    setLoginIsLoading(true);
-    setLoginError("");
+    setIsLoading(true);
+    setError("");
 
     try {
       const { error } = await supabase.auth.signInWithOAuth({
@@ -81,111 +72,10 @@ function LoginPageContent() {
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Google sign-in failed";
-      setLoginError(message);
-      toast.error(message);
-      setLoginIsLoading(false);
-    }
-  };
-
-  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setLoginError("");
-    setLoginIsLoading(true);
-
-    try {
-      const { data: authData, error: authError } =
-        await supabase.auth.signInWithPassword({
-          email: credentials.email,
-          password: credentials.password,
-        });
-
-      if (authError) {
-        throw new Error(authError.message || "Invalid email or password.");
-      }
-
-      if (authData.user) {
-        const { data: profileData, error: profileError } = await supabase
-          .from("profiles")
-          .select(
-            "id, username, full_name, role_type, barangay, approval_status",
-          )
-          .eq("id", authData.user.id)
-          .single();
-
-        if (profileError) {
-          throw new Error("Failed to retrieve user profile data.");
-        }
-
-        if (profileData.approval_status === "pending") {
-          await supabase.auth.signOut();
-          throw new Error("Your account is pending administrator approval.");
-        }
-
-        const { error: updateError } = await supabase
-          .from("profiles")
-          .update({ created_at: new Date().toISOString() })
-          .eq("id", authData.user.id);
-
-        if (updateError) {
-          console.warn(
-            "Failed to update created_at timestamp:",
-            updateError.message,
-          );
-        }
-
-        const role = profileData.role_type;
-        const userData = {
-          id: authData.user.id,
-          username: profileData.username,
-          email: credentials.email,
-          full_name: profileData.full_name || profileData.username,
-          role_type: profileData.role_type,
-          barangay: profileData.barangay || "No Barangay Assigned",
-          approval_status: profileData.approval_status,
-        };
-
-        setCurrentUser(userData);
-        setIsLoading(false);
-
-        setLoginCredentials({
-          email: "",
-          password: "",
-        });
-
-        switch (role) {
-          case "SK_Chairperson":
-          case "SK_Treasurer":
-            toast.success("Login successful! Redirecting...");
-            router.push("/sk_dashboard");
-            break;
-          case "COA":
-            toast.success("Login successful! Redirecting...");
-            router.push("/coa_dashboard");
-            break;
-          case "BMO":
-            toast.success("Login successful! Redirecting...");
-            router.push("/bmo_dashboard");
-            break;
-          case "SK_Federation":
-            toast.success("Login successful! Redirecting...");
-            router.push("/skfed_dashboard");
-            break;
-          case "Admin":
-            toast.success("Login successful! Redirecting...");
-            router.push("/admin_dashboard");
-            break;
-          default:
-            router.push("/dashboard");
-            break;
-        }
-      }
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Invalid login credentials.";
-      setLoginError(message);
+      setError(message);
       toast.error(message);
     } finally {
-      setLoginIsLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -287,102 +177,7 @@ function LoginPageContent() {
             </div>
           )}
 
-          <form onSubmit={handleLogin} className="space-y-6">
-            {/* EMAIL */}
-            <div className="space-y-2">
-              <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
-                Email Address
-              </label>
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-300 group-focus-within:text-primary transition-colors">
-                  <User className="w-5 h-5" />
-                </div>
-                <input
-                  type="email"
-                  required
-                  value={credentials.email}
-                  onChange={(e) =>
-                    setLoginCredentials({
-                      ...credentials,
-                      email: e.target.value,
-                    })
-                  }
-                  className="w-full bg-slate-50 border-2 border-transparent rounded-2xl pl-12 pr-4 py-4 text-sm font-medium text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none placeholder:text-slate-300"
-                  placeholder="Enter your email"
-                />
-              </div>
-            </div>
-
-            {/* PASSWORD */}
-            <div className="space-y-2">
-              <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
-                Secure Password
-              </label>
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-300 group-focus-within:text-primary transition-colors">
-                  <KeyRound className="w-5 h-5" />
-                </div>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  required
-                  value={credentials.password}
-                  onChange={(e) =>
-                    setLoginCredentials({
-                      ...credentials,
-                      password: e.target.value,
-                    })
-                  }
-                  className="w-full bg-slate-50 border-2 border-transparent rounded-2xl pl-12 pr-12 py-4 text-sm font-medium text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none placeholder:text-slate-300"
-                  placeholder="••••••••"
-                />
-                <button
-                  type="button"
-                  onClick={() => setLoginShowPassword(!showPassword)}
-                  className="absolute right-4 inset-y-0 text-xs font-bold uppercase text-primary/60 hover:text-primary transition-colors"
-                >
-                  {showPassword ? (
-                    <EyeOff className="w-5 h-5" />
-                  ) : (
-                    <Eye className="w-5 h-5" />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* SUBMIT BUTTON */}
-            <div className="pt-2">
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-5 rounded-2xl shadow-2xl shadow-primary/20 transform transition active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center gap-3 group"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="animate-spin h-5 w-5 text-white" />
-                    <span className="text-lg">Authenticating...</span>
-                  </>
-                ) : (
-                  <>
-                    <span className="text-lg">Sign In to Dashboard</span>
-                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
-
           <div className="mt-8">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-200"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-white text-slate-400 font-bold uppercase tracking-widest text-[10px]">
-                  Or continue with
-                </span>
-              </div>
-            </div>
-
             <div className="mt-6">
               <button
                 type="button"

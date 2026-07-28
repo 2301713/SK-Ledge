@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import SideBar from "@/components/dashboard/SideBar";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/lib/useAuthStore";
-import Link from "next/link";
 import React from "react";
 import { Users, CheckCircle2, Clock, AlertCircle } from "lucide-react";
 
@@ -14,6 +13,15 @@ interface DashboardStats {
   pendingAccounts: number;
   approvedAccounts: number;
   rejectedAccounts: number;
+}
+
+interface ApprovedAccount {
+  id: string;
+  username: string | null;
+  full_name: string | null;
+  role_type: string | null;
+  barangay: string | null;
+  email: string | null;
 }
 
 export default function AdminDashboardPage() {
@@ -32,6 +40,10 @@ export default function AdminDashboardPage() {
     approvedAccounts: 0,
     rejectedAccounts: 0,
   });
+
+  const [approvedAccounts, setApprovedAccounts] = React.useState<
+    ApprovedAccount[]
+  >([]);
   const authAttemptedRef = useRef(false);
 
   useEffect(() => {
@@ -81,7 +93,9 @@ export default function AdminDashboardPage() {
         // Fetch account statistics
         const { data: allAccounts, error: accountsError } = await supabase
           .from("profiles")
-          .select("id, approval_status");
+          .select(
+            "id, approval_status, username, full_name, role_type, barangay, email",
+          );
 
         if (!accountsError && allAccounts) {
           const pending = allAccounts.filter(
@@ -100,6 +114,19 @@ export default function AdminDashboardPage() {
             approvedAccounts: approved,
             rejectedAccounts: rejected,
           });
+
+          setApprovedAccounts(
+            allAccounts
+              .filter((account) => account.approval_status === "approved")
+              .map((account) => ({
+                id: account.id,
+                username: account.username,
+                full_name: account.full_name,
+                role_type: account.role_type,
+                barangay: account.barangay,
+                email: account.email,
+              })),
+          );
         }
       } catch (error) {
         console.error("Failed to load admin dashboard", error);
@@ -216,20 +243,65 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* Action Card */}
-        <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-          <h2 className="text-lg font-black text-slate-900 mb-2">
-            Account Management
-          </h2>
-          <p className="text-sm text-slate-600 mb-6">
-            Manage and review user accounts for SK-Ledge portal access.
-          </p>
-          <Link
-            href="/admin_dashboard/accounts"
-            className="inline-flex items-center px-6 py-3 bg-primary text-white font-bold rounded-2xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
-          >
-            Go to Account Management
-          </Link>
+        <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm mb-12">
+          <div className="mb-6 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
+                Approved Accounts
+              </p>
+              <h2 className="text-2xl font-black text-slate-900">
+                Approved Users
+              </h2>
+            </div>
+            <p className="text-sm text-slate-600">
+              Showing {approvedAccounts.length} approved account(s).
+            </p>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-slate-200 text-left">
+              <thead className="bg-slate-50">
+                <tr>
+                  <th className="px-4 py-3 text-sm font-semibold text-slate-600 uppercase tracking-[0.16em]">
+                    Name
+                  </th>
+                  <th className="px-4 py-3 text-sm font-semibold text-slate-600 uppercase tracking-[0.16em]">
+                    Username
+                  </th>
+                  <th className="px-4 py-3 text-sm font-semibold text-slate-600 uppercase tracking-[0.16em]">
+                    Role
+                  </th>
+                  <th className="px-4 py-3 text-sm font-semibold text-slate-600 uppercase tracking-[0.16em]">
+                    Barangay
+                  </th>
+                  <th className="px-4 py-3 text-sm font-semibold text-slate-600 uppercase tracking-[0.16em]">
+                    Email
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 bg-white">
+                {approvedAccounts.map((account) => (
+                  <tr key={account.id} className="hover:bg-slate-50">
+                    <td className="px-4 py-4 text-sm text-slate-700">
+                      {account.full_name || "—"}
+                    </td>
+                    <td className="px-4 py-4 text-sm text-slate-700">
+                      {account.username || "—"}
+                    </td>
+                    <td className="px-4 py-4 text-sm text-slate-700">
+                      {account.role_type || "—"}
+                    </td>
+                    <td className="px-4 py-4 text-sm text-slate-700">
+                      {account.barangay || "—"}
+                    </td>
+                    <td className="px-4 py-4 text-sm text-slate-700">
+                      {account.email || "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </main>
     </div>
