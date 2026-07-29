@@ -20,7 +20,7 @@
   --color-border: #E2E8F0;
   --color-background: #F1F5F9;
 
-  --animate-fadein: fadein 1s ease-in;
+  --animate-fadein: fadein 0.7s ease-in-out;
 
   @keyframes fadein {
     from {

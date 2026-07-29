@@ -6,7 +6,7 @@ export default function LogoLoader() {
       <div className="text-center animate-bounce">
         <div className="mx-auto mb-4 h-24 w-24 overflow-hidden rounded-3xl bg-white/90 shadow-2xl shadow-slate-200">
           <Image
-            src="/logo.png"
+            src="/skledge-logo.png"
             alt="Loading"
             width={96}
             height={96}

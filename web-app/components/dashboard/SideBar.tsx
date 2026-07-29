@@ -23,6 +23,7 @@ import {
   Activity,
   ChartPie,
 } from "lucide-react";
+import Image from "next/image";
 
 interface SidebarProps {
   userName: string;
@@ -232,11 +233,14 @@ export default function Sidebar({
   return (
     <aside className="w-70 bg-primary text-white flex flex-col h-screen sticky top-0 shadow-2xl z-50">
       {/* BRANDING HEADER */}
-      <div className="h-24 flex items-center px-8 border-b border-white/10 shrink-0">
+      <div className="h-24 flex items-center px-8 border-b border-white/10 shrink-0 animate-fadein">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-tertiary flex items-center justify-center shadow-lg shadow-tertiary/20">
-            <span className="font-black text-primary text-base">SK</span>
-          </div>
+          <Image
+            src="/skledge-logo.png"
+            height={50}
+            width={50}
+            alt="SK-Ledge Logo"
+          />
           <div className="flex flex-col">
             <h1 className="text-xl font-black tracking-tight text-white leading-none">
               SK-Ledge
@@ -259,7 +263,7 @@ export default function Sidebar({
               <Link
                 key={link.id}
                 href={link.href}
-                className={`relative flex items-center px-4 py-3.5 rounded-xl text-sm font-bold transition-all group overflow-hidden ${
+                className={`relative flex items-center px-4 py-3.5 rounded-xl text-sm font-bold transition-all group overflow-hidden animate-fadein ${
                   isActive
                     ? "text-primary bg-white shadow-md"
                     : "text-white/70 hover:bg-white/10 hover:text-white"
@@ -288,7 +292,7 @@ export default function Sidebar({
 
       {/* UNIFIED USER PROFILE & LOGOUT CARD AT BOTTOM */}
       <div className="p-5 border-t border-white/10 shrink-0 bg-primary/80 backdrop-blur-md">
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between">
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between animate-fadein">
           <div className="flex items-center gap-3 overflow-hidden">
             <div className="w-10 h-10 bg-tertiary rounded-full flex items-center justify-center font-black text-primary shrink-0 shadow-inner">
               {userName.charAt(0).toUpperCase()}

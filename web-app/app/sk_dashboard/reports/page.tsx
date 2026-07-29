@@ -205,8 +205,8 @@ export default function ReportsPage() {
       <main className="flex-1 flex flex-col h-screen overflow-hidden bg-slate-50">
         {/* HEADER */}
         <header className="h-20 bg-white border-b border-slate-200 px-8 flex items-center justify-between z-10 shrink-0 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-50 text-green-700 rounded-lg">
+          <div className="flex items-center gap-3 animate-fadein">
+            <div className="p-2 bg-primary/10 text-primary rounded-lg">
               <FileText size={24} strokeWidth={2.5} />
             </div>
             <div>
@@ -220,13 +220,13 @@ export default function ReportsPage() {
           </div>
 
           {/* PROGRESS INDICATOR */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 animate-fadein">
             {[1, 2, 3].map((step) => (
               <div key={step} className="flex items-center">
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
                     step <= currentStep
-                      ? "bg-green-600 text-white"
+                      ? "bg-primary text-white"
                       : "bg-slate-200 text-slate-500"
                   }`}
                 >
@@ -242,10 +242,10 @@ export default function ReportsPage() {
 
         {/* MAIN CONTENT */}
         <div className="flex-1 overflow-y-auto p-8 z-10">
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-4xl mx-auto animate-fadein">
             {/* STEP 1: REPORT SELECTION */}
             {currentStep === 1 && (
-              <div className="space-y-6">
+              <div className="space-y-6 animate-fadein">
                 <div className="text-center mb-8">
                   <h2 className="text-2xl font-black text-slate-900 mb-2">
                     Select Reports
@@ -262,7 +262,7 @@ export default function ReportsPage() {
                       onClick={() => toggleReportSelection(template.id)}
                       className={`p-6 border-2 rounded-xl cursor-pointer transition-all ${
                         selectedReports.includes(template.id)
-                          ? "border-green-500 bg-green-50"
+                          ? "border-primary bg-primary/10"
                           : "border-slate-200 hover:border-slate-300"
                       }`}
                     >
@@ -270,7 +270,7 @@ export default function ReportsPage() {
                         <div
                           className={`p-2 rounded-lg ${
                             selectedReports.includes(template.id)
-                              ? "bg-green-600 text-white"
+                              ? "bg-primary text-white"
                               : "bg-slate-100 text-slate-600"
                           }`}
                         >
@@ -292,7 +292,7 @@ export default function ReportsPage() {
                           </p>
                         </div>
                         {selectedReports.includes(template.id) && (
-                          <CheckCircle2 className="w-5 h-5 text-green-600" />
+                          <CheckCircle2 className="w-5 h-5 text-primary" />
                         )}
                       </div>
                     </div>
@@ -303,7 +303,7 @@ export default function ReportsPage() {
 
             {/* STEP 2: DATE RANGE */}
             {currentStep === 2 && (
-              <div className="space-y-6">
+              <div className="space-y-6 animate-fadein">
                 <div className="text-center mb-8">
                   <h2 className="text-2xl font-black text-slate-900 mb-2">
                     Select Date Range
@@ -329,7 +329,7 @@ export default function ReportsPage() {
                             startDate: e.target.value,
                           }))
                         }
-                        className="w-full pl-10 pr-3 py-3 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none"
+                        className="w-full pl-10 pr-3 py-3 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
                       />
                     </div>
                   </div>
@@ -351,7 +351,7 @@ export default function ReportsPage() {
                             endDate: e.target.value,
                           }))
                         }
-                        className="w-full pl-10 pr-3 py-3 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none"
+                        className="w-full pl-10 pr-3 py-3 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
                       />
                     </div>
                   </div>
@@ -371,7 +371,7 @@ export default function ReportsPage() {
 
             {/* STEP 3: FILTERS & GENERATE */}
             {currentStep === 3 && (
-              <div className="space-y-6">
+              <div className="space-y-6 animate-fadein">
                 <div className="text-center mb-8">
                   <h2 className="text-2xl font-black text-slate-900 mb-2">
                     Review & Generate
@@ -426,7 +426,7 @@ export default function ReportsPage() {
                             includeReceipts: e.target.checked,
                           }))
                         }
-                        className="w-4 h-4 text-green-600 border-slate-300 rounded focus:ring-green-500"
+                        className="w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary"
                       />
                       <label
                         htmlFor="includeReceipts"
@@ -443,7 +443,7 @@ export default function ReportsPage() {
                   <button
                     onClick={generateReports}
                     disabled={isGenerating}
-                    className="flex items-center gap-3 px-8 py-4 bg-green-600 hover:bg-green-500 disabled:bg-slate-300 text-white rounded-xl text-sm font-bold transition-colors shadow-sm"
+                    className="flex items-center gap-3 px-8 py-4 bg-primary hover:bg-primary disabled:bg-slate-300 text-white rounded-xl text-sm font-bold transition-colors shadow-sm"
                   >
                     {isGenerating ? (
                       <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -476,7 +476,7 @@ export default function ReportsPage() {
                 <button
                   onClick={nextStep}
                   disabled={!validateCurrentStep()}
-                  className="px-6 py-2 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 text-white rounded-lg font-medium transition-colors"
+                  className="px-6 py-2 bg-primary disabled:bg-slate-300 text-white rounded-lg font-medium transition-colors"
                 >
                   Next
                 </button>

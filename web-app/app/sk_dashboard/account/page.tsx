@@ -182,7 +182,7 @@ export default function AccountPage() {
 
         {/* HEADER */}
         <header className="h-20 bg-white/80 backdrop-blur-md border-b border-border px-8 flex items-center justify-between z-10 shrink-0">
-          <div>
+          <div className="animate-fadein">
             <h1 className="text-2xl font-extrabold text-primary tracking-tight flex items-center gap-2">
               Account Settings
             </h1>
@@ -211,7 +211,7 @@ export default function AccountPage() {
             )}
 
             {/* PROFILE OVERVIEW CARD */}
-            <section className="bg-white p-8 rounded-2xl border border-border shadow-sm relative overflow-hidden group flex flex-col md:flex-row items-center md:items-start gap-8">
+            <section className="bg-white p-8 rounded-2xl border border-border shadow-sm relative overflow-hidden group flex flex-col md:flex-row items-center md:items-start gap-8 animate-fadein">
               <div className="absolute top-0 left-0 w-1.5 h-full bg-primary"></div>
 
               <div className="w-28 h-28 shrink-0 rounded-full bg-primary flex items-center justify-center text-5xl font-black text-white shadow-md border-4 border-white z-10">
@@ -254,7 +254,7 @@ export default function AccountPage() {
             </section>
 
             {/* DETAILS FORM SECTION */}
-            <section className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden flex flex-col">
+            <section className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden flex flex-col animate-fadein">
               <div className="px-8 py-5 border-b border-border bg-gray-50/50">
                 <h3 className="text-base font-bold text-primary">
                   System & Personal Details

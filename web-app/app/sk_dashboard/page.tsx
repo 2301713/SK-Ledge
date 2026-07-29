@@ -150,7 +150,6 @@ export default function SKDashboard() {
     );
   }
 
-  // Calculate some dummy metrics for the UI
   const totalAllocated = 1250000;
   const totalSpent = 165000;
   const percentageSpent = (totalSpent / totalAllocated) * 100;
@@ -165,7 +164,7 @@ export default function SKDashboard() {
 
       <main className="flex-1 flex flex-col h-screen overflow-y-auto relative">
         {/* TOP NAVBAR */}
-        <header className="h-24 px-10 flex items-center justify-between shrink-0">
+        <header className="h-24 px-10 flex items-center justify-between shrink-0 animate-fadein">
           <div className="flex items-center gap-3 text-sm font-bold text-slate-500 uppercase tracking-widest">
             <Calendar className="w-4 h-4 text-tertiary" />
             {new Date().toLocaleDateString("en-US", {
@@ -182,7 +181,7 @@ export default function SKDashboard() {
           </div>
         </header>
 
-        <div className="px-8 pb-12 space-y-8 max-w-7xl mx-auto w-full">
+        <div className="px-8 pb-12 space-y-8 max-w-7xl mx-auto w-full animate-fadein">
           {/* WELCOME BANNER (Compact, engaging) */}
           <section className="bg-primary rounded-4xl p-8 md:p-10 relative overflow-hidden text-white shadow-xl shadow-primary/20 border border-primary">
             {/* Abstract Decorative Elements */}

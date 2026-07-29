@@ -75,7 +75,7 @@ function RegisterPageContent() {
     <div className="min-h-screen flex flex-col lg:flex-row bg-white overflow-hidden selection:bg-tertiary selection:text-primary">
       {/* LEFT SIDE */}
       <section className="w-full lg:w-[45%] flex flex-col items-center justify-center p-8 sm:p-16 lg:p-20 bg-white relative z-10 order-2 lg:order-1">
-        <div className="w-full max-w-lg">
+        <div className="w-full max-w-lg animate-fadein">
           {/* Mobile Branding Header */}
           <div className="lg:hidden mb-10 flex flex-col items-center text-center">
             <div className="h-14 w-14 bg-primary rounded-2xl flex items-center justify-center text-tertiary shadow-lg mb-4">
@@ -172,7 +172,7 @@ function RegisterPageContent() {
         <div className="absolute top-[-10%] right-[-10%] w-125 h-125 bg-primary/20 rounded-full blur-[120px]" />
         <div className="absolute bottom-[-10%] left-[-10%] w-100 h-100 bg-tertiary/10 rounded-full blur-[120px]" />
 
-        <div className="relative z-10 max-w-xl w-full">
+        <div className="relative z-10 max-w-xl w-full animate-fadein">
           {/* Glassmorphism Card — identical structure to login */}
           <div className="bg-white/5 backdrop-blur-xl p-10 rounded-[2.5rem] shadow-2xl border border-white/10 border-r-8">
             <div className="flex items-center gap-5 mb-8">

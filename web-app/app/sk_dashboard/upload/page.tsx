@@ -203,7 +203,7 @@ export default function SKUploadPage() {
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
         {/* TOP HEADER */}
         <header className="px-12 py-10 flex justify-between items-end">
-          <div>
+          <div className="animate-fadein">
             <div className="flex items-center gap-2 text-blue-600 mb-1">
               <ShieldCheck size={16} />
               <span className="text-[10px] font-bold tracking-[0.2em] uppercase">
@@ -221,7 +221,7 @@ export default function SKUploadPage() {
           <button
             disabled={isSubmitting || totalFiles === 0}
             onClick={handleSubmit}
-            className="flex items-center gap-2 bg-slate-950 text-white px-8 py-3.5 rounded-2xl font-bold text-sm hover:bg-blue-600 transition-all shadow-xl shadow-slate-200 hover:shadow-blue-100 disabled:opacity-20 disabled:grayscale"
+            className="flex items-center gap-2 bg-primary text-white px-8 py-3.5 rounded-2xl font-bold text-sm transition-all shadow-xl shadow-slate-200 hover:shadow-blue-100 disabled:opacity-20 disabled:grayscale animate-fadein"
           >
             {isSubmitting ? "Processing..." : "Submit for Review"}
             {!isSubmitting && <ArrowRight size={18} />}
@@ -229,7 +229,7 @@ export default function SKUploadPage() {
         </header>
 
         <div className="flex-1 overflow-y-auto px-12 pb-12">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl mx-auto animate-fadein">
             {/* MODULE 01: RECEIPTS */}
             <div className="flex flex-col">
               <div className="bg-white rounded-[2.5rem] border border-slate-200 p-8 shadow-sm hover:shadow-md transition-shadow">
@@ -352,7 +352,7 @@ export default function SKUploadPage() {
           </div>
 
           {/* SYSTEM STATUS FOOTER */}
-          <div className="max-w-7xl mx-auto mt-8 flex items-center gap-6 p-6 bg-slate-900/5 rounded-3xl border border-slate-200/50 backdrop-blur-sm">
+          <div className="max-w-7xl mx-auto mt-8 flex items-center gap-6 p-6 bg-slate-900/5 rounded-3xl border border-slate-200/50 backdrop-blur-sm animate-fadein">
             <div
               className={`p-2 rounded-full ${totalFiles > 0 ? "bg-green-100 text-green-600" : "bg-slate-200 text-slate-500"}`}
             >

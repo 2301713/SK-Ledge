@@ -233,8 +233,8 @@ export default function ProjectsPage() {
       <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
         <div className="absolute top-[-20%] right-[-10%] w-160 h-160 bg-tertiary/5 rounded-full blur-3xl pointer-events-none z-0"></div>
 
-        <header className="h-20 bg-white/80 backdrop-blur-md border-b border-border px-8 flex items-center justify-between z-10 shrink-0">
-          <div>
+        <header className="h-20 bg-white/80 backdrop-blur-md border-b shadow-sm border-border px-8 flex items-center justify-between z-10 shrink-0">
+          <div className="animate-fadein">
             <h1 className="text-2xl font-extrabold text-primary tracking-tight flex items-center gap-2">
               <span className="text-tertiary text-2xl">•</span>
               Projects
@@ -246,7 +246,7 @@ export default function ProjectsPage() {
 
           <button
             onClick={() => setShowForm(true)}
-            className="bg-primary text-white px-5 py-2.5 rounded-xl text-sm font-bold tracking-wide hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20 transition-all active:scale-95 flex items-center gap-2"
+            className="bg-primary text-white px-5 py-2.5 rounded-xl text-sm font-bold tracking-wide hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20 transition-all active:scale-95 flex items-center gap-2 animate-fadein"
           >
             <Plus className="w-4 h-4" />
             Propose Project
@@ -264,7 +264,7 @@ export default function ProjectsPage() {
             )}
 
             {showForm && (
-              <section className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden">
+              <section className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden animate-fadein">
                 <div className="px-6 py-5 border-b border-border bg-gray-50/50 flex items-center justify-between">
                   <h2 className="text-base font-bold text-primary">
                     Propose a New Project
@@ -394,7 +394,7 @@ export default function ProjectsPage() {
             )}
 
             <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-white p-6 rounded-2xl border border-border shadow-sm relative overflow-hidden group">
+              <div className="bg-white p-6 rounded-2xl border border-border shadow-sm relative overflow-hidden group animate-fadein">
                 <div className="absolute top-0 left-0 w-1.5 h-full bg-primary" />
                 <h3 className="text-[10px] font-bold uppercase tracking-wider text-secondary-foreground mb-2 ml-2">
                   Total Proposed Budget
@@ -405,7 +405,7 @@ export default function ProjectsPage() {
                 <Wallet className="absolute right-[-5%] bottom-[-10%] w-28 h-28 text-primary/5 group-hover:scale-110 transition-transform duration-500" />
               </div>
 
-              <div className="bg-white p-6 rounded-2xl border border-border shadow-sm relative overflow-hidden group">
+              <div className="bg-white p-6 rounded-2xl border border-border shadow-sm relative overflow-hidden group animate-fadein">
                 <div className="absolute top-0 left-0 w-1.5 h-full bg-[#2e7d32]" />
                 <h3 className="text-[10px] font-bold uppercase tracking-wider text-secondary-foreground mb-2 ml-2">
                   Approved Projects
@@ -418,7 +418,7 @@ export default function ProjectsPage() {
                 </p>
               </div>
 
-              <div className="bg-white p-6 rounded-2xl border border-border shadow-sm relative overflow-hidden group">
+              <div className="bg-white p-6 rounded-2xl border border-border shadow-sm relative overflow-hidden group animate-fadein">
                 <div className="absolute top-0 left-0 w-1.5 h-full bg-[#f57f17]" />
                 <h3 className="text-[10px] font-bold uppercase tracking-wider text-secondary-foreground mb-2 ml-2">
                   Pending Review
@@ -435,7 +435,7 @@ export default function ProjectsPage() {
               </div>
             </section>
 
-            <section className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden flex flex-col">
+            <section className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden flex flex-col animate-fadein">
               <div className="px-6 py-5 border-b border-border bg-gray-50/50 flex justify-between items-center">
                 <h2 className="text-base font-bold text-primary">
                   Project Proposals

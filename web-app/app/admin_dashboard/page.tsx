@@ -155,7 +155,7 @@ export default function AdminDashboardPage() {
       )}
 
       <main className="flex-1 p-8 lg:p-10">
-        <div className="mb-12">
+        <div className="mb-12 animate-fadein">
           <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary">
             Admin Dashboard
           </p>
@@ -166,7 +166,7 @@ export default function AdminDashboardPage() {
 
         {/* Stats Grid */}
         <div className="grid gap-6 mb-12 grid-cols-1 md:grid-cols-4">
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm animate-fadein">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-semibold text-slate-500 uppercase tracking-[0.2em]">
@@ -182,7 +182,7 @@ export default function AdminDashboardPage() {
             </div>
           </div>
 
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm animate-fadein">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-semibold text-slate-500 uppercase tracking-[0.2em]">
@@ -198,7 +198,7 @@ export default function AdminDashboardPage() {
             </div>
           </div>
 
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm animate-fadein">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-semibold text-slate-500 uppercase tracking-[0.2em]">
@@ -214,7 +214,7 @@ export default function AdminDashboardPage() {
             </div>
           </div>
 
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm animate-fadein">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-semibold text-slate-500 uppercase tracking-[0.2em]">
@@ -231,7 +231,7 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm mb-12">
+        <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm mb-12 animate-fadein">
           <div className="mb-6 flex items-center justify-between gap-4">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">

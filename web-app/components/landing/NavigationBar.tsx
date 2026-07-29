@@ -16,7 +16,12 @@ export default function NavBar() {
         <div className="flex items-center justify-between h-14 px-5 bg-slate-900/95 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl shadow-black/20">
           {/* Brand */}
           <Link href="/" className="flex items-center gap-2.5 group">
-            <Image src="/logo.png" width={30} height={30} alt="SK-Ledge Logo" />
+            <Image
+              src="/skledge-logo.png"
+              width={30}
+              height={30}
+              alt="SK-Ledge Logo"
+            />
             <span className="font-extrabold text-base text-white tracking-tight">
               SK-Ledge
             </span>

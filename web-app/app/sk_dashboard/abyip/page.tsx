@@ -169,8 +169,8 @@ export default function ABYIPPage() {
       )}
 
       <main className="flex-1 flex flex-col h-screen overflow-hidden bg-slate-50">
-        <header className="h-24 bg-white border-b border-slate-200 px-8 flex items-center justify-between z-10 shrink-0 shadow-sm">
-          <div className="flex items-center gap-4">
+        <header className="h-20 bg-white border-b border-slate-200 px-8 flex items-center justify-between z-10 shrink-0 shadow-sm">
+          <div className="flex items-center gap-4 animate-fadein">
             <div className="p-3 rounded-2xl bg-primary/10 text-primary shadow-sm">
               <DollarSign size={28} strokeWidth={2.3} />
             </div>
@@ -185,8 +185,8 @@ export default function ABYIPPage() {
             </div>
           </div>
 
-          <div className="grid gap-2 text-right">
-            <span className="text-xs uppercase tracking-[0.3em] text-slate-400 font-semibold">
+          <div className="grid gap-2 text-right animate-fadein">
+            <span className="text-xs uppercase tracking-[0.3em] text-slate-400 font-semibold ">
               Fiscal Year
             </span>
             <select
@@ -206,7 +206,7 @@ export default function ABYIPPage() {
           <div className="max-w-7xl mx-auto space-y-6">
             {/* OVERVIEW STATS */}
             <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-4">
+              <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-4 animate-fadein">
                 <p className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">
                   Total Allocation
                 </p>
@@ -218,7 +218,7 @@ export default function ABYIPPage() {
                 </p>
               </div>
 
-              <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-4">
+              <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-4 animate-fadein">
                 <p className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">
                   Total Spent
                 </p>
@@ -230,7 +230,7 @@ export default function ABYIPPage() {
                 </p>
               </div>
 
-              <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-4">
+              <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-4 animate-fadein">
                 <p className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">
                   Available Funds
                 </p>
@@ -240,7 +240,7 @@ export default function ABYIPPage() {
                 <p className="text-xs text-slate-500 mt-2">Remaining budget</p>
               </div>
 
-              <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-4">
+              <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-4 animate-fadein">
                 <p className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">
                   Budget Health
                 </p>
@@ -259,7 +259,7 @@ export default function ABYIPPage() {
             </section>
 
             {/* BUDGET BREAKDOWN TABLE */}
-            <section className="rounded-xl border border-slate-200 bg-white shadow-sm p-4">
+            <section className="rounded-xl border border-slate-200 bg-white shadow-sm p-4 animate-fadein">
               <div className="flex items-center justify-between gap-3 mb-4">
                 <div>
                   <h2 className="text-lg font-extrabold text-slate-900">
@@ -338,7 +338,7 @@ export default function ABYIPPage() {
             </section>
 
             {/* BUDGET ALLOCATION PIE CHART SECTION */}
-            <section className="rounded-xl border border-slate-200 bg-white shadow-sm p-4">
+            <section className="rounded-xl border border-slate-200 bg-white shadow-sm p-4 animate-fadein">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h2 className="text-lg font-extrabold text-slate-900">

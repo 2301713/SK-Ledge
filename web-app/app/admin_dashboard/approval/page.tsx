@@ -170,7 +170,7 @@ export default function AccountsPage() {
       )}
 
       <main className="flex-1 p-8 lg:p-10">
-        <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between animate-fadein">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary">
               Account Management
@@ -190,7 +190,7 @@ export default function AccountsPage() {
           </div>
         </div>
 
-        <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+        <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm animate-fadein">
           <div className="mb-4 flex items-center justify-between">
             <div>
               <h2 className="text-lg font-black text-slate-900">

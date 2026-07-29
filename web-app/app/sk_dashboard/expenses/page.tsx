@@ -250,7 +250,7 @@ export default function ExpensesPage() {
       <main className="flex-1 flex flex-col h-screen overflow-hidden bg-slate-50">
         {/* HEADER */}
         <header className="h-20 bg-white border-b border-slate-200 px-8 flex items-center justify-between z-10 shrink-0 shadow-sm">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 animate-fadein">
             <div className="p-2 bg-blue-50 text-blue-700 rounded-lg">
               <Receipt size={24} strokeWidth={2.5} />
             </div>
@@ -268,7 +268,7 @@ export default function ExpensesPage() {
         {/* MAIN CONTENT */}
         <div className="flex-1 overflow-y-auto p-8 z-10">
           <div className="max-w-4xl mx-auto">
-            <form onSubmit={handleSubmit} className="space-y-8">
+            <form onSubmit={handleSubmit} className="space-y-8 animate-fadein">
               {/* EXPENSE DETAILS */}
               <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
                 <h2 className="text-lg font-black text-slate-900 mb-6 flex items-center gap-2">
