@@ -1,14 +1,11 @@
 "use client";
 
+import LogoLoader from "@/components/LogoLoader";
 import { useState, useEffect } from "react";
 import SideBar from "@/components/dashboard/SideBar";
 import { supabase } from "@/lib/supabase";
 import { UserAccount } from "@/lib/useAuthStore";
-import {
-  Project,
-  ProjectStatus,
-  PROJECT_CATEGORIES,
-} from "@/lib/dummyData";
+import { Project, ProjectStatus, PROJECT_CATEGORIES } from "@/lib/dummyData";
 import { Plus, CheckCircle2, X, AlertCircle, Wallet } from "lucide-react";
 
 // HELPERS
@@ -195,18 +192,7 @@ export default function ProjectsPage() {
   };
 
   // LOADING STATE
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
-        <div className="h-16 w-16 bg-primary rounded-2xl flex items-center justify-center text-tertiary font-black text-3xl shadow-xl shadow-primary/30 mb-6 animate-bounce">
-          SK
-        </div>
-        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest animate-pulse">
-          Loading Dashboard...
-        </p>
-      </div>
-    );
-  }
+  if (isLoading) return <LogoLoader />;
 
   // ERROR / UNAUTHORIZED STATE
   if (!currentUser) {
@@ -492,7 +478,10 @@ export default function ProjectsPage() {
                             {p.name}
                           </p>
                           <p className="text-xs text-secondary-foreground mt-0.5 font-medium">
-                            ID: PRJ-{p.id.length > 8 ? p.id.slice(0, 8).toUpperCase() : p.id.padStart(4, "0")}
+                            ID: PRJ-
+                            {p.id.length > 8
+                              ? p.id.slice(0, 8).toUpperCase()
+                              : p.id.padStart(4, "0")}
                           </p>
                         </td>
                         <td className="px-6 py-4">

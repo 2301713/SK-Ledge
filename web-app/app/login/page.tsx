@@ -1,5 +1,6 @@
 "use client";
 
+import LogoLoader from "@/components/LogoLoader";
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "../../lib/supabase";
@@ -244,23 +245,7 @@ function LoginPageContent() {
 
 export default function LoginPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center bg-slate-50 selection:bg-tertiary selection:text-primary">
-          <div className="text-center">
-            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-primary text-tertiary shadow-2xl animate-pulse">
-              <ShieldCheck className="w-10 h-10" />
-            </div>
-            <h2 className="text-3xl font-black text-primary tracking-tight">
-              SK-Ledge
-            </h2>
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400 mt-3 animate-pulse">
-              Loading Secure Portal...
-            </p>
-          </div>
-        </div>
-      }
-    >
+    <Suspense fallback={<LogoLoader />}>
       <LoginPageContent />
     </Suspense>
   );

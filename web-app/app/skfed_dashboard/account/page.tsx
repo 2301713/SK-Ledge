@@ -1,5 +1,6 @@
 "use client";
 
+import LogoLoader from "@/components/LogoLoader";
 import { useEffect } from "react";
 import SideBar from "@/components/dashboard/SideBar";
 import { supabase } from "@/lib/supabase";
@@ -147,18 +148,7 @@ export default function AccountPage() {
   };
 
   // LOADING STATE
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
-        <div className="h-16 w-16 bg-primary rounded-2xl flex items-center justify-center text-tertiary font-black text-xl shadow-xl shadow-primary/30 mb-6 animate-bounce">
-          FED
-        </div>
-        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest animate-pulse">
-          Loading Dashboard...
-        </p>
-      </div>
-    );
-  }
+  if (isLoading) return <LogoLoader />;
 
   // ERROR / UNAUTHORIZED STATE
   if (!currentUser) {

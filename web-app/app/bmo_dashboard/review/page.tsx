@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import LogoLoader from "@/components/LogoLoader";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import SideBar from "@/components/dashboard/SideBar";
 import { INITIAL_PROJECTS } from "@/lib/dummyData";
@@ -93,18 +94,7 @@ export default function BMOReviewPage() {
     }).format(amount || 0);
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
-        <div className="h-16 w-16 bg-primary rounded-2xl flex items-center justify-center text-tertiary font-black text-xl shadow-xl shadow-primary/30 mb-6 animate-bounce">
-          BMO
-        </div>
-        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest animate-pulse">
-          Loading Dashboard...
-        </p>
-      </div>
-    );
-  }
+  if (isLoading) return <LogoLoader />;
 
   if (!currentUser) return null;
 

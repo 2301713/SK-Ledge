@@ -1,5 +1,6 @@
 "use client";
 
+import LogoLoader from "@/components/LogoLoader";
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import SideBar from "@/components/dashboard/SideBar";
@@ -141,20 +142,7 @@ export default function AdminDashboardPage() {
     }
   }, [router, setCurrentUser, setIsLoading, setUserProfile]);
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-tertiary shadow-xl">
-            <span className="text-xl font-black">SK</span>
-          </div>
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
-            Loading admin console...
-          </p>
-        </div>
-      </div>
-    );
-  }
+  if (isLoading) return <LogoLoader />;
 
   return (
     <div className="flex min-h-screen bg-slate-50">

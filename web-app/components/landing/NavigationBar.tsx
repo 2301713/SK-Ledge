@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Layers, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { ConnectButton } from "../ConnectButton";
+import Image from "next/image";
 
 export default function NavBar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -15,9 +16,7 @@ export default function NavBar() {
         <div className="flex items-center justify-between h-14 px-5 bg-slate-900/95 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl shadow-black/20">
           {/* Brand */}
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-              <Layers className="w-3.5 h-3.5 text-white" />
-            </div>
+            <Image src="/logo.png" width={30} height={30} alt="SK-Ledge Logo" />
             <span className="font-extrabold text-base text-white tracking-tight">
               SK-Ledge
             </span>

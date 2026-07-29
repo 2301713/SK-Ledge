@@ -1,5 +1,6 @@
 "use client";
 
+import LogoLoader from "@/components/LogoLoader";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -162,21 +163,7 @@ export default function CompleteProfilePage() {
     }
   };
 
-  if (!isSessionReady && !hasCheckedAuth) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-white px-6">
-        <div className="text-center">
-          <Loader2 className="mx-auto mb-4 h-10 w-10 animate-spin text-primary" />
-          <p className="text-lg font-semibold text-slate-700">
-            Preparing your Google sign-in session...
-          </p>
-          <p className="mt-2 text-sm text-slate-500">
-            Please wait a moment while we load your profile form.
-          </p>
-        </div>
-      </div>
-    );
-  }
+  if (!isSessionReady && !hasCheckedAuth) return <LogoLoader />;
 
   if (!isSessionReady && hasCheckedAuth) {
     return (

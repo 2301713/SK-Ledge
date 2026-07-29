@@ -1,5 +1,6 @@
 "use client";
 
+import LogoLoader from "@/components/LogoLoader";
 import { Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "../../lib/supabase";
@@ -223,20 +224,7 @@ function RegisterPageContent() {
 
 export default function RegisterPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center bg-slate-50 selection:bg-tertiary selection:text-primary">
-          <div className="text-center">
-            <h2 className="text-3xl font-black text-primary tracking-tight">
-              SK-Ledge
-            </h2>
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400 mt-3 animate-pulse">
-              Loading Registration...
-            </p>
-          </div>
-        </div>
-      }
-    >
+    <Suspense fallback={<LogoLoader />}>
       <RegisterPageContent />
     </Suspense>
   );
