@@ -3,6 +3,9 @@ import { Inter } from "next/font/google";
 import RootLayoutWrapper from "./RootLayoutWrapper";
 import "./globals.css";
 
+// 1. DITO IN-IMPORT ANG GINAWA MONG PROVIDERS
+import { Providers } from "./providers";
+
 export const metadata: Metadata = {
   title: "SK-Ledge",
   description:
@@ -22,7 +25,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={`h-full antialiased ${inter.className}`}>
       <body className="min-h-full flex flex-col">
-        <RootLayoutWrapper>{children}</RootLayoutWrapper>
+        {/* 2. IN-WRAP NATIV ANG ROOTLAYOUTWRAPPER AT CHILDREN SA LOOB NG PROVIDERS */}
+        <Providers>
+          <RootLayoutWrapper>{children}</RootLayoutWrapper>
+        </Providers>
       </body>
     </html>
   );
