@@ -1,4 +1,4 @@
-export type StatusType = "ongoing" | "done" | "pending";
+export type StatusType = "Pending" | "Completed" | "Ongoing" | "Approved";
 
 export interface Project {
   name: string;

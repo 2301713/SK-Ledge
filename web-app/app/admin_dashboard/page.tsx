@@ -1,13 +1,13 @@
 "use client";
 
-import LogoLoader from "@/components/LogoLoader";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import SideBar from "@/components/dashboard/SideBar";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/lib/useAuthStore";
 import React from "react";
 import { Users, CheckCircle2, Clock, AlertCircle } from "lucide-react";
+
 
 interface DashboardStats {
   totalAccounts: number;
@@ -140,9 +140,22 @@ export default function AdminDashboardPage() {
       authAttemptedRef.current = true;
       loadUser();
     }
-  }, [router, setCurrentUser, setIsLoading, setUserProfile]);
+  }, [router]);
 
-  if (isLoading) return <LogoLoader />;
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="text-center">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-tertiary shadow-xl">
+            <span className="text-xl font-black">SK</span>
+          </div>
+          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
+            Loading admin console...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-slate-50">
