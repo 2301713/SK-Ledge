@@ -8,22 +8,14 @@ import MetricsRow from "../../components/public_portal/MetricsRow";
 import AnalyticsSection from "../../components/public_portal/AnalyticsSection";
 import ProjectRegistry from "../../components/public_portal/ProjectRegistry";
 import PortalFooter from "../../components/public_portal/PortalFooter";
+import { Project } from "../../components/public_portal/ProjectRegistry";
 
 export default function PublicDashboard() {
-  const [projects, setProjects] = useState<any[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     async function fetchProjects() {
-      // 🔍 DIAGNOSTIC LOGS: I-check kung nababasa ng Next.js ang .env.local
-      const envUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const envKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-      console.log("-----------------------------------------");
-      console.log("🌐 SUPABASE DEBUG INFO:");
-      console.log("URL status:", envUrl ? `Loaded (${envUrl})` : "❌ MISSING / UNDEFINED");
-      console.log("KEY status:", envKey ? "Loaded (Present)" : "❌ MISSING / UNDEFINED");
-      console.log("-----------------------------------------");
 
       try {
         const { data, error } = await supabase
@@ -31,9 +23,7 @@ export default function PublicDashboard() {
           .select("*");
 
         if (error) {
-          console.error("❌ Supabase query error:", error.message, error);
         } else if (data) {
-          console.log("✅ SUPABASE SUCCESS! Data received:", data);
           setProjects(data);
         }
       } catch (err) {

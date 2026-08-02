@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import SideBar from "@/components/dashboard/SideBar";
 import { supabase } from "@/lib/supabase";
@@ -113,7 +113,7 @@ export default function AdminDashboardPage() {
       authAttemptedRef.current = true;
       loadUser();
     }
-  }, [router]);
+  }, [router, setCurrentUser, setIsLoading, setUserProfile]);
 
   if (isLoading) {
     return (

@@ -5,7 +5,6 @@ import { supabase } from "@/lib/supabase";
 
 export type ProjectStatus = "Approved" | "Pending" | "Rejected";
 
-// Kumpletong type definition na may optional fallbacks para hindi mag-error si TypeScript
 export type Project = {
   id: string;
   name: string;
@@ -16,7 +15,6 @@ export type Project = {
   dateProposed: string;
   description?: string;
   barangay?: string;
-  // Dagdag na optional fields para sa database fallbacks
   created_at?: string;
   date_proposed?: string;
   title?: string;
@@ -41,7 +39,7 @@ export default function TransparencyLedger() {
 
         if (error) throw error;
         setProjects(data || []);
-      } catch (err: any) {
+      } catch (err) {
         console.error("Error fetching projects:", err);
         setError("Error loading project ledger data.");
       } finally {

@@ -1,5 +1,6 @@
 import { Search, ExternalLink } from "lucide-react";
 import StatusBadge from "./StatusBadge";
+import { StatusType } from "../../app/public_portal/types";
 
 export interface Project {
   id?: string;
@@ -99,7 +100,11 @@ export default function ProjectRegistry({
                     const projectCategory = p.category || "General";
                     const location = p.barangay || p.location || "N/A";
 
-                    const rawDate = p.dateProposed || p.date || p.date_proposed || p.created_at;
+                    const rawDate =
+                      p.dateProposed ||
+                      p.date ||
+                      p.date_proposed ||
+                      p.created_at;
                     const formattedDate = rawDate
                       ? new Date(rawDate).toLocaleDateString("en-US", {
                           month: "short",
@@ -115,8 +120,8 @@ export default function ProjectRegistry({
                             maximumFractionDigits: 2,
                           })}`
                         : String(rawBudget).startsWith("₱")
-                        ? rawBudget
-                        : `₱${rawBudget}`;
+                          ? rawBudget
+                          : `₱${rawBudget}`;
 
                     const txHash = p.transaction_hash || p.tx_hash;
 
@@ -136,7 +141,7 @@ export default function ProjectRegistry({
                         </td>
 
                         {/* Location */}
-                        <td className="px-6 py-4 text-sm text-slate-400 font-medium">
+                        <td className="px-6 py-4 text-sm text-slate-600 font-medium">
                           {location}
                         </td>
 
@@ -152,7 +157,9 @@ export default function ProjectRegistry({
 
                         {/* Status */}
                         <td className="px-6 py-4 text-center">
-                          <StatusBadge status={(p.status as any) || "Pending"} />
+                          <StatusBadge
+                            status={(p.status as StatusType) || "Pending"}
+                          />
                         </td>
 
                         {/* Etherscan Verification */}
