@@ -22,9 +22,9 @@
     "framer-motion": "^12.38.0",
     "lucide-react": "^1.14.0",
     "next": "16.2.4",
-    "react": "19.2.4",
+    "react": "^18.3.1",
     "react-chartjs-2": "^5.3.1",
-    "react-dom": "19.2.4",
+    "react-dom": "^18.3.1",
     "viem": "^2.55.4",
     "wagmi": "^2.19.5",
     "zustand": "^5.0.12"
@@ -38,5 +38,12 @@
     "eslint-config-next": "16.2.4",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "allowScripts": {
+    "sharp@0.34.5": true,
+    "keccak@3.0.4": true,
+    "bufferutil@4.1.0": true,
+    "utf-8-validate@5.0.10": true,
+    "unrs-resolver@1.11.1": true
   }
 }
