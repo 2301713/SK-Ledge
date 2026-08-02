@@ -13,11 +13,9 @@ import {
   FolderPlus,
   Layers,
   Coins,
-  ShieldCheck,
   Wallet,
   Loader2,
   CheckCircle2,
-  AlertCircle,
   ArrowRight,
   ArrowLeft,
   FileCheck2,
@@ -54,7 +52,6 @@ export default function AllocateFundsForm() {
 
   const {
     data: hash,
-    error: writeError,
     isPending: isWritePending,
     writeContract,
   } = useWriteContract();
@@ -105,6 +102,7 @@ export default function AllocateFundsForm() {
 
   useEffect(() => {
     if (isConfirmed) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsSuccess(true);
       setProgramName("");
       setAmountPhp("");
@@ -206,7 +204,7 @@ export default function AllocateFundsForm() {
           {currentStep === 1 && (
             <div className="space-y-5 max-w-xl mx-auto animate-fadeIn">
               <div>
-                <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-2 flex items-center gap-2">
+                <label className="text-xs font-black uppercase tracking-wider text-slate-700 mb-2 flex items-center gap-2">
                   <FolderPlus className="w-4 h-4 text-blue-600" />
                   Program / Project Title
                 </label>
@@ -221,7 +219,7 @@ export default function AllocateFundsForm() {
               </div>
 
               <div>
-                <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-2 flex items-center gap-2">
+                <label className="text-xs font-black uppercase tracking-wider text-slate-700 mb-2 flex items-center gap-2">
                   <Layers className="w-4 h-4 text-blue-600" />
                   Category
                 </label>
@@ -253,7 +251,7 @@ export default function AllocateFundsForm() {
           {currentStep === 2 && (
             <div className="space-y-5 max-w-xl mx-auto animate-fadeIn">
               <div>
-                <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-2 flex items-center gap-2">
+                <label className="text-xs font-black uppercase tracking-wider text-slate-700 mb-2 flex items-center gap-2">
                   <Coins className="w-4 h-4 text-blue-600" />
                   Allocated Amount (in PHP)
                 </label>
