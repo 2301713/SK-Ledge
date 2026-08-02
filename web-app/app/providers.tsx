@@ -1,26 +1,31 @@
 "use client";
 
-import * as React from "react";
-import "@rainbow-me/rainbowkit/styles.css";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { WagmiProvider } from "wagmi";
-import { mainnet, sepolia } from "wagmi/chains";
-import { getDefaultConfig, RainbowKitProvider } from "@rainbow-me/rainbowkit";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useState, type ReactNode } from 'react';
+import { WagmiProvider, createConfig, http } from 'wagmi';
+import { sepolia } from 'wagmi/chains';
+import { injected } from 'wagmi/connectors';
 
-const config = getDefaultConfig({
-  appName: "SK-Ledge",
-  projectId: process.env.NEXT_PUBLIC_WALLET_PROJECT_ID as string,
-  chains: [mainnet, sepolia],
+export const config = createConfig({
+  chains: [sepolia],
+  connectors: [
+    injected({
+      target: 'metaMask', // Direktang tina-target ang MetaMask extension
+    }),
+  ],
+  transports: {
+    [sepolia.id]: http(),
+  },
   ssr: true,
 });
 
-const queryClient = new QueryClient();
+export function Providers({ children }: { children: ReactNode }) {
+  const [queryClient] = useState(() => new QueryClient());
 
-export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider>{children}</RainbowKitProvider>
+        {children}
       </QueryClientProvider>
     </WagmiProvider>
   );

@@ -8,6 +8,7 @@ import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/useAuthStore";
 import ProposeProjectModal from "@/components/dashboard/ProposeProjectModal";
+import AllocateFundsForm from "@/components/AllocateFundsForm";
 import {
   Plus,
   ChevronRight,
@@ -34,7 +35,6 @@ export default function SKDashboard() {
 
   useEffect(() => {
     const fetchUserProfile = async () => {
-      // If user data is already loaded from login, skip auth check
       if (
         currentUser &&
         (currentUser.role_type === "SK_Chairperson" ||
@@ -101,13 +101,9 @@ export default function SKDashboard() {
         console.error("Unexpected error loading profile:", err);
         setIsLoading(false);
         setTimeout(() => router.push("/login"), 100);
-      } finally {
-        // Only set loading to false if we have a valid user
-        // Note: Loading is already set to false in error cases above
       }
     };
 
-    // Only fetch once per component mount
     if (!authAttemptedRef.current) {
       authAttemptedRef.current = true;
       fetchUserProfile();
@@ -181,10 +177,9 @@ export default function SKDashboard() {
           </div>
         </header>
 
-        <div className="px-8 pb-12 space-y-8 max-w-7xl mx-auto w-full animate-fadein">
+        <div className="px-8 pb-12 space-y-8 max-w-7xl mx-auto w-full">
           {/* WELCOME BANNER (Compact, engaging) */}
           <section className="bg-primary rounded-4xl p-8 md:p-10 relative overflow-hidden text-white shadow-xl shadow-primary/20 border border-primary">
-            {/* Abstract Decorative Elements */}
             <div className="absolute top-0 right-0 w-full h-full overflow-hidden pointer-events-none z-0">
               <div className="absolute -top-28 -right-16 w-28 h-28 bg-white/5 rounded-full blur-3xl"></div>
               <div className="absolute -bottom-32 right-16 w-24 h-24 bg-tertiary/10 rounded-full blur-3xl"></div>
@@ -248,7 +243,23 @@ export default function SKDashboard() {
             </div>
           </section>
 
-          {/* CARD-ROW LEDGER LIST */}
+          {/* ALLOCATE FUNDS FORM SECTION */}
+          <section className="bg-white rounded-[2.5rem] p-8 md:p-10 border border-slate-200 shadow-sm">
+            <div className="mb-6">
+              <h2 className="text-2xl font-black text-primary tracking-tight">
+                Blockchain Budget Allocation
+              </h2>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
+                Record official SK funds directly on the Sepolia ledger
+              </p>
+            </div>
+
+            <div className="max-w-xl mx-auto">
+              <AllocateFundsForm />
+            </div>
+          </section>
+
+          {/* ACTIVE PROPOSALS SECTION */}
           <section className="bg-white rounded-[2.5rem] p-8 md:p-10 border border-slate-200 shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
               <div>
@@ -332,6 +343,7 @@ export default function SKDashboard() {
             </div>
           </section>
         </div>
+
         <ProposeProjectModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
