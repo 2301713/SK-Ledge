@@ -6,9 +6,7 @@ import { ConnectButton as RainbowConnectButton } from "@rainbow-me/rainbowkit";
 export function ConnectButton() {
   const [componentMounted, setComponentMounted] = useState(false);
 
-  // This forces the component to wait until it is safely running in the user's browser
   useEffect(() => {
-    // ✅ Fixes the ESLint error by rendering the state update asynchronously
     const timer = setTimeout(() => {
       setComponentMounted(true);
     }, 0);
