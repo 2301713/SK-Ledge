@@ -35,7 +35,7 @@ export default function UnauthorizedPage() {
         <div className="mt-8 flex justify-center">
           <Link 
             href="/login"
-            className="rounded-md bg-yellow-500 px-6 py-3 text-sm font-bold text-slate-900 shadow-sm hover:bg-yellow-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-500 transition-all duration-200"
+            className="rounded-md bg-yellow-500 px-6 py-3 text-sm font-bold text-slate-900 shadow-sm hover:bg-yellow-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-500 transition-all duration-200"
           >
             Return to Login
           </Link>
