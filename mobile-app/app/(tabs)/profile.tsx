@@ -15,7 +15,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function Profile() {
   const [loading, setLoading] = useState(false);
   const [companyName, setCompanyName] = useState("Loading...");
-  const [hasPaymentMethod, setHasPaymentMethod] = useState(false);
+  const [hasPaymentMethod] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
