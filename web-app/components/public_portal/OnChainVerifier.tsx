@@ -19,7 +19,7 @@ export default function OnChainVerifier() {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const {
-    data: records,
+    data: rawRecords,
     isLoading,
     refetch,
     isRefetching,
@@ -29,15 +29,18 @@ export default function OnChainVerifier() {
     functionName: "getAllRecords",
   });
 
-  const totalAllocations = records
-    ? records.filter((r: OnChainRecord) => r.recordType === "Allocation").length
-    : 0;
-  const totalExpenses = records
-    ? records.filter((r: OnChainRecord) => r.recordType === "Expense").length
-    : 0;
-  const totalAmount = records
-    ? records.reduce((sum: bigint, r: OnChainRecord) => sum + r.amount, 0n)
-    : 0n;
+  const records = (rawRecords as OnChainRecord[] | undefined) ?? [];
+
+  const totalAllocations = records.filter(
+    (r: OnChainRecord) => r.recordType === "Allocation",
+  ).length;
+  const totalExpenses = records.filter(
+    (r: OnChainRecord) => r.recordType === "Expense",
+  ).length;
+  const totalAmount = records.reduce(
+    (sum: bigint, r: OnChainRecord) => sum + r.amount,
+    BigInt(0),
+  );
 
   return (
     <section className="px-6 mb-12">
@@ -126,7 +129,7 @@ export default function OnChainVerifier() {
                   <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
                   <p className="text-sm">Loading on-chain records...</p>
                 </div>
-              ) : !records || records.length === 0 ? (
+              ) : records.length === 0 ? (
                 <div className="text-center py-8 text-slate-500 bg-slate-800/30 rounded-xl border border-slate-700">
                   <p className="text-sm">No records found on-chain yet.</p>
                 </div>

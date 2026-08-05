@@ -1,4 +1,5 @@
-export const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || "";
+export const CONTRACT_ADDRESS = (process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ||
+  "") as `0x${string}`;
 
 export const SK_LEDGE_ABI = [
   {
