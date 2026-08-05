@@ -1,12 +1,18 @@
 "use client";
 
 import LogoLoader from "@/components/LogoLoader";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import SideBar from "@/components/dashboard/SideBar";
 import { supabase } from "@/lib/supabase";
 import { UserAccount } from "@/lib/useAuthStore";
 import { useToast } from "@/lib/useToast";
+import {
+  useWriteContract,
+  useWaitForTransactionReceipt,
+  useAccount,
+} from "wagmi";
+import { CONTRACT_ADDRESS, SK_LEDGE_ABI } from "@/lib/contractConfig";
 import {
   Receipt,
   Upload,
@@ -18,6 +24,8 @@ import {
   Save,
   X,
   PhilippinePeso,
+  Loader2,
+  ExternalLink,
 } from "lucide-react";
 
 interface ExpenseForm {
@@ -54,7 +62,16 @@ export default function ExpensesPage() {
   const toast = useToast();
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [synced, setSynced] = useState(false);
+
+  const { isConnected, address } = useAccount();
+  const {
+    data: hash,
+    isPending: isWritePending,
+    writeContract,
+  } = useWriteContract();
+  const { isLoading: isConfirming, isSuccess: isConfirmed } =
+    useWaitForTransactionReceipt({ hash });
 
   const [form, setForm] = useState<ExpenseForm>({
     amount: "",
@@ -66,6 +83,11 @@ export default function ExpensesPage() {
 
   const [receipts, setReceipts] = useState<UploadedFile[]>([]);
   const [dragActive, setDragActive] = useState(false);
+  const submitRef = useRef<{
+    barangay: string;
+    amount: number;
+    purpose: string;
+  } | null>(null);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -192,26 +214,27 @@ export default function ExpensesPage() {
       return;
     }
 
-    setIsSubmitting(true);
     try {
-      // TODO: Save to Supabase/blockchain with file uploads
-      await new Promise((resolve) => setTimeout(resolve, 3000));
+      submitRef.current = {
+        barangay: currentUser?.barangay || "General",
+        amount: Math.round(parseFloat(form.amount) * 100),
+        purpose: `${form.description} — Vendor: ${form.vendor}`,
+      };
 
-      // Reset form
-      setForm({
-        amount: "",
-        vendor: "",
-        category: "",
-        description: "",
-        date: new Date().toISOString().split("T")[0],
+      writeContract({
+        address: CONTRACT_ADDRESS,
+        abi: SK_LEDGE_ABI,
+        functionName: "addRecord",
+        args: [
+          submitRef.current.barangay,
+          BigInt(submitRef.current.amount),
+          submitRef.current.purpose,
+          "Expense",
+        ],
       });
-      setReceipts([]);
-
-      toast.success("Expense logged successfully!");
-    } catch {
-      toast.error("Failed to log expense. Please try again.");
-    } finally {
-      setIsSubmitting(false);
+    } catch (err) {
+      console.error("Submission failed:", err);
+      toast.error("Failed to submit expense. Please try again.");
     }
   };
 
@@ -234,6 +257,39 @@ export default function ExpensesPage() {
       handleFileUpload(e.dataTransfer.files);
     }
   };
+
+  useEffect(() => {
+    if (isConfirmed && hash && submitRef.current) {
+      const data = submitRef.current;
+
+      fetch("/api/sync-record", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "expense",
+          user_id: currentUser?.id || "",
+          blockchain_tx_hash: hash,
+          official_address: address || "",
+          barangay: data.barangay,
+          amount: data.amount,
+          purpose: data.purpose,
+        }),
+      }).catch((err) => console.error("Sync failed:", err));
+
+      setForm({
+        amount: "",
+        vendor: "",
+        category: "",
+        description: "",
+        date: new Date().toISOString().split("T")[0],
+      });
+      setReceipts([]);
+      setSynced(true);
+
+      toast.success("Expense logged on blockchain!");
+      submitRef.current = null;
+    }
+  }, [isConfirmed, hash, currentUser, address, toast]);
 
   if (isLoading) return <LogoLoader />;
 
@@ -464,17 +520,45 @@ export default function ExpensesPage() {
               <div className="flex justify-end">
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isWritePending || isConfirming || !isConnected}
                   className="flex items-center gap-2 px-8 py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-300 text-white rounded-lg text-sm font-bold transition-colors shadow-sm"
                 >
-                  {isSubmitting ? (
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  {isWritePending ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      Awaiting Signature...
+                    </>
+                  ) : isConfirming ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      Recording on Chain...
+                    </>
                   ) : (
-                    <Save size={16} />
+                    <>
+                      <Save size={16} />
+                      Log Expense
+                    </>
                   )}
-                  {isSubmitting ? "Logging Expense..." : "Log Expense"}
                 </button>
               </div>
+
+              {/* SUCCESS MESSAGE */}
+              {synced && hash && (
+                <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-sm font-bold text-emerald-800">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                    Expense successfully recorded on Sepolia!
+                  </div>
+                  <a
+                    href={`https://sepolia.etherscan.io/tx/${hash}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="underline flex items-center gap-1 text-emerald-700"
+                  >
+                    View Etherscan <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+              )}
             </form>
           </div>
         </div>
