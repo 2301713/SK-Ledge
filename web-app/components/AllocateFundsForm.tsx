@@ -21,27 +21,15 @@ import {
   FileCheck2,
   Sparkles,
   ExternalLink,
+  MapPin,
 } from "lucide-react";
-
-const CONTRACT_ADDRESS = "0x1234567890123456789012345678901234567890";
-
-const CONTRACT_ABI = [
-  {
-    inputs: [
-      { internalType: "string", name: "_programName", type: "string" },
-      { internalType: "string", name: "_category", type: "string" },
-      { internalType: "uint256", name: "_amountPhp", type: "uint256" },
-    ],
-    name: "allocateFund",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-] as const;
+import { CONTRACT_ADDRESS, SK_LEDGE_ABI } from "@/lib/contractConfig";
+import { useAuthStore } from "@/lib/useAuthStore";
 
 export default function AllocateFundsForm() {
   const [currentStep, setCurrentStep] = useState(1);
   const [programName, setProgramName] = useState("");
+  const [barangay, setBarangay] = useState("");
   const [category, setCategory] = useState("Health & Sports");
   const [amountPhp, setAmountPhp] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
@@ -49,6 +37,7 @@ export default function AllocateFundsForm() {
   const { isConnected, address } = useAccount();
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
+  const { currentUser } = useAuthStore();
 
   const {
     data: hash,
@@ -66,6 +55,10 @@ export default function AllocateFundsForm() {
   const handleNext = () => {
     if (currentStep === 1 && !programName) {
       alert("Please enter a Program Title");
+      return;
+    }
+    if (currentStep === 1 && !barangay) {
+      alert("Please enter a Barangay name");
       return;
     }
     if (currentStep === 2 && (!amountPhp || Number(amountPhp) <= 0)) {
@@ -91,9 +84,9 @@ export default function AllocateFundsForm() {
     try {
       writeContract({
         address: CONTRACT_ADDRESS,
-        abi: CONTRACT_ABI,
-        functionName: "allocateFund",
-        args: [programName, category, BigInt(amountPhp)],
+        abi: SK_LEDGE_ABI,
+        functionName: "addRecord",
+        args: [barangay || "General", BigInt(amountPhp), programName, "Allocation"],
       });
     } catch (err) {
       console.error("Submission error:", err);
@@ -101,14 +94,30 @@ export default function AllocateFundsForm() {
   };
 
   useEffect(() => {
-    if (isConfirmed) {
+    if (isConfirmed && hash) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsSuccess(true);
       setProgramName("");
+      setBarangay("");
       setAmountPhp("");
       setCurrentStep(1);
+
+      // Sync to Supabase via API
+      fetch("/api/sync-record", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "allocation",
+          user_id: currentUser?.id || "",
+          blockchain_tx_hash: hash,
+          official_address: address || "",
+          barangay: barangay || "General",
+          amount: Number(amountPhp),
+          purpose: programName,
+        }),
+      }).catch((err) => console.error("Sync failed:", err));
     }
-  }, [isConfirmed]);
+  }, [isConfirmed, hash, currentUser, address, barangay, amountPhp, programName]);
 
   const formatCurrency = (val: string) => {
     const num = parseFloat(val);
@@ -220,6 +229,21 @@ export default function AllocateFundsForm() {
 
               <div>
                 <label className="text-xs font-black uppercase tracking-wider text-slate-700 mb-2 flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-blue-600" />
+                  Barangay
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g., Barangay San Jose"
+                  value={barangay}
+                  onChange={(e) => setBarangay(e.target.value)}
+                  className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 text-sm font-semibold focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-black uppercase tracking-wider text-slate-700 mb-2 flex items-center gap-2">
                   <Layers className="w-4 h-4 text-blue-600" />
                   Category
                 </label>
@@ -314,6 +338,10 @@ export default function AllocateFundsForm() {
                   <div className="flex justify-between">
                     <span className="text-slate-500">Program:</span>
                     <span className="font-bold text-slate-900">{programName}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Barangay:</span>
+                    <span className="font-bold text-slate-700">{barangay}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-500">Category:</span>

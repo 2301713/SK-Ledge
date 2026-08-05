@@ -1,34 +1,23 @@
 "use client";
 
-import { useState } from "react";
-import { parseEther } from "viem";
+import { useState, useEffect } from "react";
 import {
   useWriteContract,
   useWaitForTransactionReceipt,
   useAccount,
 } from "wagmi";
-
-const CONTRACT_ADDRESS = "0xYourContractAddressHere";
-const SK_LEDGE_ABI = [
-  {
-    type: "function",
-    name: "submitRecord",
-    stateMutability: "nonpayable",
-    inputs: [
-      { name: "purpose", type: "string" },
-      { name: "amount", type: "uint256" },
-      { name: "recordType", type: "string" },
-    ],
-  },
-] as const;
+import { CONTRACT_ADDRESS, SK_LEDGE_ABI } from "@/lib/contractConfig";
+import { useAuthStore } from "@/lib/useAuthStore";
 
 export function RecordForm() {
+  const [barangay, setBarangay] = useState("");
   const [purpose, setPurpose] = useState("");
   const [amount, setAmount] = useState("");
   const [recordType, setRecordType] = useState("Expense");
   const [formError, setFormError] = useState("");
 
-  const { isConnected } = useAccount();
+  const { isConnected, address } = useAccount();
+  const { currentUser } = useAuthStore();
   const {
     data: hash,
     error: writeError,
@@ -43,6 +32,7 @@ export function RecordForm() {
     e.preventDefault();
     setFormError("");
 
+    if (!barangay.trim()) return setFormError("Barangay is required.");
     if (!purpose.trim()) return setFormError("Purpose is required.");
     if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
       return setFormError("Please enter a valid positive amount.");
@@ -52,8 +42,8 @@ export function RecordForm() {
       writeContract({
         address: CONTRACT_ADDRESS,
         abi: SK_LEDGE_ABI,
-        functionName: "submitRecord",
-        args: [purpose, parseEther(amount), recordType],
+        functionName: "addRecord",
+        args: [barangay, BigInt(amount), purpose, recordType],
       });
     } catch (err) {
       console.error("Submission failed:", err);
@@ -61,6 +51,24 @@ export function RecordForm() {
   };
 
   const isProcessing = isAwaitingWallet || isConfirming;
+
+  useEffect(() => {
+    if (isConfirmed && hash) {
+      fetch("/api/sync-record", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: recordType.toLowerCase(),
+          user_id: currentUser?.id || "",
+          blockchain_tx_hash: hash,
+          official_address: address || "",
+          barangay,
+          amount: Number(amount),
+          purpose,
+        }),
+      }).catch((err) => console.error("Sync failed:", err));
+    }
+  }, [isConfirmed, hash, recordType, currentUser, address, barangay, amount, purpose]);
 
   if (!isConnected) {
     return (
@@ -80,6 +88,20 @@ export function RecordForm() {
       <h2 className="text-xl font-semibold">Log Financial Record</h2>
 
       <div className="flex flex-col space-y-1">
+        <label className="text-sm font-medium" htmlFor="barangay">
+          Barangay
+        </label>
+        <input
+          id="barangay"
+          disabled={isProcessing}
+          className="p-2 border rounded-md"
+          value={barangay}
+          onChange={(e) => setBarangay(e.target.value)}
+          placeholder="e.g., Barangay San Jose"
+        />
+      </div>
+
+      <div className="flex flex-col space-y-1">
         <label className="text-sm font-medium" htmlFor="purpose">
           Purpose
         </label>
@@ -95,7 +117,7 @@ export function RecordForm() {
 
       <div className="flex flex-col space-y-1">
         <label className="text-sm font-medium" htmlFor="amount">
-          Amount (ETH)
+          Amount (PHP)
         </label>
         <input
           id="amount"
@@ -103,7 +125,7 @@ export function RecordForm() {
           className="p-2 border rounded-md"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
-          placeholder="0.05"
+          placeholder="25000"
         />
       </div>
 
@@ -119,7 +141,7 @@ export function RecordForm() {
           onChange={(e) => setRecordType(e.target.value)}
         >
           <option value="Expense">Expense</option>
-          <option value="Income">Income</option>
+          <option value="Allocation">Allocation</option>
         </select>
       </div>
 

@@ -7,6 +7,7 @@ import PortalHero from "../../components/public_portal/PortalHero";
 import MetricsRow from "../../components/public_portal/MetricsRow";
 import AnalyticsSection from "../../components/public_portal/AnalyticsSection";
 import ProjectRegistry from "../../components/public_portal/ProjectRegistry";
+import OnChainVerifier from "../../components/public_portal/OnChainVerifier";
 import PortalFooter from "../../components/public_portal/PortalFooter";
 import { Project } from "../../components/public_portal/ProjectRegistry";
 
@@ -56,6 +57,7 @@ export default function PublicDashboard() {
         <PortalHero />
         <MetricsRow />
         <AnalyticsSection />
+        <OnChainVerifier />
         <ProjectRegistry
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
