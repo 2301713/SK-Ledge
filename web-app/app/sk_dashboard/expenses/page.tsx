@@ -4,6 +4,9 @@ import LogoLoader from "@/components/LogoLoader";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import SideBar from "@/components/dashboard/SideBar";
+import TopBar from "@/components/dashboard/ui/TopBar";
+import PageHeader from "@/components/dashboard/ui/PageHeader";
+import { Card, CardHeader } from "@/components/dashboard/ui/Card";
 import { supabase } from "@/lib/supabase";
 import { UserAccount } from "@/lib/useAuthStore";
 import { useToast } from "@/lib/useToast";
@@ -14,11 +17,9 @@ import {
 } from "wagmi";
 import { CONTRACT_ADDRESS, SK_LEDGE_ABI } from "@/lib/contractConfig";
 import {
-  Receipt,
   Upload,
   Building,
   Tag,
-  FileText,
   Calendar,
   CheckCircle2,
   Save,
@@ -56,6 +57,9 @@ const CATEGORIES = [
   "Utilities",
   "Other",
 ];
+
+const inputClass =
+  "w-full rounded-xl border border-border bg-white py-3 pl-10 pr-3 text-sm font-bold text-primary-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20";
 
 export default function ExpensesPage() {
   const router = useRouter();
@@ -261,6 +265,19 @@ export default function ExpensesPage() {
   useEffect(() => {
     if (isConfirmed && hash && submitRef.current) {
       const data = submitRef.current;
+      submitRef.current = null;
+
+      setForm({
+        amount: "",
+        vendor: "",
+        category: "",
+        description: "",
+        date: new Date().toISOString().split("T")[0],
+      });
+      setReceipts([]);
+      setSynced(true);
+
+      toast.success("Expense logged on blockchain!");
 
       fetch("/api/sync-record", {
         method: "POST",
@@ -274,27 +291,29 @@ export default function ExpensesPage() {
           amount: data.amount,
           purpose: data.purpose,
         }),
-      }).catch((err) => console.error("Sync failed:", err));
-
-      setForm({
-        amount: "",
-        vendor: "",
-        category: "",
-        description: "",
-        date: new Date().toISOString().split("T")[0],
-      });
-      setReceipts([]);
-      setSynced(true);
-
-      toast.success("Expense logged on blockchain!");
-      submitRef.current = null;
+      })
+        .then(async (res) => {
+          if (!res.ok) {
+            const body = await res.json().catch(() => null);
+            console.error("Database sync failed:", res.status, body);
+            toast.error(
+              "Recorded on-chain, but syncing to the database failed. Contact an admin.",
+            );
+          }
+        })
+        .catch((err) => {
+          console.error("Sync failed:", err);
+          toast.error(
+            "Recorded on-chain, but syncing to the database failed. Contact an admin.",
+          );
+        });
     }
   }, [isConfirmed, hash, currentUser, address, toast]);
 
   if (isLoading) return <LogoLoader />;
 
   return (
-    <div className="flex min-h-screen bg-background selection:bg-tertiary selection:text-primary">
+    <div className="flex min-h-screen gap-4 bg-background p-4 selection:bg-tertiary selection:text-primary">
       {currentUser && (
         <SideBar
           userName={currentUser.full_name}
@@ -303,265 +322,249 @@ export default function ExpensesPage() {
         />
       )}
 
-      <main className="flex-1 flex flex-col h-screen overflow-hidden bg-slate-50">
-        {/* HEADER */}
-        <header className="h-20 bg-white border-b border-slate-200 px-8 flex items-center justify-between z-10 shrink-0 shadow-sm">
-          <div className="flex items-center gap-3 animate-fadein">
-            <div className="p-2 bg-blue-50 text-blue-700 rounded-lg">
-              <Receipt size={24} strokeWidth={2.5} />
-            </div>
-            <div>
-              <h1 className="text-xl font-black text-slate-900 tracking-tight">
-                Expense Logger
-              </h1>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mt-0.5">
-                Record transactions with digital receipts
-              </p>
-            </div>
-          </div>
-        </header>
+      <main className="min-w-0 flex-1 space-y-6 py-2 animate-fadein">
+        <TopBar
+          userName={currentUser?.full_name ?? "SK Official"}
+          userEmail={currentUser?.email}
+          hideSearch
+        />
 
-        {/* MAIN CONTENT */}
-        <div className="flex-1 overflow-y-auto p-8 z-10">
-          <div className="max-w-4xl mx-auto">
-            <form onSubmit={handleSubmit} className="space-y-8 animate-fadein">
-              {/* EXPENSE DETAILS */}
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-                <h2 className="text-lg font-black text-slate-900 mb-6 flex items-center gap-2">
-                  <FileText size={20} />
-                  Transaction Details
-                </h2>
+        <PageHeader
+          eyebrow="SK Officials"
+          title="Expense Logger"
+          subtitle="Record transactions with digital receipts, secured on the Sepolia ledger."
+        />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* AMOUNT */}
-                  <div className="space-y-2">
-                    <label className="block text-sm font-bold text-slate-700">
-                      Amount (₱)
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <PhilippinePeso className="h-5 w-5 text-slate-400" />
-                      </div>
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={form.amount}
-                        onChange={(e) =>
-                          handleInputChange("amount", e.target.value)
-                        }
-                        className="w-full pl-10 pr-3 py-3 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
-                        placeholder="0.00"
-                      />
-                    </div>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* EXPENSE DETAILS */}
+          <Card>
+            <CardHeader
+              eyebrow="Details"
+              title="Transaction Details"
+            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* AMOUNT */}
+              <div className="space-y-2">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-secondary-foreground">
+                  Amount (₱)
+                </label>
+                <div className="relative">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                    <PhilippinePeso className="h-5 w-5 text-secondary-foreground" />
                   </div>
-
-                  {/* DATE */}
-                  <div className="space-y-2">
-                    <label className="block text-sm font-bold text-slate-700">
-                      Transaction Date
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Calendar className="h-5 w-5 text-slate-400" />
-                      </div>
-                      <input
-                        type="date"
-                        value={form.date}
-                        onChange={(e) =>
-                          handleInputChange("date", e.target.value)
-                        }
-                        className="w-full pl-10 pr-3 py-3 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
-                      />
-                    </div>
-                  </div>
-
-                  {/* VENDOR */}
-                  <div className="space-y-2">
-                    <label className="block text-sm font-bold text-slate-700">
-                      Vendor/Supplier
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Building className="h-5 w-5 text-slate-400" />
-                      </div>
-                      <input
-                        type="text"
-                        value={form.vendor}
-                        onChange={(e) =>
-                          handleInputChange("vendor", e.target.value)
-                        }
-                        className="w-full pl-10 pr-3 py-3 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
-                        placeholder="Enter vendor name"
-                      />
-                    </div>
-                  </div>
-
-                  {/* CATEGORY */}
-                  <div className="space-y-2">
-                    <label className="block text-sm font-bold text-slate-700">
-                      Category
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Tag className="h-5 w-5 text-slate-400" />
-                      </div>
-                      <select
-                        value={form.category}
-                        onChange={(e) =>
-                          handleInputChange("category", e.target.value)
-                        }
-                        className="w-full pl-10 pr-3 py-3 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
-                      >
-                        <option value="">Select category</option>
-                        {CATEGORIES.map((category) => (
-                          <option key={category} value={category}>
-                            {category}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
-                {/* DESCRIPTION */}
-                <div className="mt-6 space-y-2">
-                  <label className="block text-sm font-bold text-slate-700">
-                    Description
-                  </label>
-                  <textarea
-                    value={form.description}
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={form.amount}
                     onChange={(e) =>
-                      handleInputChange("description", e.target.value)
+                      handleInputChange("amount", e.target.value)
                     }
-                    rows={3}
-                    className="w-full px-3 py-3 border border-slate-200 rounded-lg text-sm font-medium text-slate-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none resize-none"
-                    placeholder="Describe the expense and purpose..."
+                    className={inputClass}
+                    placeholder="0.00"
                   />
                 </div>
               </div>
 
-              {/* RECEIPT UPLOAD */}
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-                <h2 className="text-lg font-black text-slate-900 mb-6 flex items-center gap-2">
-                  <Upload size={20} />
-                  Digital Receipts
-                </h2>
-
-                {/* DRAG & DROP AREA */}
-                <div
-                  className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
-                    dragActive
-                      ? "border-blue-500 bg-blue-50"
-                      : "border-slate-300 hover:border-slate-400"
-                  }`}
-                  onDragEnter={handleDrag}
-                  onDragLeave={handleDrag}
-                  onDragOver={handleDrag}
-                  onDrop={handleDrop}
-                >
-                  <Upload className="mx-auto h-12 w-12 text-slate-400 mb-4" />
-                  <p className="text-sm font-bold text-slate-900 mb-2">
-                    Drop receipt files here, or{" "}
-                    <label className="text-blue-600 hover:text-blue-700 cursor-pointer underline">
-                      browse
-                      <input
-                        type="file"
-                        multiple
-                        accept="image/*,.pdf"
-                        onChange={(e) => handleFileUpload(e.target.files)}
-                        className="hidden"
-                      />
-                    </label>
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    Supports JPG, PNG, PDF • Max 10MB each
-                  </p>
+              {/* DATE */}
+              <div className="space-y-2">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-secondary-foreground">
+                  Transaction Date
+                </label>
+                <div className="relative">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                    <Calendar className="h-5 w-5 text-secondary-foreground" />
+                  </div>
+                  <input
+                    type="date"
+                    value={form.date}
+                    onChange={(e) => handleInputChange("date", e.target.value)}
+                    className={inputClass}
+                  />
                 </div>
-
-                {/* UPLOADED FILES */}
-                {receipts.length > 0 && (
-                  <div className="mt-6 space-y-3">
-                    <h3 className="text-sm font-bold text-slate-700">
-                      Uploaded Files ({receipts.length})
-                    </h3>
-                    {receipts.map((file) => (
-                      <div
-                        key={file.id}
-                        className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-green-50 text-green-600 rounded">
-                            <CheckCircle2 size={16} />
-                          </div>
-                          <div>
-                            <p className="text-sm font-bold text-slate-900">
-                              {file.name}
-                            </p>
-                            <p className="text-xs text-slate-500">
-                              {formatFileSize(file.size)}
-                            </p>
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => removeFile(file.id)}
-                          className="p-1 text-slate-400 hover:text-red-500 transition-colors"
-                        >
-                          <X size={16} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
 
-              {/* SUBMIT BUTTON */}
-              <div className="flex justify-end">
-                <button
-                  type="submit"
-                  disabled={isWritePending || isConfirming || !isConnected}
-                  className="flex items-center gap-2 px-8 py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-300 text-white rounded-lg text-sm font-bold transition-colors shadow-sm"
-                >
-                  {isWritePending ? (
-                    <>
-                      <Loader2 size={16} className="animate-spin" />
-                      Awaiting Signature...
-                    </>
-                  ) : isConfirming ? (
-                    <>
-                      <Loader2 size={16} className="animate-spin" />
-                      Recording on Chain...
-                    </>
-                  ) : (
-                    <>
-                      <Save size={16} />
-                      Log Expense
-                    </>
-                  )}
-                </button>
+              {/* VENDOR */}
+              <div className="space-y-2">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-secondary-foreground">
+                  Vendor/Supplier
+                </label>
+                <div className="relative">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                    <Building className="h-5 w-5 text-secondary-foreground" />
+                  </div>
+                  <input
+                    type="text"
+                    value={form.vendor}
+                    onChange={(e) =>
+                      handleInputChange("vendor", e.target.value)
+                    }
+                    className={inputClass}
+                    placeholder="Enter vendor name"
+                  />
+                </div>
               </div>
 
-              {/* SUCCESS MESSAGE */}
-              {synced && hash && (
-                <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-sm font-bold text-emerald-800">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-                    Expense successfully recorded on Sepolia!
+              {/* CATEGORY */}
+              <div className="space-y-2">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-secondary-foreground">
+                  Category
+                </label>
+                <div className="relative">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                    <Tag className="h-5 w-5 text-secondary-foreground" />
                   </div>
-                  <a
-                    href={`https://sepolia.etherscan.io/tx/${hash}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="underline flex items-center gap-1 text-emerald-700"
+                  <select
+                    value={form.category}
+                    onChange={(e) =>
+                      handleInputChange("category", e.target.value)
+                    }
+                    className={inputClass}
                   >
-                    View Etherscan <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
+                    <option value="">Select category</option>
+                    {CATEGORIES.map((category) => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                  </select>
                 </div>
+              </div>
+            </div>
+
+            {/* DESCRIPTION */}
+            <div className="mt-6 space-y-2">
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-secondary-foreground">
+                Description
+              </label>
+              <textarea
+                value={form.description}
+                onChange={(e) =>
+                  handleInputChange("description", e.target.value)
+                }
+                rows={3}
+                className="w-full resize-none rounded-xl border border-border bg-white px-3 py-3 text-sm font-medium text-primary-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                placeholder="Describe the expense and purpose..."
+              />
+            </div>
+          </Card>
+
+          {/* RECEIPT UPLOAD */}
+          <Card>
+            <CardHeader eyebrow="Attachments" title="Digital Receipts" />
+
+            {/* DRAG & DROP AREA */}
+            <div
+              className={`flex flex-col items-center justify-center rounded-2xl border-2 border-dashed p-8 text-center transition-colors ${
+                dragActive
+                  ? "border-primary bg-primary/5"
+                  : "border-border hover:border-secondary-foreground/40"
+              }`}
+              onDragEnter={handleDrag}
+              onDragLeave={handleDrag}
+              onDragOver={handleDrag}
+              onDrop={handleDrop}
+            >
+              <Upload className="mx-auto mb-4 h-12 w-12 text-secondary-foreground/40" />
+              <p className="mb-2 text-sm font-bold text-primary-foreground">
+                Drop receipt files here, or{" "}
+                <label className="cursor-pointer text-primary underline hover:text-primary/80">
+                  browse
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*,.pdf"
+                    onChange={(e) => handleFileUpload(e.target.files)}
+                    className="hidden"
+                  />
+                </label>
+              </p>
+              <p className="text-xs text-secondary-foreground">
+                Supports JPG, PNG, PDF • Max 10MB each
+              </p>
+            </div>
+
+            {/* UPLOADED FILES */}
+            {receipts.length > 0 && (
+              <div className="mt-6 space-y-3">
+                <h3 className="text-sm font-bold text-primary-foreground">
+                  Uploaded Files ({receipts.length})
+                </h3>
+                {receipts.map((file) => (
+                  <div
+                    key={file.id}
+                    className="flex items-center justify-between rounded-xl border border-border bg-secondary/40 p-3"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="rounded-lg bg-success/10 p-2 text-success">
+                        <CheckCircle2 size={16} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-primary-foreground">
+                          {file.name}
+                        </p>
+                        <p className="text-xs text-secondary-foreground">
+                          {formatFileSize(file.size)}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeFile(file.id)}
+                      className="p-1 text-secondary-foreground transition-colors hover:text-danger"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+
+          {/* SUBMIT BUTTON */}
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              disabled={isWritePending || isConfirming || !isConnected}
+              className="flex items-center gap-2 rounded-xl bg-primary px-8 py-3 text-sm font-bold text-white shadow-[0_6px_16px_-6px_rgba(1,56,168,0.5)] transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:bg-secondary-foreground/30"
+            >
+              {isWritePending ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  Awaiting Signature...
+                </>
+              ) : isConfirming ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  Recording on Chain...
+                </>
+              ) : (
+                <>
+                  <Save size={16} />
+                  Log Expense
+                </>
               )}
-            </form>
+            </button>
           </div>
-        </div>
+
+          {/* SUCCESS MESSAGE */}
+          {synced && hash && (
+            <div className="flex items-center justify-between rounded-xl border border-success/30 bg-success/10 p-4 text-sm font-bold text-success">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-5 w-5 shrink-0" />
+                Expense successfully recorded on Sepolia!
+              </div>
+              <a
+                href={`https://sepolia.etherscan.io/tx/${hash}`}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-1 text-success underline"
+              >
+                View Etherscan <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+            </div>
+          )}
+        </form>
       </main>
     </div>
   );

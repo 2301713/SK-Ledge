@@ -10,30 +10,32 @@ export default function StatCard({
 }: StatCardProps) {
   return (
     <div
-      className={`p-6 rounded-3xl border border-slate-200 relative overflow-hidden transition-all duration-300 ${
-        isActive ? "bg-slate-50 ring-1 ring-sky-100" : "bg-white"
+      className={`relative p-6 rounded-3xl border bg-white overflow-hidden transition-all duration-300 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(15,23,42,0.10)] ${
+        isActive ? "ring-1 ring-primary/15 border-primary/20" : "border-border"
       }`}
     >
-      <div className="flex justify-between items-start mb-6">
-        <div className="p-2 bg-slate-100 rounded-xl border border-slate-200">
+      <div
+        className={`absolute top-0 left-6 right-6 h-1 rounded-b-full ${lineColor} opacity-70`}
+      />
+      <div className="flex justify-between items-start mb-5 pt-2">
+        <div className="p-2.5 bg-secondary rounded-xl border border-border">
           {icon}
         </div>
-        <div className="w-6 h-6 rounded-full border-2 border-slate-200 border-t-sky-500 animate-[spin_3s_linear_infinite]" />
+        {isActive && (
+          <div className="w-6 h-6 rounded-full border-2 border-primary/25 border-t-primary animate-[spin_3s_linear_infinite]" />
+        )}
       </div>
-      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">
+      <p className="text-[10px] font-black text-secondary-foreground uppercase tracking-widest leading-none">
         {label}
       </p>
-      <h3 className="text-2xl font-black mt-2 tracking-tight text-slate-900">
+      <h3 className="text-2xl font-extrabold mt-2 tracking-tight text-primary-foreground tabular-nums">
         {value}
       </h3>
       {subtitle && (
-        <p className="text-[10px] text-slate-400 font-bold tracking-tighter mt-1">
+        <p className="text-[10px] text-secondary-foreground font-bold uppercase tracking-wider mt-1">
           {subtitle}
         </p>
       )}
-      <div
-        className={`absolute bottom-0 left-4 right-4 h-0.5 ${lineColor} opacity-60`}
-      />
     </div>
   );
 }

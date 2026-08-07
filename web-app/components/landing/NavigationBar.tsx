@@ -6,6 +6,14 @@ import { Menu, X } from "lucide-react";
 import { ConnectButton } from "../ConnectButton";
 import Image from "next/image";
 
+const NAV_LINKS = [
+  { label: "Home", href: "#home" },
+  { label: "About", href: "#about" },
+  { label: "Features", href: "#features" },
+  { label: "Team", href: "#team" },
+  { label: "Contact", href: "#contact" },
+];
+
 export default function NavBar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -29,13 +37,13 @@ export default function NavBar() {
 
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-1">
-            {["Home", "About", "Features"].map((item) => (
+            {NAV_LINKS.map((item) => (
               <Link
-                key={item}
-                href={`#${item.toLowerCase()}`}
+                key={item.href}
+                href={item.href}
                 className="text-xs font-semibold text-slate-400 hover:text-white px-3.5 py-2 rounded-xl hover:bg-white/8 transition-all"
               >
-                {item}
+                {item.label}
               </Link>
             ))}
           </nav>
@@ -70,14 +78,14 @@ export default function NavBar() {
         {isMobileMenuOpen && (
           <div className="md:hidden mt-2 bg-slate-900/98 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl overflow-hidden">
             <div className="flex flex-col p-3 gap-2">
-              {["Features", "Contact"].map((item) => (
+              {NAV_LINKS.map((item) => (
                 <Link
-                  key={item}
-                  href={`#${item.toLowerCase()}`}
+                  key={item.href}
+                  href={item.href}
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="text-sm font-semibold text-slate-400 hover:text-white hover:bg-white/8 px-4 py-3 rounded-xl transition-all"
                 >
-                  {item}
+                  {item.label}
                 </Link>
               ))}
               <div className="h-px bg-white/8 my-1" />
@@ -89,6 +97,7 @@ export default function NavBar() {
 
               <Link
                 href="/login"
+                onClick={() => setIsMobileMenuOpen(false)}
                 className="text-center px-4 py-3 bg-primary text-white text-sm font-bold rounded-xl hover:bg-primary/90 transition-all"
               >
                 Sign In

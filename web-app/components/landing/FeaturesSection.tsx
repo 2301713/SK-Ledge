@@ -8,11 +8,16 @@ import {
   BarChart3,
   Shield,
   UserCircle,
+  ArrowRight,
 } from "lucide-react";
+import Link from "next/link";
 
 export default function FeaturesSection() {
   return (
-    <section id="features" className="py-16 bg-slate-950 px-6">
+    <section
+      id="features"
+      className="py-16 bg-slate-950 px-6 scroll-mt-24"
+    >
       <div className="max-w-6xl mx-auto animate-fadein">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-10 pb-8 border-b border-white/8">
@@ -37,13 +42,13 @@ export default function FeaturesSection() {
         {/* Bento Grid */}
         <div className="grid grid-cols-1 md:grid-cols-11 gap-4">
           {/* Card 1: Project Management — wide */}
-          <div className="md:col-span-6 p-5 rounded-lg bg-slate-900 border border-white/8 group hover:border-primary/30 transition-all duration-300 flex flex-col justify-between min-h-60">
+          <div className="md:col-span-6 p-6 rounded-3xl bg-slate-900 border border-white/8 group hover:border-primary/30 transition-all duration-300 flex flex-col justify-between min-h-60">
             <div>
               <div className="flex items-start justify-between mb-4">
-                <div className="w-8 h-8 rounded-lg bg-tertiary/15 flex items-center justify-center">
+                <div className="w-9 h-9 rounded-xl bg-tertiary/15 flex items-center justify-center">
                   <LayoutDashboard className="w-4 h-4 text-tertiary" />
                 </div>
-                <span className="text-[9px] font-bold text-slate-600 uppercase tracking-widest">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                   01
                 </span>
               </div>
@@ -56,7 +61,7 @@ export default function FeaturesSection() {
               </p>
             </div>
             {/* Micro-UI */}
-            <div className="mt-4 bg-slate-800/60 border border-white/8 rounded-lg p-3 w-3/4 group-hover:translate-x-1 transition-transform duration-300">
+            <div className="mt-4 bg-slate-800/60 border border-white/8 rounded-xl p-3 w-3/4 group-hover:translate-x-1 transition-transform duration-300">
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-2 h-2 rounded-full bg-tertiary" />
                 <div className="h-1.5 w-20 bg-slate-700 rounded-full" />
@@ -73,13 +78,13 @@ export default function FeaturesSection() {
           </div>
 
           {/* Card 2: Budget Tracking — narrow */}
-          <div className="md:col-span-5 p-5 rounded-lg bg-primary border border-primary/30 flex flex-col justify-between min-h-60 group hover:bg-primary/90 transition-all duration-300">
+          <div className="md:col-span-5 p-6 rounded-3xl bg-primary border border-primary/30 flex flex-col justify-between min-h-60 group hover:bg-primary/90 transition-all duration-300">
             <div>
               <div className="flex items-start justify-between mb-4">
-                <div className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center">
+                <div className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center">
                   <Wallet className="w-4 h-4 text-white" />
                 </div>
-                <span className="text-[9px] font-bold text-white/50 uppercase tracking-widest">
+                <span className="text-[10px] font-bold text-white/50 uppercase tracking-widest">
                   02
                 </span>
               </div>
@@ -107,13 +112,13 @@ export default function FeaturesSection() {
           </div>
 
           {/* Card 3: Public Transparency — narrow */}
-          <div className="md:col-span-4 p-5 rounded-lg bg-slate-900 border border-white/8 group hover:border-primary/30 transition-all duration-300 flex flex-col justify-between min-h-56">
+          <div className="md:col-span-4 p-6 rounded-3xl bg-slate-900 border border-white/8 group hover:border-primary/30 transition-all duration-300 flex flex-col justify-between min-h-56">
             <div>
               <div className="flex items-start justify-between mb-4">
-                <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center">
+                <div className="w-9 h-9 rounded-xl bg-slate-800 flex items-center justify-center">
                   <Eye className="w-4 h-4 text-slate-400" />
                 </div>
-                <span className="text-[9px] font-bold text-slate-600 uppercase tracking-widest">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                   03
                 </span>
               </div>
@@ -126,7 +131,7 @@ export default function FeaturesSection() {
               </p>
             </div>
             {/* Micro-UI */}
-            <div className="mt-4 bg-slate-800/60 border border-white/8 rounded-lg p-3 flex items-center gap-2 group-hover:-translate-y-1 transition-transform duration-300">
+            <div className="mt-4 bg-slate-800/60 border border-white/8 rounded-xl p-3 flex items-center gap-2 group-hover:-translate-y-1 transition-transform duration-300">
               <div className="w-7 h-7 bg-slate-700 rounded-lg flex items-center justify-center shrink-0">
                 <BarChart3 className="w-3 h-3 text-slate-400" />
               </div>
@@ -138,14 +143,14 @@ export default function FeaturesSection() {
           </div>
 
           {/* Card 4: Role-Based Access — wide */}
-          <div className="md:col-span-7 p-5 rounded-lg bg-slate-900 border border-white/8 group hover:border-primary/30 transition-all duration-300 min-h-56">
+          <div className="md:col-span-7 p-6 rounded-3xl bg-slate-900 border border-white/8 group hover:border-primary/30 transition-all duration-300 min-h-56">
             <div className="flex flex-col md:flex-row gap-6 h-full items-start">
               <div className="flex-1">
                 <div className="flex items-start justify-between mb-4">
-                  <div className="w-8 h-8 rounded-lg bg-tertiary/15 flex items-center justify-center">
+                  <div className="w-9 h-9 rounded-xl bg-tertiary/15 flex items-center justify-center">
                     <Users className="w-4 h-4 text-tertiary" />
                   </div>
-                  <span className="text-[9px] font-bold text-slate-600 uppercase tracking-widest">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                     04
                   </span>
                 </div>
@@ -159,7 +164,7 @@ export default function FeaturesSection() {
               </div>
 
               {/* Micro-UI */}
-              <div className="flex-1 w-full bg-slate-800/60 border border-white/8 rounded-lg p-4 space-y-3 mt-auto">
+              <div className="flex-1 w-full bg-slate-800/60 border border-white/8 rounded-xl p-4 space-y-3 mt-auto">
                 <div className="flex items-center justify-between pb-2 border-b border-white/8">
                   <div className="flex items-center gap-2">
                     <UserCircle className="w-6 h-6 text-tertiary" />
@@ -197,6 +202,17 @@ export default function FeaturesSection() {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Public dashboard link */}
+        <div className="mt-10 flex justify-center">
+          <Link
+            href="/public_portal"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-white/5 text-white border border-white/10 rounded-xl font-bold text-sm hover:bg-white/10 transition-all group"
+          >
+            See the Live Public Dashboard
+            <ArrowRight className="w-4 h-4 text-tertiary group-hover:translate-x-0.5 transition-transform" />
+          </Link>
         </div>
       </div>
     </section>

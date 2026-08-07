@@ -5,7 +5,7 @@ export default function StatusBadge({ status }: { status: StatusType }) {
     Ongoing: "bg-ongoing/10 text-ongoing border-ongoing/20",
     Completed: "bg-success/10 text-success border-success/20",
     Pending: "bg-pending/10 text-pending border-pending/20",
-    Approved: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+    Approved: "bg-primary/10 text-primary border-primary/20",
   };
 
   const labels: Record<StatusType, string> = {
@@ -17,7 +17,7 @@ export default function StatusBadge({ status }: { status: StatusType }) {
 
   return (
     <span
-      className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-widest ${config[status] ?? "bg-slate-800 text-slate-400 border-white/10"}`}
+      className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-widest ${config[status] ?? "bg-secondary text-secondary-foreground border-border"}`}
     >
       {labels[status] ?? status}
     </span>

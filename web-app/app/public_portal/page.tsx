@@ -51,7 +51,7 @@ export default function PublicDashboard() {
   }, [searchQuery, projects]);
 
   return (
-    <div className="min-h-screen bg-white text-black selection:bg-primary/30">
+    <div className="min-h-screen bg-background selection:bg-tertiary selection:text-primary">
       <PortalNav />
       <main>
         <PortalHero />

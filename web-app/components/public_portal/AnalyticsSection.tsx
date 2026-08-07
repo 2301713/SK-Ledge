@@ -25,15 +25,15 @@ ChartJS.register(
 
 export default function AnalyticsSection() {
   return (
-    <section className="px-6 mb-8">
+    <section className="px-4 sm:px-6 mb-8">
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Pie Chart */}
-        <div className="lg:col-span-1 bg-secondary rounded-2xl p-7 border border-black/20 hover:border-black/40 transition-all">
+        <div className="lg:col-span-1 rounded-3xl border border-border bg-white p-7 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(15,23,42,0.10)]">
           <div className="mb-6">
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.15em] mb-1">
+            <p className="text-[10px] font-bold text-secondary-foreground uppercase tracking-[0.15em] mb-1">
               Analytics
             </p>
-            <h3 className="text-base font-bold text-white">
+            <h3 className="text-base font-bold text-primary-foreground">
               Fund Distribution
             </h3>
           </div>
@@ -65,7 +65,7 @@ export default function AnalyticsSection() {
                     labels: {
                       usePointStyle: true,
                       padding: 16,
-                      color: "#94a3b8",
+                      color: "#64748B",
                       font: { size: 10, weight: "bold" },
                     },
                   },
@@ -76,12 +76,12 @@ export default function AnalyticsSection() {
         </div>
 
         {/* Bar Chart */}
-        <div className="lg:col-span-2 bg-secondary rounded-2xl p-7 border border-black/20 hover:border-black/40 transition-all">
+        <div className="lg:col-span-2 rounded-3xl border border-border bg-white p-7 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(15,23,42,0.10)]">
           <div className="mb-6">
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.15em] mb-1">
+            <p className="text-[10px] font-bold text-secondary-foreground uppercase tracking-[0.15em] mb-1">
               Analytics
             </p>
-            <h3 className="text-base font-bold text-white">
+            <h3 className="text-base font-bold text-primary-foreground">
               Disbursement Trend (Quarterly)
             </h3>
           </div>
@@ -93,8 +93,8 @@ export default function AnalyticsSection() {
                   {
                     label: "Disbursed (₱)",
                     data: [320000, 480000, 610000, 890000, 600000],
-                    backgroundColor: "#003366",
-                    hoverBackgroundColor: "#FFCC00",
+                    backgroundColor: "#0138A8",
+                    hoverBackgroundColor: "#FBD219",
                     borderRadius: 8,
                   },
                 ],
@@ -115,12 +115,12 @@ export default function AnalyticsSection() {
                 scales: {
                   x: {
                     grid: { display: false },
-                    ticks: { color: "#475569", font: { size: 11 } },
+                    ticks: { color: "#64748B", font: { size: 11 } },
                     border: { display: false },
                   },
                   y: {
-                    grid: { color: "rgba(255,255,255,0.04)" },
-                    ticks: { color: "#475569", font: { size: 11 } },
+                    grid: { color: "rgba(15,23,42,0.06)" },
+                    ticks: { color: "#64748B", font: { size: 11 } },
                     border: { display: false },
                   },
                 },

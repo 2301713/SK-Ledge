@@ -4,6 +4,10 @@ import LogoLoader from "@/components/LogoLoader";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import SideBar from "@/components/dashboard/SideBar";
+import TopBar from "@/components/dashboard/ui/TopBar";
+import PageHeader from "@/components/dashboard/ui/PageHeader";
+import { Card } from "@/components/dashboard/ui/Card";
+import StatusBadge from "@/components/dashboard/ui/StatusBadge";
 import { supabase } from "@/lib/supabase";
 import { ProcurementProject } from "../types";
 import { procurementProjects } from "../types";
@@ -15,9 +19,7 @@ import {
   CheckCircle2,
   Clock,
   FileText,
-  Filter,
   Gavel,
-  Search,
   Trophy,
 } from "lucide-react";
 
@@ -89,108 +91,129 @@ export default function BMOReviewPage() {
     }).format(amount);
   };
 
+  const filteredProjects = procurementProjects.filter((project) =>
+    project.title.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
+
   if (isLoading) return <LogoLoader />;
 
   if (!currentUser) return null;
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex min-h-screen gap-4 bg-background p-4 selection:bg-tertiary selection:text-primary">
       <SideBar
         userName={currentUser.full_name}
         roleType={currentUser.role_type}
+        barangay={currentUser.barangay}
       />
 
-      <main className="flex-1">
-        <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row">
-          {/* LEFT PANEL */}
-          <div className="w-full md:w-80 bg-white border-r border-slate-200 flex flex-col h-screen overflow-hidden shrink-0">
-            <div className="p-4 border-b border-slate-100 bg-white sticky top-0 z-10">
-              <h1 className="text-lg font-black text-slate-900 tracking-tight flex items-center gap-2">
-                <Gavel className="w-5 h-5 text-primary" />
-                BAC Control Room
-              </h1>
-              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mt-1">
-                Procurement Management
-              </p>
+      <main className="min-w-0 flex-1 space-y-6 py-2 animate-fadein">
+        <TopBar
+          userName={currentUser.full_name}
+          userEmail={currentUser.email}
+          searchValue={searchQuery}
+          onSearchChange={setSearchQuery}
+        />
 
-              <div className="mt-4 flex items-center bg-slate-50 border border-slate-200 rounded-xl px-2 py-2">
-                <Search className="w-4 h-4 text-slate-400 mr-2" />
-                <input
-                  type="text"
-                  placeholder="Search projects..."
-                  className="bg-transparent border-none outline-none text-sm w-full text-slate-700"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                <Filter className="w-4 h-4 text-slate-400 cursor-pointer hover:text-primary transition" />
+        <PageHeader
+          eyebrow="Procurement Management"
+          title="BAC Control Room"
+          subtitle="Manage active procurements, evaluate vendor submissions, and award the lowest calculated responsive bid."
+        />
+
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[340px_1fr]">
+          {/* LEFT PANEL: PROJECT LIST */}
+          <Card className="h-fit lg:max-h-[calc(100vh-14rem)]">
+            <div className="mb-4 flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <Gavel className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-base font-bold tracking-tight text-primary-foreground">
+                  Active Procurements
+                </h2>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-secondary-foreground">
+                  {filteredProjects.length} project(s)
+                </p>
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-3 space-y-2">
-              {procurementProjects.map((project) => (
-                <div
-                  key={project.id}
-                  onClick={() => setSelectedProject(project)}
-                  className={`p-3 rounded-xl cursor-pointer transition-all border ${
-                    selectedProject.id === project.id
-                      ? "bg-primary/5 border-primary/10 shadow-sm"
-                      : "bg-white border-slate-100 hover:border-slate-300 hover:bg-slate-50"
-                  }`}
-                >
-                  <div className="flex justify-between items-start mb-1">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                      {project.id}
-                    </span>
-                    <span
-                      className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${
-                        project.status === "Evaluation"
-                          ? "bg-orange-100 text-orange-600"
-                          : "bg-green-100 text-green-600"
-                      }`}
-                    >
-                      {project.status}
-                    </span>
-                  </div>
-                  <h3 className="text-sm font-black text-slate-900 leading-tight mb-1">
-                    {project.title}
-                  </h3>
-                  <div className="flex items-center justify-between text-[12px] text-slate-500">
-                    <span>{project.barangay}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="flex items-center gap-1 text-[11px] text-slate-400">
-                        <Clock className="w-3 h-3" /> {project.deadline}
+            <div className="thin-scrollbar space-y-2 overflow-y-auto pr-1 lg:max-h-[calc(100vh-22rem)]">
+              {filteredProjects.map((project) => {
+                const isSelected = selectedProject.id === project.id;
+                return (
+                  <div
+                    key={project.id}
+                    onClick={() => setSelectedProject(project)}
+                    className={`cursor-pointer rounded-2xl border p-3.5 transition-all ${
+                      isSelected
+                        ? "border-primary/20 bg-primary/5 shadow-sm"
+                        : "border-border bg-white hover:border-secondary-foreground/30 hover:bg-secondary/40"
+                    }`}
+                  >
+                    <div className="mb-1.5 flex items-center justify-between gap-2">
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
+                        {project.id}
                       </span>
-                      <span className="text-[12px] font-bold text-slate-700">
-                        {formatCurrency(project.abc)}
+                      <StatusBadge
+                        status={
+                          project.status === "Evaluation"
+                            ? "evaluation"
+                            : project.status === "Accepting Bids"
+                              ? "pending"
+                              : "approved"
+                        }
+                      />
+                    </div>
+                    <h3 className="mb-1 text-sm font-bold leading-tight text-primary-foreground">
+                      {project.title}
+                    </h3>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-secondary-foreground">
+                        {project.barangay}
                       </span>
+                      <div className="flex items-center gap-2">
+                        <span className="flex items-center gap-1 text-[11px] text-secondary-foreground">
+                          <Clock className="h-3 w-3" /> {project.deadline}
+                        </span>
+                        <span className="text-xs font-bold text-primary-foreground">
+                          {formatCurrency(project.abc)}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </div>
+                );
+              })}
 
-          {/* RIGHT PANEL */}
-          <div className="flex-1 h-screen overflow-y-auto bg-slate-50/50 p-6">
-            <div className="max-w-5xl mx-auto space-y-6">
-              {/* Header Card */}
-              <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              {filteredProjects.length === 0 && (
+                <div className="p-6 text-center text-sm font-bold text-secondary-foreground">
+                  No projects match your search.
+                </div>
+              )}
+            </div>
+          </Card>
+
+          {/* RIGHT PANEL: SELECTED PROJECT */}
+          <div className="space-y-6">
+            {/* Header Card */}
+            <Card>
+              <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
                 <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="px-2 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-black uppercase tracking-widest rounded-lg">
+                  <div className="mb-2 flex flex-wrap items-center gap-2">
+                    <span className="rounded-lg border border-border bg-secondary/60 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
                       {selectedProject.id}
                     </span>
-                    <span className="px-2 py-0.5 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-lg flex items-center gap-1">
-                      <Building2 className="w-3 h-3" />{" "}
+                    <span className="inline-flex items-center gap-1 rounded-lg bg-primary px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-white">
+                      <Building2 className="h-3 w-3" />
                       {selectedProject.barangay}
                     </span>
                   </div>
-                  <h2 className="text-xl font-black text-slate-900 tracking-tight">
+                  <h2 className="text-xl font-bold tracking-tight text-primary-foreground">
                     {selectedProject.title}
                   </h2>
-                  <p className="text-sm font-medium text-slate-500 mt-1 flex items-center gap-2">
+                  <p className="mt-1 text-sm font-medium text-secondary-foreground">
                     Approved Budget (ABC):{" "}
-                    <span className="text-slate-900 font-black">
+                    <span className="font-bold text-primary-foreground">
                       {formatCurrency(selectedProject.abc)}
                     </span>
                   </p>
@@ -199,120 +222,141 @@ export default function BMOReviewPage() {
                 {/* Workflow Action Button based on status */}
                 <div>
                   {selectedProject.status === "Accepting Bids" ? (
-                    <button className="px-6 py-3 bg-orange-50 text-orange-600 hover:bg-orange-100 rounded-xl text-xs font-black uppercase tracking-widest transition-colors flex items-center gap-2 border border-orange-200 shadow-sm">
-                      <AlertCircle className="w-4 h-4" /> Close Bidding &
-                      Evaluate
+                    <button className="inline-flex items-center gap-2 rounded-xl border border-pending/30 bg-pending/10 px-5 py-2.5 text-xs font-bold uppercase tracking-widest text-pending transition hover:bg-pending/20">
+                      <AlertCircle className="h-4 w-4" />
+                      Close Bidding & Evaluate
                     </button>
                   ) : (
-                    <button className="px-6 py-3 bg-slate-100 text-slate-400 rounded-xl text-xs font-black uppercase tracking-widest cursor-not-allowed flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4" /> Bidding Closed
+                    <button className="inline-flex cursor-not-allowed items-center gap-2 rounded-xl border border-border bg-secondary px-5 py-2.5 text-xs font-bold uppercase tracking-widest text-secondary-foreground">
+                      <CheckCircle2 className="h-4 w-4" />
+                      Bidding Closed
                     </button>
                   )}
                 </div>
               </div>
+            </Card>
 
-              {/* Vendor Bids Table */}
-              <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-                <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                  <div>
-                    <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">
-                      Vendor Submissions
-                    </h3>
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
-                      {selectedProject.bids.length} Active Bids
-                    </p>
-                  </div>
-                </div>
-
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left">
-                    <thead className="bg-white border-b border-slate-100 text-[11px] font-black text-slate-400 uppercase tracking-widest">
-                      <tr>
-                        <th className="px-4 py-3">Vendor</th>
-                        <th className="px-4 py-3">Date</th>
-                        <th className="px-4 py-3">Bid</th>
-                        <th className="px-4 py-3">Variance</th>
-                        <th className="px-4 py-3 text-center">Docs</th>
-                        <th className="px-4 py-3 text-right">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 text-sm">
-                      {selectedProject.bids
-                        .sort((a, b) => a.bidAmount - b.bidAmount)
-                        .map((bid, index) => {
-                          const variance = selectedProject.abc - bid.bidAmount;
-                          const isOverBudget = variance < 0;
-                          const isLowestEligible =
-                            index === 0 && !isOverBudget && bid.documentsValid;
-
-                          return (
-                            <tr
-                              key={bid.id}
-                              className={`hover:bg-slate-50 transition-colors ${isLowestEligible ? "bg-primary/5" : ""}`}
-                            >
-                              <td className="px-4 py-3">
-                                <p className="font-black text-sm text-slate-900 flex items-center gap-2">
-                                  {bid.vendorName}
-                                  {isLowestEligible && (
-                                    <span
-                                      className="bg-yellow-100 text-yellow-700 p-1 rounded-full"
-                                      title="Lowest Calculated Bid"
-                                    >
-                                      <Trophy className="w-3 h-3" />
-                                    </span>
-                                  )}
-                                </p>
-                              </td>
-                              <td className="px-4 py-3 text-sm font-bold text-slate-500">
-                                {bid.dateSubmitted}
-                              </td>
-                              <td className="px-4 py-3">
-                                <p
-                                  className={`font-black text-sm ${isOverBudget ? "text-red-600" : "text-slate-900"}`}
-                                >
-                                  {formatCurrency(bid.bidAmount)}
-                                </p>
-                              </td>
-                              <td className="px-4 py-3">
-                                <span
-                                  className={`text-[11px] font-black px-2 py-0.5 rounded-lg uppercase tracking-widest ${isOverBudget ? "bg-red-50 text-red-600" : "bg-emerald-50 text-emerald-600"}`}
-                                >
-                                  {isOverBudget
-                                    ? "Over Budget"
-                                    : `-${formatCurrency(variance)}`}
-                                </span>
-                              </td>
-                              <td className="px-4 py-3 text-center">
-                                <button
-                                  className={`p-2 rounded-lg transition-colors ${bid.documentsValid ? "bg-blue-50 text-blue-600 hover:bg-blue-100" : "bg-slate-100 text-slate-400"}`}
-                                >
-                                  <FileText className="w-4 h-4 mx-auto" />
-                                </button>
-                              </td>
-                              <td className="px-4 py-3 text-right">
-                                <button
-                                  disabled={
-                                    isOverBudget ||
-                                    selectedProject.status !== "Evaluation"
-                                  }
-                                  className={`px-3 py-1 rounded-md text-xs font-black uppercase tracking-widest transition-colors ${selectedProject.status === "Evaluation" && !isOverBudget ? "bg-primary text-white hover:bg-primary/90 shadow" : "bg-slate-100 text-slate-400 cursor-not-allowed"}`}
-                                >
-                                  Award
-                                </button>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                    </tbody>
-                  </table>
-                  {selectedProject.bids.length === 0 && (
-                    <div className="p-6 text-center text-slate-400 text-sm font-bold">
-                      No bids submitted yet.
-                    </div>
-                  )}
+            {/* Vendor Bids Table */}
+            <Card>
+              <div className="mb-4 flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-primary-foreground">
+                    Vendor Submissions
+                  </h3>
+                  <p className="mt-1 text-xs font-bold uppercase tracking-widest text-secondary-foreground">
+                    {selectedProject.bids.length} Active Bids
+                  </p>
                 </div>
               </div>
-            </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="border-b border-border text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
+                      <th className="px-4 py-3">Vendor</th>
+                      <th className="px-4 py-3">Date</th>
+                      <th className="px-4 py-3">Bid</th>
+                      <th className="px-4 py-3">Variance</th>
+                      <th className="px-4 py-3 text-center">Docs</th>
+                      <th className="px-4 py-3 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border text-sm">
+                    {selectedProject.bids
+                      .slice()
+                      .sort((a, b) => a.bidAmount - b.bidAmount)
+                      .map((bid, index) => {
+                        const variance = selectedProject.abc - bid.bidAmount;
+                        const isOverBudget = variance < 0;
+                        const isLowestEligible =
+                          index === 0 && !isOverBudget && bid.documentsValid;
+
+                        return (
+                          <tr
+                            key={bid.id}
+                            className={`transition-colors hover:bg-secondary/50 ${
+                              isLowestEligible ? "bg-success/5" : ""
+                            }`}
+                          >
+                            <td className="px-4 py-3">
+                              <p className="flex items-center gap-2 text-sm font-bold text-primary-foreground">
+                                {bid.vendorName}
+                                {isLowestEligible && (
+                                  <span
+                                    className="rounded-full bg-tertiary p-1 text-primary"
+                                    title="Lowest Calculated Bid"
+                                  >
+                                    <Trophy className="h-3 w-3" />
+                                  </span>
+                                )}
+                              </p>
+                            </td>
+                            <td className="px-4 py-3 text-sm font-bold text-secondary-foreground">
+                              {bid.dateSubmitted}
+                            </td>
+                            <td className="px-4 py-3">
+                              <p
+                                className={`text-sm font-bold ${
+                                  isOverBudget
+                                    ? "text-danger"
+                                    : "text-primary-foreground"
+                                }`}
+                              >
+                                {formatCurrency(bid.bidAmount)}
+                              </p>
+                            </td>
+                            <td className="px-4 py-3">
+                              <span
+                                className={`inline-flex rounded-lg px-2 py-0.5 text-[11px] font-bold uppercase tracking-widest ${
+                                  isOverBudget
+                                    ? "bg-danger/10 text-danger"
+                                    : "bg-success/10 text-success"
+                                }`}
+                              >
+                                {isOverBudget
+                                  ? "Over Budget"
+                                  : `-${formatCurrency(variance)}`}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <button
+                                className={`rounded-xl p-2 transition-colors ${
+                                  bid.documentsValid
+                                    ? "bg-information/10 text-information hover:bg-information/20"
+                                    : "bg-secondary text-secondary-foreground"
+                                }`}
+                              >
+                                <FileText className="mx-auto h-4 w-4" />
+                              </button>
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              <button
+                                disabled={
+                                  isOverBudget ||
+                                  selectedProject.status !== "Evaluation"
+                                }
+                                className={`rounded-xl px-3 py-1.5 text-xs font-bold uppercase tracking-widest transition-colors ${
+                                  selectedProject.status === "Evaluation" &&
+                                  !isOverBudget
+                                    ? "bg-primary text-white shadow-sm hover:bg-primary/90"
+                                    : "cursor-not-allowed bg-secondary text-secondary-foreground"
+                                }`}
+                              >
+                                Award
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                  </tbody>
+                </table>
+                {selectedProject.bids.length === 0 && (
+                  <div className="p-6 text-center text-sm font-bold text-secondary-foreground">
+                    No bids submitted yet.
+                  </div>
+                )}
+              </div>
+            </Card>
           </div>
         </div>
       </main>

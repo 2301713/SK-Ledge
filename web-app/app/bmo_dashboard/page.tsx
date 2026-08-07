@@ -3,18 +3,25 @@
 import LogoLoader from "@/components/LogoLoader";
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import Sidebar from "@/components/dashboard/SideBar";
+import SideBar from "@/components/dashboard/SideBar";
+import TopBar from "@/components/dashboard/ui/TopBar";
+import PageHeader from "@/components/dashboard/ui/PageHeader";
+import StatCard from "@/components/dashboard/ui/StatCard";
+import { Card, CardHeader } from "@/components/dashboard/ui/Card";
+import StatusBadge from "@/components/dashboard/ui/StatusBadge";
 import { useAuthStore } from "@/lib/useAuthStore";
 import { INITIAL_PROJECTS } from "@/lib/dummyData";
 import { supabase } from "@/lib/supabase";
 import {
   ShieldCheck,
   MapPin,
-  History,
+  Activity,
   FileText,
   CheckCircle2,
   XCircle,
+  ClipboardCheck,
   CircleAlert,
+  Landmark,
 } from "lucide-react";
 
 export default function BMODashboard() {
@@ -88,22 +95,31 @@ export default function BMODashboard() {
     }
   }, [router, setCurrentUser, setIsLoading, currentUser]);
 
-  const pendingCount = INITIAL_PROJECTS.filter(
+  const pendingProjects = INITIAL_PROJECTS.filter(
     (p) => p.status === "Pending",
-  ).length;
+  );
+
+  const pendingCount = pendingProjects.length;
 
   const totalValue = INITIAL_PROJECTS.reduce(
     (acc, curr) => acc + curr.budget,
     0,
   );
 
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("en-PH", {
+      style: "currency",
+      currency: "PHP",
+    }).format(amount || 0);
+  };
+
   if (isLoading) return <LogoLoader />;
 
   // Prevent rendering if currentUser failed to load
   if (!currentUser) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
-        <div className="max-w-md w-full bg-white rounded-4xl shadow-xl border border-slate-200 p-10 text-center">
+      <div className="min-h-screen flex items-center justify-center bg-background p-6">
+        <div className="max-w-md w-full bg-white rounded-4xl shadow-xl border border-border p-10 text-center">
           <div className="h-16 w-16 bg-danger/10 text-danger rounded-2xl flex items-center justify-center mx-auto mb-6">
             <span className="text-2xl">
               <CircleAlert />
@@ -112,7 +128,7 @@ export default function BMODashboard() {
           <h2 className="text-2xl font-black text-primary mb-3 tracking-tight">
             Access Restricted
           </h2>
-          <p className="text-sm text-slate-500 mb-8 leading-relaxed">
+          <p className="text-sm text-secondary-foreground mb-8 leading-relaxed">
             You do not have the required credentials to view the BMO Dashboard.
           </p>
           <button
@@ -126,263 +142,237 @@ export default function BMODashboard() {
     );
   }
 
+  const today = new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
   return (
-    <div className="flex min-h-screen bg-secondary selection:bg-tertiary selection:text-primary">
-      <Sidebar
+    <div className="flex min-h-screen gap-4 bg-background p-4 selection:bg-tertiary selection:text-primary">
+      <SideBar
         userName={currentUser.full_name}
         roleType={currentUser.role_type}
+        barangay={currentUser.barangay}
       />
 
-      <main className="flex-1 p-10 overflow-y-auto">
-        {/* 1. HEADER SECTION & HIGH-LEVEL METRICS */}
-        <header className="mb-12 flex justify-between items-end">
-          <div>
-            <h1 className="text-4xl font-black text-primary tracking-tight">
-              BMO Overview
-            </h1>
-            <p className="text-slate-500 font-medium mt-1">
-              Welcome back,{" "}
-              <span className="text-primary font-bold border-b-2 border-tertiary pb-0.5">
-                {currentUser.full_name}
-              </span>
-            </p>
-          </div>
+      <main className="min-w-0 flex-1 space-y-6 py-2 animate-fadein">
+        <TopBar
+          userName={currentUser.full_name}
+          userEmail={currentUser.email}
+          hideSearch
+        />
 
-          <div className="hidden md:block text-right">
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
-              System Access
-            </p>
-            <p className="text-sm font-bold text-slate-600">
-              Authorized Personnel Only
-            </p>
-          </div>
-        </header>
+        <PageHeader
+          eyebrow="Budget Management Office"
+          title={`Welcome back, ${currentUser.full_name.split(" ")[0]}!`}
+          subtitle={`${today} · ${pendingCount} project(s) pending budget alignment and the fiscal year budget is in a healthy position.`}
+          actions={
+            <>
+              <button
+                onClick={() => router.push("/bmo_dashboard/review")}
+                className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white shadow-[0_6px_16px_-6px_rgba(1,56,168,0.5)] transition hover:bg-primary/90"
+              >
+                <ClipboardCheck className="h-4 w-4" />
+                Review Queue
+              </button>
+              <button className="inline-flex items-center gap-2 rounded-xl border border-border bg-white px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-secondary">
+                <Landmark className="h-4 w-4" />
+                View Ledger
+              </button>
+            </>
+          }
+        />
 
-        {/* WELCOME BANNER (Compact, engaging) */}
-        <section className="relative overflow-hidden rounded-4xl border border-primary/30 bg-primary/95 p-6 md:p-8 text-white shadow-lg shadow-primary/15 mb-10">
-          <div className="absolute top-0 right-0 w-full h-full overflow-hidden pointer-events-none z-0">
-            <div className="absolute -top-20 -right-12 w-24 h-24 bg-white/10 rounded-full blur-3xl"></div>
-            <div className="absolute -bottom-28 right-12 w-20 h-20 bg-tertiary/10 rounded-full blur-3xl"></div>
-          </div>
-
-          <div className="relative z-10 grid gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,0.9fr)] items-start">
-            <div className="space-y-4">
-              <p className="text-tertiary font-semibold uppercase tracking-[0.3em] text-[10px]">
-                Barangay {currentUser.barangay}
-              </p>
-              <h2 className="text-2xl md:text-3xl font-black tracking-tight leading-snug">
-                Welcome back, <br /> {currentUser.full_name.split(" ")[0]}!
-              </h2>
-              <p className="max-w-xl text-sm text-white/80 leading-relaxed">
-                You have{" "}
-                <strong className="text-white">
-                  1 project pending approval
-                </strong>
-                , and the current budget is in a healthy position.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* METRICS GRID */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10">
-          {/* Card 1: Pending Alignment */}
-          <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
-            <div className="absolute inset-y-0 left-0 w-1 bg-tertiary"></div>
-            <div className="flex items-start justify-between gap-4">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                Pending Alignment
-              </p>
-              {pendingCount > 0 && (
-                <span className="relative inline-flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-3 w-3 rounded-full bg-red-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-                </span>
-              )}
-            </div>
-            <h2 className="mt-4 text-4xl font-black text-[#0B3B78] tracking-tight">
-              {pendingCount}
-            </h2>
-            <p className="mt-2 text-xs uppercase tracking-wider text-slate-400">
-              Requests awaiting review
-            </p>
-          </div>
-
-          {/* Card 2: Total Managed */}
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              Total Managed
-            </p>
-            <div className="mt-4 flex items-baseline gap-2">
-              <span className="text-xl font-bold text-[#0B3B78]">₱</span>
-              <h2 className="text-4xl font-black text-[#0B3B78] tracking-tight">
-                {totalValue.toLocaleString()}
-              </h2>
-            </div>
-            <p className="mt-2 text-xs uppercase tracking-wider text-slate-400">
-              Overall LGU Youth Budget
-            </p>
-          </div>
-
-          {/* Card 3: System Status */}
-          <div className="rounded-3xl border border-slate-200 bg-white/95 p-6 shadow-sm transition hover:shadow-md">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              Utilization Rate
-            </p>
-            <div className="mt-4">
-              <div className="flex items-end justify-between gap-2">
-                <h2 className="text-4xl font-black text-primary tracking-tight">
-                  68%
-                </h2>
-                <span className="rounded-full bg-tertiary/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.25em] text-tertiary">
-                  Live
-                </span>
-              </div>
-              <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-slate-100">
-                <div className="h-full w-[68%] rounded-full bg-green-500 transition-all"></div>
-              </div>
-            </div>
-          </div>
+        {/* STAT ROW */}
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+          <StatCard
+            label="Pending Alignment"
+            value={pendingCount}
+            icon={ClipboardCheck}
+            variant="brand"
+            trend="Requests awaiting review"
+          />
+          <StatCard
+            label="Total Managed"
+            value={formatCurrency(totalValue)}
+            icon={Landmark}
+            trend="Overall LGU youth budget"
+          />
+          <StatCard
+            label="Utilization Rate"
+            value="68%"
+            icon={Activity}
+            trend="Live utilization across barangays"
+          />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-          {/* 2. THE REVIEW QUEUE (ACTION CENTER) - Main Content */}
-          <section className="lg:col-span-2 space-y-6">
-            <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
-              <div className="p-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
-                <h3 className="text-xl font-black text-primary">
-                  Project Review Queue
-                </h3>
-                <button className="text-xs font-bold text-primary bg-secondary px-4 py-2 rounded-full hover:bg-slate-100">
-                  View All Pipeline
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          {/* REVIEW QUEUE */}
+          <Card className="lg:col-span-2">
+            <CardHeader
+              eyebrow="Action Center"
+              title="Project Review Queue"
+              subtitle="Proposals awaiting BMO budget alignment"
+              action={
+                <button
+                  onClick={() => router.push("/bmo_dashboard/review")}
+                  className="rounded-xl bg-secondary px-4 py-2 text-xs font-bold uppercase tracking-widest text-primary transition hover:bg-secondary-foreground/10"
+                >
+                  View All
                 </button>
-              </div>
-              <div className="p-0">
-                <table className="w-full text-left">
-                  <thead className="text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-50">
-                    <tr>
-                      <th className="px-8 py-4">Project / Barangay</th>
-                      <th className="px-8 py-4">Requested</th>
-                      <th className="px-8 py-4 text-center">Decision</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-50">
-                    {/* Map your incoming proposals here */}
-                    <tr className="group hover:bg-slate-50/50 transition-colors">
-                      <td className="px-8 py-6">
-                        <p className="font-bold text-slate-900 text-sm">
-                          Youth Sports Program
-                        </p>
-                        <p className="text-xs text-slate-400">
-                          Barangay San Miguel
-                        </p>
-                      </td>
-                      <td className="px-8 py-6 font-bold text-primary">
-                        ₱150,000
-                      </td>
-                      <td className="px-8 py-6 flex justify-center gap-2">
-                        <button className="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-600 hover:text-white transition-all">
-                          <CheckCircle2 size={18} />
-                        </button>
-                        <button className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-all">
-                          <XCircle size={18} />
-                        </button>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
+              }
+            />
 
-            {/* 4. LIQUIDATION & DOCUMENT VAULT */}
-            <div className="bg-primary p-8 rounded-[2.5rem] shadow-xl text-white">
-              <div className="flex items-center gap-3 mb-6">
-                <ShieldCheck className="text-tertiary" />
-                <h3 className="text-xl font-black tracking-tight">
+            {pendingProjects.length === 0 ? (
+              <div className="p-10 text-center">
+                <p className="text-sm font-bold text-secondary-foreground">
+                  Inbox zero — no pending proposals.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {pendingProjects.map((project) => (
+                  <div
+                    key={project.id}
+                    className="flex flex-col gap-4 rounded-2xl border border-border bg-secondary/40 p-5 transition-colors hover:bg-secondary md:flex-row md:items-center md:justify-between"
+                  >
+                    <div className="min-w-0">
+                      <div className="mb-1.5 flex flex-wrap items-center gap-2">
+                        <StatusBadge status="pending" showDot />
+                        <span className="text-[11px] font-semibold text-secondary-foreground flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          {project.barangay || "Barangay info missing"}
+                        </span>
+                      </div>
+                      <h3 className="truncate text-sm font-bold text-primary-foreground">
+                        {project.name}
+                      </h3>
+                      <p className="mt-1 line-clamp-2 text-xs text-secondary-foreground">
+                        {project.description ||
+                          "No detailed description provided by the SK official."}
+                      </p>
+                    </div>
+
+                    <div className="flex shrink-0 items-center gap-4">
+                      <div className="text-right">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
+                          Requested
+                        </p>
+                        <p className="text-lg font-bold tracking-tight text-primary">
+                          {formatCurrency(project.budget)}
+                        </p>
+                      </div>
+                      <button
+                        className="flex h-10 w-10 items-center justify-center rounded-xl bg-success/10 text-success transition hover:bg-success hover:text-white"
+                        title="Align & Approve"
+                      >
+                        <CheckCircle2 className="h-5 w-5" />
+                      </button>
+                      <button
+                        className="flex h-10 w-10 items-center justify-center rounded-xl bg-danger/10 text-danger transition hover:bg-danger hover:text-white"
+                        title="Return to SK"
+                      >
+                        <XCircle className="h-5 w-5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+
+          {/* SIDEBAR COLUMN */}
+          <div className="space-y-6">
+            {/* DOCUMENT VERIFICATION VAULT */}
+            <div className="rounded-3xl bg-primary-foreground p-6 text-white shadow-[0_8px_28px_-10px_rgba(15,23,42,0.5)]">
+              <div className="mb-4 flex items-center gap-3">
+                <ShieldCheck className="h-5 w-5 text-tertiary" />
+                <h3 className="text-base font-bold tracking-tight">
                   Document Verification Vault
                 </h3>
               </div>
-              <div className="bg-white/5 rounded-3xl p-6 border border-white/10 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-white/10 rounded-2xl">
-                    <FileText className="text-tertiary" />
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-tertiary">
+                      <FileText className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-bold">
+                        Q2_Liquidation_Report.pdf
+                      </p>
+                      <p className="text-[10px] font-medium uppercase tracking-wider text-white/50">
+                        Awaiting BMO verification
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-bold text-sm tracking-tight">
-                      Q2_Liquidation_Report.pdf
-                    </p>
-                    <p className="text-[10px] text-slate-300 uppercase font-medium tracking-wider">
-                      Awaiting BMO Verification
-                    </p>
-                  </div>
+                  <button className="shrink-0 rounded-xl bg-tertiary px-4 py-2 text-xs font-bold text-primary transition hover:bg-white">
+                    Open Vault
+                  </button>
                 </div>
-                <button className="px-6 py-2 bg-tertiary text-primary font-bold rounded-xl text-sm hover:scale-103 transition-transform cursor-pointer">
-                  Open Vault
-                </button>
               </div>
             </div>
-          </section>
 
-          {/* 3 & 5. SIDEBAR MONITORING (Directory & Audit) */}
-          <section className="space-y-8">
-            {/* 3. Barangay Directory */}
-            <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
-              <h3 className="text-lg font-black text-primary mb-6 flex items-center gap-2">
-                <MapPin size={18} className="text-tertiary" /> Barangay
-                Directory
-              </h3>
+            {/* BARANGAY DIRECTORY */}
+            <Card>
+              <CardHeader eyebrow="Monitoring" title="Barangay Directory" />
               <div className="space-y-3">
-                <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                  <span className="text-sm font-bold text-slate-700">
+                <div className="flex items-center justify-between rounded-xl border border-border bg-secondary/40 p-3.5">
+                  <span className="text-sm font-bold text-primary-foreground">
                     San Miguel
                   </span>
-                  <span className="h-2 w-2 rounded-full bg-green-500"></span>
+                  <span className="h-2.5 w-2.5 rounded-full bg-success" />
                 </div>
-                <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                  <span className="text-sm font-bold text-slate-700">
+                <div className="flex items-center justify-between rounded-xl border border-border bg-secondary/40 p-3.5">
+                  <span className="text-sm font-bold text-primary-foreground">
                     Poblacion Uno
                   </span>
-                  <span className="h-2 w-2 rounded-full bg-amber-500"></span>
+                  <span className="h-2.5 w-2.5 rounded-full bg-pending" />
                 </div>
               </div>
-            </div>
+            </Card>
 
-            {/* 5. Audit Trail */}
-            <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
-              <h3 className="text-lg font-black text-primary mb-6 flex items-center gap-2">
-                <History size={18} className="text-tertiary" /> Compliance
-                Ledger
-              </h3>
-              <div className="space-y-6 relative before:absolute before:inset-0 before:ml-2.25 before:w-0.5 before:bg-slate-100">
-                <div className="relative pl-8">
-                  <div className="absolute left-0 top-1 w-5 h-5 bg-white border-2 border-green-500 rounded-full z-10"></div>
-                  <p className="text-xs font-bold text-slate-800 leading-tight">
-                    BMO Approved Project Alignment
-                  </p>
-                  <p className="text-[10px] text-slate-400 uppercase font-medium">
-                    2 mins ago
-                  </p>
+            {/* COMPLIANCE LEDGER */}
+            <Card>
+              <CardHeader eyebrow="Audit Trail" title="Compliance Ledger" />
+              <div className="space-y-5">
+                <div className="flex items-start gap-3">
+                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-success bg-white">
+                    <span className="h-2 w-2 rounded-full bg-success" />
+                  </span>
+                  <div>
+                    <p className="text-xs font-bold leading-tight text-primary-foreground">
+                      BMO Approved Project Alignment
+                    </p>
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-secondary-foreground">
+                      2 mins ago
+                    </p>
+                  </div>
                 </div>
-                <div className="relative pl-8">
-                  <div className="absolute left-0 top-1 w-5 h-5 bg-white border-2 border-slate-200 rounded-full z-10"></div>
-                  <p className="text-xs font-bold text-slate-500 leading-tight">
-                    New Liquidation Uploaded
-                  </p>
-                  <p className="text-[10px] text-slate-400 uppercase font-medium">
-                    1 hour ago
-                  </p>
+                <div className="flex items-start gap-3">
+                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-border bg-white">
+                    <span className="h-2 w-2 rounded-full bg-border" />
+                  </span>
+                  <div>
+                    <p className="text-xs font-bold leading-tight text-secondary-foreground">
+                      New Liquidation Uploaded
+                    </p>
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-secondary-foreground">
+                      1 hour ago
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-          </section>
+            </Card>
+          </div>
         </div>
 
         {/* Subtle Bottom Accent */}
-        <div className="mt-12 opacity-30 border-t border-slate-200 pt-6">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em] text-center">
-            SK-Ledge Smart Auditing System • Fiscal Year 2026
-          </p>
-        </div>
+        <p className="pt-2 text-center text-[10px] font-bold uppercase tracking-[0.3em] text-secondary-foreground/50">
+          SK-Ledge Smart Auditing System • Fiscal Year 2026
+        </p>
       </main>
     </div>
   );

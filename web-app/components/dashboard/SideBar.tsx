@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/lib/useAuthStore";
@@ -23,7 +24,6 @@ import {
   Activity,
   ChartPie,
 } from "lucide-react";
-import Image from "next/image";
 
 interface SidebarProps {
   userName: string;
@@ -202,6 +202,14 @@ const ROLE_LINKS: Record<
   ],
 };
 
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-secondary-foreground">
+      {children}
+    </p>
+  );
+}
+
 export default function Sidebar({
   userName,
   roleType,
@@ -226,99 +234,103 @@ export default function Sidebar({
     }
   };
 
-  const formatRole = (role: string) => {
-    return role.replace("_", " ");
-  };
-
   return (
-    <aside className="w-70 bg-primary text-white flex flex-col h-screen sticky top-0 shadow-2xl z-50">
-      {/* BRANDING HEADER */}
-      <div className="h-24 flex items-center px-8 border-b border-white/10 shrink-0 animate-fadein">
-        <div className="flex items-center gap-3">
-          <Image
-            src="/skledge-logo.png"
-            height={50}
-            width={50}
-            alt="SK-Ledge Logo"
-          />
-          <div className="flex flex-col">
-            <h1 className="text-xl font-black tracking-tight text-white leading-none">
-              SK-Ledge
-            </h1>
-            <p className="text-[10px] text-tertiary uppercase tracking-[0.2em] font-bold mt-1">
-              Portal
-            </p>
-          </div>
+    <aside className="sticky top-4 z-50 flex h-[calc(100vh-2rem)] w-[260px] shrink-0 flex-col rounded-3xl border border-border bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_32px_-16px_rgba(15,23,42,0.12)]">
+      {/* BRAND */}
+      <div className="flex items-center gap-3 px-2 pb-6 pt-1">
+        <Image
+          src="/skledge-logo.png"
+          height={40}
+          width={40}
+          alt="SK-Ledge Logo"
+        />
+        <div>
+          <p className="text-lg font-bold leading-none tracking-tight text-primary-foreground">
+            SK-Ledge
+          </p>
+          <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
+            Portal
+          </p>
         </div>
       </div>
 
-      {/* NAVIGATION LINKS */}
-      <nav className="flex-1 px-4 py-8 space-y-2 overflow-y-auto">
+      {/* MENU */}
+      <nav className="thin-scrollbar flex-1 overflow-y-auto">
+        <SectionLabel>Menu</SectionLabel>
         {navLinks.length > 0 ? (
-          navLinks.map((link) => {
-            const isActive = pathname === link.href;
-            const Icon = link.icon;
-
-            return (
-              <Link
-                key={link.id}
-                href={link.href}
-                className={`relative flex items-center px-4 py-3.5 rounded-xl text-sm font-bold transition-all group overflow-hidden animate-fadein ${
-                  isActive
-                    ? "text-primary bg-white shadow-md"
-                    : "text-white/70 hover:bg-white/10 hover:text-white"
-                }`}
-              >
-                {isActive && (
-                  <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-tertiary" />
-                )}
-                <Icon
-                  className={`w-5 h-5 mr-3 transition-colors ${
-                    isActive
-                      ? "text-tertiary"
-                      : "text-white/50 group-hover:text-white"
+          <div className="space-y-1">
+            {navLinks.map((link) => {
+              const isActive = pathname === link.href;
+              const Icon = link.icon;
+              return (
+                <Link
+                  key={link.id}
+                  href={link.href}
+                  className={`group relative flex items-center gap-3 rounded-2xl px-3 py-2.5 transition-all ${
+                    isActive ? "bg-primary/5" : "hover:bg-secondary"
                   }`}
-                />
-                {link.label}
-              </Link>
-            );
-          })
+                >
+                  {isActive && (
+                    <span className="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full bg-primary" />
+                  )}
+                  <span
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors ${
+                      isActive
+                        ? "bg-primary text-white shadow-[0_4px_12px_-4px_rgba(1,56,168,0.5)]"
+                        : "bg-secondary text-secondary-foreground group-hover:text-primary"
+                    }`}
+                  >
+                    <Icon className="h-5 w-5" />
+                  </span>
+                  <span
+                    className={`text-sm font-semibold ${
+                      isActive ? "text-primary" : "text-primary-foreground"
+                    }`}
+                  >
+                    {link.label}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
         ) : (
-          <p className="text-xs text-white/50 text-center mt-4">
+          <p className="px-3 text-xs text-secondary-foreground">
             No navigation available.
           </p>
         )}
       </nav>
 
-      {/* UNIFIED USER PROFILE & LOGOUT CARD AT BOTTOM */}
-      <div className="p-5 border-t border-white/10 shrink-0 bg-primary/80 backdrop-blur-md">
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between animate-fadein">
-          <div className="flex items-center gap-3 overflow-hidden">
-            <div className="w-10 h-10 bg-tertiary rounded-full flex items-center justify-center font-black text-primary shrink-0 shadow-inner">
+      {/* GENERAL */}
+      <div className="pt-5">
+        <SectionLabel>General</SectionLabel>
+        <div className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-secondary/40 p-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-white">
               {userName.charAt(0).toUpperCase()}
             </div>
-            <div className="flex flex-col overflow-hidden">
+            <div className="min-w-0">
               <p
-                className="text-sm font-bold truncate text-white"
+                className="truncate text-sm font-semibold text-primary-foreground"
                 title={userName}
               >
                 {userName}
               </p>
-              <p className="text-[10px] text-tertiary uppercase tracking-widest font-bold truncate">
-                {formatRole(roleType)}
+              <p className="truncate text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
+                {roleType.replace("_", " ")}
               </p>
               {barangay && barangay !== "N/A" && (
-                <p className="text-[10px] text-foreground">{barangay}</p>
+                <p className="truncate text-[10px] text-secondary-foreground">
+                  {barangay}
+                </p>
               )}
             </div>
           </div>
-
           <button
             onClick={handleLogout}
             title="Sign Out"
-            className="w-10 h-10 rounded-full bg-white/5 hover:bg-danger/20 text-white/70 hover:text-danger flex items-center justify-center transition-all shrink-0 cursor-pointer"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-secondary-foreground shadow-sm transition hover:bg-danger/10 hover:text-danger"
           >
-            <LogOut className="w-4 h-4" />
+            <LogOut className="h-4 w-4" />
           </button>
         </div>
       </div>

@@ -4,10 +4,23 @@ import LogoLoader from "@/components/LogoLoader";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import SideBar from "@/components/dashboard/SideBar";
+import TopBar from "@/components/dashboard/ui/TopBar";
+import PageHeader from "@/components/dashboard/ui/PageHeader";
+import StatCard from "@/components/dashboard/ui/StatCard";
+import { Card, CardHeader } from "@/components/dashboard/ui/Card";
+import StatusBadge from "@/components/dashboard/ui/StatusBadge";
 import { supabase } from "@/lib/supabase";
-import { UserAccount } from "../types";
+import { UserAccount } from "@/lib/useAuthStore";
 import { VerifiedTransaction, ProjectStatus } from "../types";
-import { ShieldCheck, Search } from "lucide-react";
+import {
+  ShieldCheck,
+  Search,
+  BadgeCheck,
+  MapPin,
+  Lock,
+  Download,
+  Play,
+} from "lucide-react";
 
 export default function AuditorPage() {
   const router = useRouter();
@@ -139,19 +152,6 @@ export default function AuditorPage() {
     fetchUserProfile();
   }, [router]);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "verified":
-        return "bg-green-100 text-green-800";
-      case "pending":
-        return "bg-yellow-100 text-yellow-800";
-      case "flagged":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-slate-100 text-slate-800";
-    }
-  };
-
   const filteredTransactions = transactions.filter((tx) => {
     const matchesSearch =
       tx.vendor.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -160,294 +160,319 @@ export default function AuditorPage() {
     return matchesSearch && matchesStatus;
   });
 
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("en-PH", {
+      style: "currency",
+      currency: "PHP",
+    }).format(amount);
+  };
+
   if (isLoading) return <LogoLoader />;
 
+  if (!currentUser) return null;
+
   return (
-    <div className="flex min-h-screen bg-background selection:bg-tertiary selection:text-primary">
-      {currentUser && (
-        <SideBar
+    <div className="flex min-h-screen gap-4 bg-background p-4 selection:bg-tertiary selection:text-primary">
+      <SideBar
+        userName={currentUser.full_name}
+        roleType={currentUser.role_type}
+      />
+
+      <main className="min-w-0 flex-1 space-y-6 py-2 animate-fadein">
+        <TopBar
           userName={currentUser.full_name}
-          roleType={currentUser.role_type}
+          userEmail={currentUser.email}
+          hideSearch
         />
-      )}
 
-      <main className="flex-1 flex flex-col h-screen overflow-hidden bg-slate-50">
-        <header className="h-24 bg-white border-b border-slate-200 px-8 flex items-center justify-between z-10 shrink-0 shadow-sm">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-2xl bg-blue-50 text-blue-700 shadow-sm">
-              <ShieldCheck size={28} strokeWidth={2.3} />
-            </div>
-            <div>
-              <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-                Auditor Verification
-              </h1>
-              <p className="text-sm text-slate-600 mt-1 max-w-2xl">
-                Track compliance, verify transactions, and review project audits
-                in a unified COA dashboard.
-              </p>
-            </div>
-          </div>
-        </header>
+        <PageHeader
+          eyebrow="Commission on Audit"
+          title="Auditor Verification"
+          subtitle="Track compliance, verify transactions, and review project audits in a unified dashboard."
+        />
 
-        <div className="flex-1 overflow-y-auto p-8">
-          <div className="max-w-7xl mx-auto space-y-6">
-            <section className="grid gap-3 lg:grid-cols-[1.6fr_0.9fr] items-start">
-              <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-4 min-h-40 h-full flex flex-col">
-                <div className="flex items-start justify-between gap-3 mb-4">
-                  <div>
-                    <p className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">
-                      Audit readiness
-                    </p>
-                    <h2 className="text-lg font-extrabold text-slate-900 mt-1">
-                      Transaction integrity
-                    </h2>
-                  </div>
-                  <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
-                    <ShieldCheck className="w-4 h-4" />
-                    Verified
-                  </div>
-                </div>
+        {/* STAT ROW */}
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+          <StatCard
+            label="Verified"
+            value="2,150"
+            icon={BadgeCheck}
+            variant="brand"
+            trend="Completed review cycles"
+          />
+          <StatCard
+            label="Flagged"
+            value="18"
+            icon={ShieldCheck}
+            trend="Require follow-up"
+          />
+          <StatCard
+            label="Projects"
+            value="12"
+            icon={MapPin}
+            trend="Active reviews"
+          />
+        </div>
 
-                <div className="grid gap-3 sm:grid-cols-3">
-                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 min-h-27.5 flex flex-col justify-between">
-                    <p className="text-[10px] uppercase text-slate-500 font-bold">
-                      Verified
-                    </p>
-                    <p className="mt-2 text-2xl font-black text-slate-900">
-                      2,150
-                    </p>
-                    <p className="text-xs text-slate-500 mt-1">
-                      Completed review cycles
-                    </p>
-                  </div>
-                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 min-h-27.5 flex flex-col justify-between">
-                    <p className="text-[10px] uppercase text-slate-500 font-bold">
-                      Flagged
-                    </p>
-                    <p className="mt-2 text-2xl font-black text-amber-700">
-                      18
-                    </p>
-                    <p className="text-xs text-slate-500 mt-1">
-                      Require follow-up
-                    </p>
-                  </div>
-                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 min-h-27.5 flex flex-col justify-between">
-                    <p className="text-[10px] uppercase text-slate-500 font-bold">
-                      Projects
-                    </p>
-                    <p className="mt-2 text-2xl font-black text-slate-900">
-                      12
-                    </p>
-                    <p className="text-xs text-slate-500 mt-1">
-                      Active reviews
-                    </p>
-                  </div>
-                </div>
+        {/* AUDITOR PROFILE + TABS */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.4fr_0.6fr]">
+          <Card>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-secondary-foreground">
+                  Audit readiness
+                </p>
+                <h2 className="mt-1 text-lg font-bold tracking-tight text-primary-foreground">
+                  Transaction integrity
+                </h2>
               </div>
+              <StatusBadge status="verified" showDot />
+            </div>
 
-              <aside className="space-y-3 self-stretch h-full">
-                <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-4 flex flex-col justify-between h-full">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-[11px] uppercase text-slate-500 font-semibold">
-                        Auditor
-                      </p>
-                      <h3 className="text-sm font-black text-slate-900 mt-1">
-                        {currentUser?.full_name}
-                      </h3>
-                      <p className="text-xs text-slate-500">
-                        {currentUser?.role_type.replace(/_/g, " ")}
-                      </p>
-                    </div>
-                    <div className="rounded-lg bg-slate-100 px-3 py-1 text-slate-700 text-xs font-semibold">
-                      COA
-                    </div>
-                  </div>
-
-                  <div className="mt-3 grid gap-2">
-                    <div className="rounded-lg bg-slate-50 p-2 text-sm">
-                      <p className="text-[10px] uppercase text-slate-500 font-bold">
-                        Barangay
-                      </p>
-                      <p className="mt-1 text-sm font-semibold text-slate-900">
-                        {currentUser?.barangay}
-                      </p>
-                    </div>
-                    <div className="rounded-lg bg-slate-50 p-2 text-sm">
-                      <p className="text-[10px] uppercase text-slate-500 font-bold">
-                        Access
-                      </p>
-                      <p className="mt-1 text-sm font-semibold text-slate-900">
-                        Full review
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </aside>
-            </section>
-
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setActiveTab("transactions")}
-                  className={`px-4 py-2 rounded-xl text-sm font-bold transition ${activeTab === "transactions" ? "bg-primary text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
-                >
-                  Transactions
-                </button>
-                <button
-                  onClick={() => setActiveTab("projects")}
-                  className={`px-4 py-2 rounded-xl text-sm font-bold transition ${activeTab === "projects" ? "bg-primary text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
-                >
+            <div className="mt-6 grid gap-4 sm:grid-cols-3">
+              <div className="rounded-2xl border border-border bg-secondary/40 p-4">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
+                  Verified
+                </p>
+                <p className="mt-2 text-2xl font-bold text-success">2,150</p>
+              </div>
+              <div className="rounded-2xl border border-border bg-secondary/40 p-4">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
+                  Flagged
+                </p>
+                <p className="mt-2 text-2xl font-bold text-danger">18</p>
+              </div>
+              <div className="rounded-2xl border border-border bg-secondary/40 p-4">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
                   Projects
-                </button>
-              </div>
-
-              <div className="rounded-xl bg-slate-50 px-3 py-2 flex items-center justify-end gap-2">
-                <button
-                  type="button"
-                  className="px-4 py-2 rounded-xl text-sm font-bold bg-primary text-white hover:bg-primary/80"
-                >
-                  Start audit
-                </button>
-                <button
-                  type="button"
-                  className="px-4 py-2 rounded-xl text-sm font-bold bg-slate-100 text-slate-700 hover:bg-slate-200"
-                >
-                  Export
-                </button>
+                </p>
+                <p className="mt-2 text-2xl font-bold text-primary-foreground">
+                  12
+                </p>
               </div>
             </div>
+          </Card>
 
-            {activeTab === "transactions" && (
-              <section className="rounded-xl border border-slate-200 bg-white shadow-sm p-4">
-                <div className="flex items-center justify-between gap-3 mb-4">
-                  <div>
-                    <h2 className="text-lg font-extrabold text-slate-900">
-                      Audit stream
-                    </h2>
-                    <p className="text-xs text-slate-500 mt-1">
-                      Filter latest transactions
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 w-full max-w-lg">
-                    <div className="relative flex-1">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Search className="h-4 w-4 text-slate-400" />
-                      </div>
-                      <input
-                        type="text"
-                        placeholder="Search..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm text-slate-900 outline-none"
-                      />
-                    </div>
-                    <select
-                      value={statusFilter}
-                      onChange={(e) => setStatusFilter(e.target.value)}
-                      className="rounded-lg border border-slate-200 bg-white py-2 px-3 text-sm"
-                    >
-                      <option value="all">All</option>
-                      <option value="verified">Verified</option>
-                      <option value="pending">Pending</option>
-                      <option value="flagged">Flagged</option>
-                    </select>
-                  </div>
-                </div>
+          <Card>
+            <CardHeader eyebrow="Auditor" title="Profile" />
+            <div className="space-y-4">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
+                  Name
+                </p>
+                <p className="mt-1 text-sm font-bold text-primary-foreground">
+                  {currentUser.full_name}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
+                  Role
+                </p>
+                <p className="mt-1 text-sm font-bold text-primary-foreground">
+                  {currentUser.role_type.replace(/_/g, " ")}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
+                  Barangay
+                </p>
+                <p className="mt-1 text-sm font-bold text-primary-foreground">
+                  {currentUser.barangay}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 rounded-xl bg-success/10 px-3 py-2 text-xs font-bold text-success">
+                <Lock className="h-3.5 w-3.5" />
+                Full audit access
+              </div>
+            </div>
+          </Card>
+        </div>
 
-                <div className="space-y-3">
-                  {filteredTransactions.map((tx) => (
-                    <div
-                      key={tx.id}
-                      className="rounded-lg border border-slate-200 bg-slate-50 p-3 flex items-center justify-between gap-3"
-                    >
-                      <div className="min-w-0">
-                        <p className="text-[10px] uppercase text-slate-500 font-semibold">
-                          {tx.category}
-                        </p>
-                        <h3 className="text-sm font-black text-slate-900 truncate">
-                          {tx.vendor}
-                        </h3>
-                        <p className="text-xs text-slate-500">
-                          {new Date(tx.date).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`rounded-full px-3 py-1 text-xs font-bold ${getStatusColor(tx.status)}`}
-                        >
-                          {tx.status}
-                        </div>
-                        <div className="text-sm font-black text-slate-900">
-                          ₱{tx.amount.toLocaleString()}
-                        </div>
-                        <button className="px-2 py-1 bg-primary text-white rounded-md text-xs font-bold hover:bg-primary/90 transition-colors">
-                          Review
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
+        {/* TABS */}
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex gap-2">
+            {(
+              [
+                ["transactions", "Transactions"],
+                ["projects", "Projects"],
+              ] as const
+            ).map(([key, label]) => (
+              <button
+                key={key}
+                onClick={() => setActiveTab(key)}
+                className={`rounded-xl px-4 py-2 text-sm font-bold transition ${
+                  activeTab === key
+                    ? "bg-primary text-white shadow-sm"
+                    : "border border-border bg-white text-secondary-foreground hover:bg-secondary"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
 
-            {activeTab === "projects" && (
-              <section className="rounded-xl border border-slate-200 bg-white shadow-sm p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h2 className="text-lg font-extrabold text-slate-900">
-                      Project oversight
-                    </h2>
-                    <p className="text-xs text-slate-500 mt-1">
-                      Review project compliance and budgets
-                    </p>
-                  </div>
-                  <button className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-bold text-white">
-                    Export
-                  </button>
-                </div>
-
-                <div className="grid gap-3 md:grid-cols-2">
-                  {projects.map((project) => (
-                    <div
-                      key={project.id}
-                      className="rounded-lg border border-slate-200 bg-slate-50 p-3"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <p className="text-[10px] uppercase text-slate-500 font-bold">
-                            {project.status.replace(/-/g, " ")}
-                          </p>
-                          <h3 className="mt-2 text-sm font-black text-slate-900">
-                            {project.name}
-                          </h3>
-                        </div>
-                        <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-bold text-blue-700">
-                          {project.complianceScore}%
-                        </span>
-                      </div>
-
-                      <div className="mt-3 text-sm text-slate-600 grid gap-2 sm:grid-cols-2">
-                        <div className="rounded-lg bg-white border border-slate-200 p-2">
-                          <p className="font-semibold text-slate-900">Budget</p>
-                          <p className="mt-1">
-                            ₱{project.budget.toLocaleString()}
-                          </p>
-                        </div>
-                        <div className="rounded-lg bg-white border border-slate-200 p-2">
-                          <p className="font-semibold text-slate-900">Spent</p>
-                          <p className="mt-1">
-                            ₱{project.spent.toLocaleString()}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
+          <div className="flex gap-2">
+            <button className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-xs font-bold uppercase tracking-widest text-white shadow-sm transition hover:bg-primary/90">
+              <Play className="h-3.5 w-3.5" />
+              Start audit
+            </button>
+            <button className="inline-flex items-center gap-2 rounded-xl border border-border bg-white px-4 py-2 text-xs font-bold uppercase tracking-widest text-secondary-foreground transition hover:bg-secondary">
+              <Download className="h-3.5 w-3.5" />
+              Export
+            </button>
           </div>
         </div>
+
+        {activeTab === "transactions" && (
+          <Card>
+            <CardHeader
+              eyebrow="Audit Stream"
+              title="Latest Transactions"
+              subtitle="Filter latest verified and flagged entries"
+              action={
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-secondary-foreground" />
+                    <input
+                      type="text"
+                      placeholder="Search..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-52 rounded-xl border border-border bg-white py-2 pl-9 pr-3 text-sm text-primary-foreground outline-none transition placeholder:text-secondary-foreground focus:border-primary focus:ring-2 focus:ring-primary/10"
+                    />
+                  </div>
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="rounded-xl border border-border bg-white px-3 py-2 text-sm text-primary-foreground outline-none transition focus:border-primary"
+                  >
+                    <option value="all">All</option>
+                    <option value="verified">Verified</option>
+                    <option value="pending">Pending</option>
+                    <option value="flagged">Flagged</option>
+                  </select>
+                </div>
+              }
+            />
+
+            <div className="space-y-3">
+              {filteredTransactions.map((tx) => (
+                <div
+                  key={tx.id}
+                  className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-secondary/40 p-4 transition-colors hover:bg-secondary"
+                >
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
+                      {tx.category}
+                    </p>
+                    <h3 className="truncate text-sm font-bold text-primary-foreground">
+                      {tx.vendor}
+                    </h3>
+                    <p className="text-xs text-secondary-foreground">
+                      {new Date(tx.date).toLocaleDateString()} · {tx.blockchainHash}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-3">
+                    <StatusBadge status={tx.status} />
+                    <span className="text-sm font-bold tabular-nums text-primary-foreground">
+                      {formatCurrency(tx.amount)}
+                    </span>
+                    <button className="rounded-xl bg-primary px-3 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-primary/90">
+                      Review
+                    </button>
+                  </div>
+                </div>
+              ))}
+
+              {filteredTransactions.length === 0 && (
+                <div className="p-10 text-center text-sm font-bold text-secondary-foreground">
+                  No transactions match your filters.
+                </div>
+              )}
+            </div>
+          </Card>
+        )}
+
+        {activeTab === "projects" && (
+          <Card>
+            <CardHeader
+              eyebrow="Project Oversight"
+              title="Compliance & Budget Review"
+              subtitle="Review project compliance and budgets"
+              action={
+                <button className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-xs font-bold uppercase tracking-widest text-white shadow-sm transition hover:bg-primary/90">
+                  <Download className="h-3.5 w-3.5" />
+                  Export
+                </button>
+              }
+            />
+
+            <div className="grid gap-4 md:grid-cols-2">
+              {projects.map((project) => {
+                const utilization = Math.round(
+                  (project.spent / project.budget) * 100,
+                );
+                return (
+                  <div
+                    key={project.id}
+                    className="rounded-2xl border border-border bg-secondary/40 p-5"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <StatusBadge status={project.status} />
+                        <h3 className="mt-2 text-sm font-bold text-primary-foreground">
+                          {project.name}
+                        </h3>
+                        <p className="mt-1 text-[11px] text-secondary-foreground">
+                          Last audit: {project.lastAudit}
+                        </p>
+                      </div>
+                      <span className="inline-flex items-center rounded-full bg-information/10 px-3 py-1 text-xs font-bold text-information">
+                        {project.complianceScore}%
+                      </span>
+                    </div>
+
+                    <div className="mt-4">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-bold text-secondary-foreground">
+                          Utilization
+                        </span>
+                        <span className="font-bold text-primary-foreground">
+                          {utilization}%
+                        </span>
+                      </div>
+                      <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-border">
+                        <div
+                          className="h-full rounded-full bg-primary"
+                          style={{ width: `${utilization}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mt-4 grid grid-cols-2 gap-3">
+                      <div className="rounded-xl border border-border bg-white p-3">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
+                          Budget
+                        </p>
+                        <p className="mt-1 text-sm font-bold text-primary-foreground">
+                          {formatCurrency(project.budget)}
+                        </p>
+                      </div>
+                      <div className="rounded-xl border border-border bg-white p-3">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
+                          Spent
+                        </p>
+                        <p className="mt-1 text-sm font-bold text-primary-foreground">
+                          {formatCurrency(project.spent)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+        )}
       </main>
     </div>
   );

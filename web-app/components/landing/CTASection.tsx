@@ -7,11 +7,17 @@ import {
   Lock,
 } from "lucide-react";
 
+const STATS = [
+  { value: "12+", label: "Barangays Served" },
+  { value: "1K+", label: "Records Tracked" },
+  { value: "99.9%", label: "Secure Uptime" },
+];
+
 export default function CTASection() {
   return (
     <section className="py-12 px-6 animate-fadein bg-white">
       <div className="max-w-6xl mx-auto">
-        <div className="bg-slate-950 rounded-2xl overflow-hidden border border-white/8 relative">
+        <div className="bg-slate-950 rounded-3xl overflow-hidden border border-white/8 relative">
           {/* Grid texture */}
           <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-size-[40px_40px] pointer-events-none" />
 
@@ -37,14 +43,14 @@ export default function CTASection() {
               <div className="flex flex-col sm:flex-row gap-2">
                 <Link
                   href="/public_portal"
-                  className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-primary text-white rounded-lg font-bold text-sm hover:bg-primary/90 transition-all group shadow-lg shadow-primary/20"
+                  className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-primary text-white rounded-xl font-bold text-sm hover:bg-primary/90 transition-all group shadow-lg shadow-primary/20"
                 >
                   <Rocket className="w-4 h-4 group-hover:-translate-y-0.5 transition-transform" />
                   Access Public Dashboard
                 </Link>
                 <Link
                   href="/login"
-                  className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-white/6 text-white border border-white/10 rounded-lg font-bold text-sm hover:bg-white/10 transition-all"
+                  className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-white/6 text-white border border-white/10 rounded-xl font-bold text-sm hover:bg-white/10 transition-all"
                 >
                   Login
                   <ArrowRight className="w-4 h-4" />
@@ -61,11 +67,25 @@ export default function CTASection() {
                   <span>LGU Compliant</span>
                 </div>
               </div>
+
+              {/* Stats strip */}
+              <div className="grid grid-cols-3 gap-4 pt-5 border-t border-white/8">
+                {STATS.map((s) => (
+                  <div key={s.label}>
+                    <p className="text-2xl font-extrabold text-white tabular-nums">
+                      {s.value}
+                    </p>
+                    <p className="text-xs text-slate-500 font-medium mt-0.5">
+                      {s.label}
+                    </p>
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* RIGHT: Secure Gateway mockup */}
             <div className="hidden lg:block">
-              <div className="bg-slate-900 border border-white/10 rounded-lg p-4">
+              <div className="bg-slate-900 border border-white/10 rounded-xl p-4">
                 <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/8">
                   <div className="flex items-center gap-2">
                     <Lock className="w-4 h-4 text-tertiary" />

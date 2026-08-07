@@ -4,14 +4,15 @@ import LogoLoader from "@/components/LogoLoader";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import SideBar from "@/components/dashboard/SideBar";
+import TopBar from "@/components/dashboard/ui/TopBar";
+import PageHeader from "@/components/dashboard/ui/PageHeader";
+import { Card, CardHeader } from "@/components/dashboard/ui/Card";
 import { supabase } from "@/lib/supabase";
 import { UserAccount } from "@/lib/useAuthStore";
 import { useToast } from "@/lib/useToast";
 import {
-  FileText,
   Download,
   Calendar,
-  Filter,
   CheckCircle2,
   AlertCircle,
   ChevronRight,
@@ -43,6 +44,9 @@ const REPORT_TEMPLATES: ReportTemplate[] = [
     required: false,
   },
 ];
+
+const inputClass =
+  "w-full rounded-xl border border-border bg-white py-3 pl-10 pr-3 text-sm font-bold text-primary-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20";
 
 export default function ReportsPage() {
   const router = useRouter();
@@ -193,7 +197,7 @@ export default function ReportsPage() {
   if (isLoading) return <LogoLoader />;
 
   return (
-    <div className="flex min-h-screen bg-background selection:bg-tertiary selection:text-primary">
+    <div className="flex min-h-screen gap-4 bg-background p-4 selection:bg-tertiary selection:text-primary">
       {currentUser && (
         <SideBar
           userName={currentUser.full_name}
@@ -202,289 +206,286 @@ export default function ReportsPage() {
         />
       )}
 
-      <main className="flex-1 flex flex-col h-screen overflow-hidden bg-slate-50">
-        {/* HEADER */}
-        <header className="h-20 bg-white border-b border-slate-200 px-8 flex items-center justify-between z-10 shrink-0 shadow-sm">
-          <div className="flex items-center gap-3 animate-fadein">
-            <div className="p-2 bg-primary/10 text-primary rounded-lg">
-              <FileText size={24} strokeWidth={2.5} />
-            </div>
-            <div>
-              <h1 className="text-xl font-black text-slate-900 tracking-tight">
-                Report Generator
-              </h1>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mt-0.5">
-                COA-compliant automated reporting
-              </p>
-            </div>
-          </div>
+      <main className="min-w-0 flex-1 space-y-6 py-2 animate-fadein">
+        <TopBar
+          userName={currentUser?.full_name ?? "SK Official"}
+          userEmail={currentUser?.email}
+          hideSearch
+        />
 
-          {/* PROGRESS INDICATOR */}
-          <div className="flex items-center gap-2 animate-fadein">
-            {[1, 2, 3].map((step) => (
-              <div key={step} className="flex items-center">
-                <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
-                    step <= currentStep
-                      ? "bg-primary text-white"
-                      : "bg-slate-200 text-slate-500"
-                  }`}
-                >
-                  {step}
-                </div>
-                {step < 3 && (
-                  <ChevronRight className="w-4 h-4 text-slate-300 mx-1" />
-                )}
-              </div>
-            ))}
-          </div>
-        </header>
-
-        {/* MAIN CONTENT */}
-        <div className="flex-1 overflow-y-auto p-8 z-10">
-          <div className="max-w-4xl mx-auto animate-fadein">
-            {/* STEP 1: REPORT SELECTION */}
-            {currentStep === 1 && (
-              <div className="space-y-6 animate-fadein">
-                <div className="text-center mb-8">
-                  <h2 className="text-2xl font-black text-slate-900 mb-2">
-                    Select Reports
-                  </h2>
-                  <p className="text-slate-600">
-                    Choose which COA-compliant reports to generate
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {REPORT_TEMPLATES.map((template) => (
-                    <div
-                      key={template.id}
-                      onClick={() => toggleReportSelection(template.id)}
-                      className={`p-6 border-2 rounded-xl cursor-pointer transition-all ${
-                        selectedReports.includes(template.id)
-                          ? "border-primary bg-primary/10"
-                          : "border-slate-200 hover:border-slate-300"
-                      }`}
-                    >
-                      <div className="flex items-start gap-4">
-                        <div
-                          className={`p-2 rounded-lg ${
-                            selectedReports.includes(template.id)
-                              ? "bg-primary text-white"
-                              : "bg-slate-100 text-slate-600"
-                          }`}
-                        >
-                          {template.icon}
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <h3 className="font-bold text-slate-900">
-                              {template.name}
-                            </h3>
-                            {template.required && (
-                              <span className="px-2 py-1 bg-red-100 text-red-700 text-xs font-bold rounded">
-                                Required
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-sm text-slate-600">
-                            {template.description}
-                          </p>
-                        </div>
-                        {selectedReports.includes(template.id) && (
-                          <CheckCircle2 className="w-5 h-5 text-primary" />
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* STEP 2: DATE RANGE */}
-            {currentStep === 2 && (
-              <div className="space-y-6 animate-fadein">
-                <div className="text-center mb-8">
-                  <h2 className="text-2xl font-black text-slate-900 mb-2">
-                    Select Date Range
-                  </h2>
-                  <p className="text-slate-600">Specify the reporting period</p>
-                </div>
-
-                <div className="max-w-md mx-auto space-y-6">
-                  <div className="space-y-2">
-                    <label className="block text-sm font-bold text-slate-700">
-                      Start Date
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Calendar className="h-5 w-5 text-slate-400" />
-                      </div>
-                      <input
-                        type="date"
-                        value={dateRange.startDate}
-                        onChange={(e) =>
-                          setDateRange((prev) => ({
-                            ...prev,
-                            startDate: e.target.value,
-                          }))
-                        }
-                        className="w-full pl-10 pr-3 py-3 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
-                      />
-                    </div>
+        <PageHeader
+          eyebrow="SK Officials"
+          title="Report Generator"
+          subtitle="COA-compliant automated reporting."
+          actions={
+            <div className="flex items-center gap-2 rounded-2xl border border-border bg-white px-3 py-2 shadow-sm">
+              {[1, 2, 3].map((step) => (
+                <div key={step} className="flex items-center">
+                  <div
+                    className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold ${
+                      step <= currentStep
+                        ? "bg-primary text-white"
+                        : "bg-secondary text-secondary-foreground"
+                    }`}
+                  >
+                    {step}
                   </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-sm font-bold text-slate-700">
-                      End Date
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Calendar className="h-5 w-5 text-slate-400" />
-                      </div>
-                      <input
-                        type="date"
-                        value={dateRange.endDate}
-                        onChange={(e) =>
-                          setDateRange((prev) => ({
-                            ...prev,
-                            endDate: e.target.value,
-                          }))
-                        }
-                        className="w-full pl-10 pr-3 py-3 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
-                      />
-                    </div>
-                  </div>
-
-                  {new Date(dateRange.startDate) >
-                    new Date(dateRange.endDate) && (
-                    <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-                      <AlertCircle className="w-5 h-5 text-red-600" />
-                      <p className="text-sm text-red-700 font-medium">
-                        Start date cannot be after end date
-                      </p>
-                    </div>
+                  {step < 3 && (
+                    <ChevronRight className="mx-1 h-4 w-4 text-secondary-foreground/50" />
                   )}
                 </div>
-              </div>
-            )}
+              ))}
+            </div>
+          }
+        />
 
-            {/* STEP 3: FILTERS & GENERATE */}
-            {currentStep === 3 && (
-              <div className="space-y-6 animate-fadein">
-                <div className="text-center mb-8">
-                  <h2 className="text-2xl font-black text-slate-900 mb-2">
-                    Review & Generate
-                  </h2>
-                  <p className="text-slate-600">
-                    Configure filters and generate your reports
-                  </p>
-                </div>
+        {/* STEP 1: REPORT SELECTION */}
+        {currentStep === 1 && (
+          <div className="space-y-6 animate-fadein">
+            <div className="text-center mb-4">
+              <h2 className="text-2xl font-bold tracking-tight text-primary-foreground">
+                Select Reports
+              </h2>
+              <p className="mt-1 text-sm text-secondary-foreground">
+                Choose which COA-compliant reports to generate
+              </p>
+            </div>
 
-                {/* SUMMARY */}
-                <div className="bg-slate-50 rounded-xl p-6 border border-slate-200">
-                  <h3 className="font-bold text-slate-900 mb-4">
-                    Report Summary
-                  </h3>
-                  <div className="space-y-2 text-sm">
-                    <p>
-                      <span className="font-medium">Reports:</span>{" "}
-                      {selectedReports
-                        .map(
-                          (id) =>
-                            REPORT_TEMPLATES.find((t) => t.id === id)?.name,
-                        )
-                        .join(", ")}
-                    </p>
-                    <p>
-                      <span className="font-medium">Period:</span>{" "}
-                      {dateRange.startDate} to {dateRange.endDate}
-                    </p>
-                    <p>
-                      <span className="font-medium">Generated by:</span>{" "}
-                      {currentUser?.full_name}
-                    </p>
-                  </div>
-                </div>
-
-                {/* OPTIONAL FILTERS */}
-                <div className="bg-white rounded-xl p-6 border border-slate-200">
-                  <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
-                    <Filter size={16} />
-                    Optional Filters
-                  </h3>
-
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="checkbox"
-                        id="includeReceipts"
-                        checked={filters.includeReceipts}
-                        onChange={(e) =>
-                          setFilters((prev) => ({
-                            ...prev,
-                            includeReceipts: e.target.checked,
-                          }))
-                        }
-                        className="w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary"
-                      />
-                      <label
-                        htmlFor="includeReceipts"
-                        className="text-sm font-medium text-slate-700"
-                      >
-                        Include digital receipt attachments
-                      </label>
-                    </div>
-                  </div>
-                </div>
-
-                {/* GENERATE BUTTON */}
-                <div className="flex justify-center pt-6">
-                  <button
-                    onClick={generateReports}
-                    disabled={isGenerating}
-                    className="flex items-center gap-3 px-8 py-4 bg-primary hover:bg-primary disabled:bg-slate-300 text-white rounded-xl text-sm font-bold transition-colors shadow-sm"
-                  >
-                    {isGenerating ? (
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      <Download size={18} />
-                    )}
-                    {isGenerating
-                      ? "Generating Reports..."
-                      : "Generate COA Reports"}
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* NAVIGATION BUTTONS */}
-            <div className="flex justify-between items-center mt-8 pt-6 border-t border-slate-200">
-              <button
-                onClick={prevStep}
-                disabled={currentStep === 1}
-                className="px-6 py-2 text-slate-600 hover:text-slate-900 disabled:text-slate-400 font-medium transition-colors"
-              >
-                Previous
-              </button>
-
-              <div className="text-sm text-slate-500">
-                Step {currentStep} of 3
-              </div>
-
-              {currentStep < 3 ? (
-                <button
-                  onClick={nextStep}
-                  disabled={!validateCurrentStep()}
-                  className="px-6 py-2 bg-primary disabled:bg-slate-300 text-white rounded-lg font-medium transition-colors"
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {REPORT_TEMPLATES.map((template) => (
+                <div
+                  key={template.id}
+                  onClick={() => toggleReportSelection(template.id)}
+                  className={`cursor-pointer rounded-3xl border-2 p-6 transition-all ${
+                    selectedReports.includes(template.id)
+                      ? "border-primary bg-primary/5"
+                      : "border-border bg-white hover:border-secondary-foreground/30"
+                  }`}
                 >
-                  Next
-                </button>
-              ) : (
-                <div></div> // Empty for alignment
-              )}
+                  <div className="flex items-start gap-4">
+                    <div
+                      className={`rounded-xl p-2 ${
+                        selectedReports.includes(template.id)
+                          ? "bg-primary text-white"
+                          : "bg-secondary text-secondary-foreground"
+                      }`}
+                    >
+                      {template.icon}
+                    </div>
+                    <div className="flex-1">
+                      <div className="mb-2 flex items-center gap-2">
+                        <h3 className="font-bold text-primary-foreground">
+                          {template.name}
+                        </h3>
+                        {template.required && (
+                          <span className="rounded-full bg-danger/10 px-2 py-1 text-xs font-bold text-danger">
+                            Required
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-secondary-foreground">
+                        {template.description}
+                      </p>
+                    </div>
+                    {selectedReports.includes(template.id) && (
+                      <CheckCircle2 className="h-5 w-5 text-primary" />
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
+        )}
+
+        {/* STEP 2: DATE RANGE */}
+        {currentStep === 2 && (
+          <div className="space-y-6 animate-fadein">
+            <div className="text-center mb-4">
+              <h2 className="text-2xl font-bold tracking-tight text-primary-foreground">
+                Select Date Range
+              </h2>
+              <p className="mt-1 text-sm text-secondary-foreground">
+                Specify the reporting period
+              </p>
+            </div>
+
+            <Card className="mx-auto max-w-md">
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-secondary-foreground">
+                    Start Date
+                  </label>
+                  <div className="relative">
+                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                      <Calendar className="h-5 w-5 text-secondary-foreground" />
+                    </div>
+                    <input
+                      type="date"
+                      value={dateRange.startDate}
+                      onChange={(e) =>
+                        setDateRange((prev) => ({
+                          ...prev,
+                          startDate: e.target.value,
+                        }))
+                      }
+                      className={inputClass}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-secondary-foreground">
+                    End Date
+                  </label>
+                  <div className="relative">
+                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                      <Calendar className="h-5 w-5 text-secondary-foreground" />
+                    </div>
+                    <input
+                      type="date"
+                      value={dateRange.endDate}
+                      onChange={(e) =>
+                        setDateRange((prev) => ({
+                          ...prev,
+                          endDate: e.target.value,
+                        }))
+                      }
+                      className={inputClass}
+                    />
+                  </div>
+                </div>
+
+                {new Date(dateRange.startDate) > new Date(dateRange.endDate) && (
+                  <div className="flex items-center gap-2 rounded-xl border border-danger/30 bg-danger/10 p-3">
+                    <AlertCircle className="h-5 w-5 text-danger" />
+                    <p className="text-sm font-medium text-danger">
+                      Start date cannot be after end date
+                    </p>
+                  </div>
+                )}
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {/* STEP 3: FILTERS & GENERATE */}
+        {currentStep === 3 && (
+          <div className="space-y-6 animate-fadein">
+            <div className="text-center mb-4">
+              <h2 className="text-2xl font-bold tracking-tight text-primary-foreground">
+                Review & Generate
+              </h2>
+              <p className="mt-1 text-sm text-secondary-foreground">
+                Configure filters and generate your reports
+              </p>
+            </div>
+
+            {/* SUMMARY */}
+            <div className="rounded-3xl border border-border bg-secondary/40 p-6">
+              <h3 className="mb-4 font-bold text-primary-foreground">
+                Report Summary
+              </h3>
+              <div className="space-y-2 text-sm text-secondary-foreground">
+                <p>
+                  <span className="font-semibold text-primary-foreground">
+                    Reports:
+                  </span>{" "}
+                  {selectedReports
+                    .map(
+                      (id) => REPORT_TEMPLATES.find((t) => t.id === id)?.name,
+                    )
+                    .join(", ")}
+                </p>
+                <p>
+                  <span className="font-semibold text-primary-foreground">
+                    Period:
+                  </span>{" "}
+                  {dateRange.startDate} to {dateRange.endDate}
+                </p>
+                <p>
+                  <span className="font-semibold text-primary-foreground">
+                    Generated by:
+                  </span>{" "}
+                  {currentUser?.full_name}
+                </p>
+              </div>
+            </div>
+
+            {/* OPTIONAL FILTERS */}
+            <Card>
+              <CardHeader
+                eyebrow="Optional"
+                title="Filters"
+              />
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="includeReceipts"
+                    checked={filters.includeReceipts}
+                    onChange={(e) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        includeReceipts: e.target.checked,
+                      }))
+                    }
+                    className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
+                  />
+                  <label
+                    htmlFor="includeReceipts"
+                    className="text-sm font-medium text-primary-foreground"
+                  >
+                    Include digital receipt attachments
+                  </label>
+                </div>
+              </div>
+            </Card>
+
+            {/* GENERATE BUTTON */}
+            <div className="flex justify-center pt-2">
+              <button
+                onClick={generateReports}
+                disabled={isGenerating}
+                className="flex items-center gap-3 rounded-xl bg-primary px-8 py-4 text-sm font-bold text-white shadow-[0_6px_16px_-6px_rgba(1,56,168,0.5)] transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:bg-secondary-foreground/30"
+              >
+                {isGenerating ? (
+                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                ) : (
+                  <Download size={18} />
+                )}
+                {isGenerating
+                  ? "Generating Reports..."
+                  : "Generate COA Reports"}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* NAVIGATION BUTTONS */}
+        <div className="flex items-center justify-between border-t border-border pt-6">
+          <button
+            onClick={prevStep}
+            disabled={currentStep === 1}
+            className="font-medium text-secondary-foreground transition-colors hover:text-primary-foreground disabled:text-secondary-foreground/40"
+          >
+            Previous
+          </button>
+
+          <div className="text-sm text-secondary-foreground">
+            Step {currentStep} of 3
+          </div>
+
+          {currentStep < 3 ? (
+            <button
+              onClick={nextStep}
+              disabled={!validateCurrentStep()}
+              className="rounded-xl bg-primary px-6 py-2 font-medium text-white transition-colors hover:bg-primary/90 disabled:bg-secondary-foreground/30"
+            >
+              Next
+            </button>
+          ) : (
+            <div />
+          )}
         </div>
       </main>
     </div>

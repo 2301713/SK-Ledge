@@ -4,13 +4,15 @@ import LogoLoader from "@/components/LogoLoader";
 import { useState, useEffect, DragEvent, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import SideBar from "@/components/dashboard/SideBar";
+import TopBar from "@/components/dashboard/ui/TopBar";
+import PageHeader from "@/components/dashboard/ui/PageHeader";
+import { Card, CardHeader } from "@/components/dashboard/ui/Card";
 import { supabase } from "@/lib/supabase";
 import { UserAccount } from "@/lib/useAuthStore";
 import {
   UploadCloud,
   FileText,
   X,
-  Receipt,
   ShieldCheck,
   Plus,
   ArrowRight,
@@ -146,38 +148,38 @@ export default function SKUploadPage() {
     files: FileWithPreview[],
     type: "receipts" | "reports",
   ) => (
-    <div className="mt-4 space-y-2 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+    <div className="mt-4 max-h-60 space-y-2 overflow-y-auto pr-2 custom-scrollbar">
       {files.map((item) => (
         <div
           key={item.id}
-          className="group flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100 hover:border-blue-200 transition-all animate-in fade-in slide-in-from-bottom-1"
+          className="group flex items-center justify-between rounded-xl border border-border bg-secondary/40 p-3 transition-all"
         >
           <div className="flex items-center gap-3 overflow-hidden">
-            <div className="w-10 h-10 shrink-0 bg-white border rounded-lg overflow-hidden flex items-center justify-center">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-white">
               {item.file.type.startsWith("image/") ? (
                 <Image
                   src={item.preview}
                   alt="preview"
                   width={40}
                   height={40}
-                  className="object-cover h-full w-full"
+                  className="h-full w-full object-cover"
                 />
               ) : (
-                <FileText className="w-5 h-5 text-slate-400" />
+                <FileText className="h-5 w-5 text-secondary-foreground" />
               )}
             </div>
             <div className="truncate">
-              <p className="text-xs font-semibold text-slate-700 truncate">
+              <p className="truncate text-xs font-semibold text-primary-foreground">
                 {item.file.name}
               </p>
-              <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">
+              <p className="text-[10px] font-medium uppercase tracking-wider text-secondary-foreground">
                 {(item.file.size / 1024 / 1024).toFixed(2)} MB
               </p>
             </div>
           </div>
           <button
             onClick={() => removeFile(item.id, type)}
-            className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+            className="rounded-md p-1.5 text-secondary-foreground transition-colors hover:bg-danger/10 hover:text-danger"
           >
             <X size={14} />
           </button>
@@ -193,182 +195,174 @@ export default function SKUploadPage() {
   const totalFiles = receipts.length + reports.length;
 
   return (
-    <div className="flex min-h-screen bg-secondary">
+    <div className="flex min-h-screen gap-4 bg-background p-4 selection:bg-tertiary selection:text-primary">
       <SideBar
         userName={currentUser.full_name}
         roleType={currentUser.role_type}
         barangay={currentUser.barangay}
       />
 
-      <main className="flex-1 flex flex-col h-screen overflow-hidden">
-        {/* TOP HEADER */}
-        <header className="px-12 py-10 flex justify-between items-end">
-          <div className="animate-fadein">
-            <div className="flex items-center gap-2 text-blue-600 mb-1">
-              <ShieldCheck size={16} />
-              <span className="text-[10px] font-bold tracking-[0.2em] uppercase">
-                Document Vault
-              </span>
-            </div>
-            <h1 className="text-4xl font-black tracking-tight text-slate-900">
-              Upload Documents
-            </h1>
-            <p className="text-slate-500 text-sm mt-1">
-              Submit official documents for audit verification.
-            </p>
-          </div>
+      <main className="min-w-0 flex-1 space-y-6 py-2 animate-fadein">
+        <TopBar
+          userName={currentUser.full_name}
+          userEmail={currentUser.email}
+          hideSearch
+        />
 
-          <button
-            disabled={isSubmitting || totalFiles === 0}
-            onClick={handleSubmit}
-            className="flex items-center gap-2 bg-primary text-white px-8 py-3.5 rounded-2xl font-bold text-sm transition-all shadow-xl shadow-slate-200 hover:shadow-blue-100 disabled:opacity-20 disabled:grayscale animate-fadein"
-          >
-            {isSubmitting ? "Processing..." : "Submit for Review"}
-            {!isSubmitting && <ArrowRight size={18} />}
-          </button>
-        </header>
-
-        <div className="flex-1 overflow-y-auto px-12 pb-12">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl mx-auto animate-fadein">
-            {/* MODULE 01: RECEIPTS */}
-            <div className="flex flex-col">
-              <div className="bg-white rounded-[2.5rem] border border-slate-200 p-8 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between mb-8">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center shadow-inner">
-                      <Receipt size={24} />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-slate-900">
-                        Official Receipts
-                      </h3>
-                      <p className="text-xs text-slate-400">
-                        JPG, PNG, or PDF up to 10MB
-                      </p>
-                    </div>
-                  </div>
-                  <span className="bg-blue-50 text-blue-700 text-[10px] font-black px-3 py-1 rounded-full uppercase">
-                    Queue: {receipts.length}
-                  </span>
-                </div>
-
-                <label
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    setActiveDropzone("receipts");
-                  }}
-                  onDragLeave={() => setActiveDropzone(null)}
-                  onDrop={(e) => handleDrop(e, "receipts")}
-                  className={`
-                    flex flex-col items-center justify-center h-60 border-2 border-dashed rounded-4xl transition-all cursor-pointer
-                    ${activeDropzone === "receipts" ? "border-blue-500 bg-blue-50/50 scale-[0.98]" : "border-slate-100 bg-slate-50/50 hover:bg-white hover:border-slate-300"}
-                  `}
-                >
-                  <div className="bg-white p-3 rounded-xl shadow-sm mb-4">
-                    <UploadCloud
-                      className={`w-6 h-6 ${activeDropzone === "receipts" ? "text-blue-600" : "text-slate-400"}`}
-                    />
-                  </div>
-                  <p className="text-sm font-bold text-slate-700">
-                    Drop receipts here
-                  </p>
-                  <p className="text-xs text-slate-400 mt-1">
-                    or{" "}
-                    <span className="text-blue-600 underline">
-                      browse files
-                    </span>
-                  </p>
-                  <input
-                    type="file"
-                    multiple
-                    hidden
-                    onChange={(e) => handleFileChange(e, "receipts")}
-                  />
-                </label>
-
-                {receipts.length > 0 && renderFileQueue(receipts, "receipts")}
-              </div>
-            </div>
-
-            {/* MODULE 02: REPORTS */}
-            <div className="flex flex-col">
-              <div className="bg-white rounded-[2.5rem] border border-slate-200 p-8 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between mb-8">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center shadow-inner">
-                      <FileText size={24} />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-slate-900">
-                        Liquidation Reports
-                      </h3>
-                      <p className="text-xs text-slate-400">
-                        PDF, DOCX, or XLSX up to 20MB
-                      </p>
-                    </div>
-                  </div>
-                  <span className="bg-emerald-50 text-emerald-700 text-[10px] font-black px-3 py-1 rounded-full uppercase">
-                    Queue: {reports.length}
-                  </span>
-                </div>
-
-                <label
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    setActiveDropzone("reports");
-                  }}
-                  onDragLeave={() => setActiveDropzone(null)}
-                  onDrop={(e) => handleDrop(e, "reports")}
-                  className={`
-                    flex flex-col items-center justify-center h-60 border-2 border-dashed rounded-4xl transition-all cursor-pointer
-                    ${activeDropzone === "reports" ? "border-emerald-500 bg-emerald-50/50 scale-[0.98]" : "border-slate-100 bg-slate-50/50 hover:bg-white hover:border-slate-300"}
-                  `}
-                >
-                  <div className="bg-white p-3 rounded-xl shadow-sm mb-4">
-                    <Plus
-                      className={`w-6 h-6 ${activeDropzone === "reports" ? "text-emerald-600" : "text-slate-400"}`}
-                    />
-                  </div>
-                  <p className="text-sm font-bold text-slate-700">
-                    Add liquidation reports
-                  </p>
-                  <p className="text-xs text-slate-400 mt-1">
-                    or{" "}
-                    <span className="text-emerald-600 underline">
-                      browse documents
-                    </span>
-                  </p>
-                  <input
-                    type="file"
-                    multiple
-                    hidden
-                    onChange={(e) => handleFileChange(e, "reports")}
-                  />
-                </label>
-
-                {reports.length > 0 && renderFileQueue(reports, "reports")}
-              </div>
-            </div>
-          </div>
-
-          {/* SYSTEM STATUS FOOTER */}
-          <div className="max-w-7xl mx-auto mt-8 flex items-center gap-6 p-6 bg-slate-900/5 rounded-3xl border border-slate-200/50 backdrop-blur-sm animate-fadein">
-            <div
-              className={`p-2 rounded-full ${totalFiles > 0 ? "bg-green-100 text-green-600" : "bg-slate-200 text-slate-500"}`}
+        <PageHeader
+          eyebrow={
+            <span className="inline-flex items-center gap-1.5">
+              <ShieldCheck className="h-3.5 w-3.5" />
+              Document Vault
+            </span>
+          }
+          title="Upload Documents"
+          subtitle="Submit official documents for audit verification."
+          actions={
+            <button
+              disabled={isSubmitting || totalFiles === 0}
+              onClick={handleSubmit}
+              className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm font-bold text-white shadow-[0_6px_16px_-6px_rgba(1,56,168,0.5)] transition-all hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-30 disabled:grayscale"
             >
-              <FileCheck2 size={20} />
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-bold text-slate-800">
-                {totalFiles > 0
-                  ? `${totalFiles} items staged for secure upload`
-                  : "No documents selected for submission"}
+              {isSubmitting ? "Processing..." : "Submit for Review"}
+              {!isSubmitting && <ArrowRight size={18} />}
+            </button>
+          }
+        />
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* MODULE 01: RECEIPTS */}
+          <Card>
+            <CardHeader
+              eyebrow="Queue"
+              title="Official Receipts"
+              subtitle="JPG, PNG, or PDF up to 10MB"
+              action={
+                <span className="rounded-full bg-information/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-information">
+                  Queue: {receipts.length}
+                </span>
+              }
+            />
+
+            <label
+              onDragOver={(e) => {
+                e.preventDefault();
+                setActiveDropzone("receipts");
+              }}
+              onDragLeave={() => setActiveDropzone(null)}
+              onDrop={(e) => handleDrop(e, "receipts")}
+              className={`flex h-60 cursor-pointer flex-col items-center justify-center rounded-3xl border-2 border-dashed transition-all ${
+                activeDropzone === "receipts"
+                  ? "border-primary bg-primary/5 scale-[0.99]"
+                  : "border-border bg-secondary/40 hover:bg-secondary"
+              }`}
+            >
+              <div className="mb-4 rounded-xl bg-white p-3 shadow-sm">
+                <UploadCloud
+                  className={`h-6 w-6 ${
+                    activeDropzone === "receipts"
+                      ? "text-primary"
+                      : "text-secondary-foreground"
+                  }`}
+                />
+              </div>
+              <p className="text-sm font-bold text-primary-foreground">
+                Drop receipts here
               </p>
-              <p className="text-xs text-slate-500">
-                Submissions are encrypted and stored in the SK-Ledge private
-                vault.
+              <p className="mt-1 text-xs text-secondary-foreground">
+                or{" "}
+                <span className="text-primary underline">
+                  browse files
+                </span>
               </p>
-            </div>
+              <input
+                type="file"
+                multiple
+                hidden
+                onChange={(e) => handleFileChange(e, "receipts")}
+              />
+            </label>
+
+            {receipts.length > 0 && renderFileQueue(receipts, "receipts")}
+          </Card>
+
+          {/* MODULE 02: REPORTS */}
+          <Card>
+            <CardHeader
+              eyebrow="Queue"
+              title="Liquidation Reports"
+              subtitle="PDF, DOCX, or XLSX up to 20MB"
+              action={
+                <span className="rounded-full bg-success/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-success">
+                  Queue: {reports.length}
+                </span>
+              }
+            />
+
+            <label
+              onDragOver={(e) => {
+                e.preventDefault();
+                setActiveDropzone("reports");
+              }}
+              onDragLeave={() => setActiveDropzone(null)}
+              onDrop={(e) => handleDrop(e, "reports")}
+              className={`flex h-60 cursor-pointer flex-col items-center justify-center rounded-3xl border-2 border-dashed transition-all ${
+                activeDropzone === "reports"
+                  ? "border-primary bg-primary/5 scale-[0.99]"
+                  : "border-border bg-secondary/40 hover:bg-secondary"
+              }`}
+            >
+              <div className="mb-4 rounded-xl bg-white p-3 shadow-sm">
+                <Plus
+                  className={`h-6 w-6 ${
+                    activeDropzone === "reports"
+                      ? "text-primary"
+                      : "text-secondary-foreground"
+                  }`}
+                />
+              </div>
+              <p className="text-sm font-bold text-primary-foreground">
+                Add liquidation reports
+              </p>
+              <p className="mt-1 text-xs text-secondary-foreground">
+                or{" "}
+                <span className="text-primary underline">
+                  browse documents
+                </span>
+              </p>
+              <input
+                type="file"
+                multiple
+                hidden
+                onChange={(e) => handleFileChange(e, "reports")}
+              />
+            </label>
+
+            {reports.length > 0 && renderFileQueue(reports, "reports")}
+          </Card>
+        </div>
+
+        {/* SYSTEM STATUS */}
+        <div className="flex items-center gap-6 rounded-3xl border border-border bg-primary-foreground p-6 text-white">
+          <div
+            className={`rounded-full p-2 ${
+              totalFiles > 0
+                ? "bg-success/20 text-success"
+                : "bg-white/10 text-white/60"
+            }`}
+          >
+            <FileCheck2 size={20} />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-bold">
+              {totalFiles > 0
+                ? `${totalFiles} items staged for secure upload`
+                : "No documents selected for submission"}
+            </p>
+            <p className="text-xs text-white/60">
+              Submissions are encrypted and stored in the SK-Ledge private
+              vault.
+            </p>
           </div>
         </div>
       </main>

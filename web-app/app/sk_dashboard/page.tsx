@@ -3,6 +3,10 @@
 import LogoLoader from "@/components/LogoLoader";
 import { useEffect, useRef } from "react";
 import SideBar from "@/components/dashboard/SideBar";
+import TopBar from "@/components/dashboard/ui/TopBar";
+import PageHeader from "@/components/dashboard/ui/PageHeader";
+import StatCard from "@/components/dashboard/ui/StatCard";
+import { Card, CardHeader } from "@/components/dashboard/ui/Card";
 import { INITIAL_PROJECTS } from "@/lib/dummyData";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
@@ -12,13 +16,15 @@ import AllocateFundsForm from "@/components/AllocateFundsForm";
 import {
   Plus,
   ChevronRight,
-  Activity,
   CheckCircle2,
   Clock,
-  Calendar,
-  FileText,
-  Folder,
+  FolderKanban,
+  PiggyBank,
+  Receipt,
+  TrendingUp,
+  Wallet,
   CircleAlert,
+  FileText,
 } from "lucide-react";
 
 export default function SKDashboard() {
@@ -121,8 +127,8 @@ export default function SKDashboard() {
 
   if (!currentUser) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
-        <div className="max-w-md w-full bg-white rounded-4xl shadow-xl border border-slate-200 p-10 text-center">
+      <div className="min-h-screen flex items-center justify-center bg-background p-6">
+        <div className="max-w-md w-full bg-white rounded-4xl shadow-xl border border-border p-10 text-center">
           <div className="h-16 w-16 bg-danger/10 text-danger rounded-2xl flex items-center justify-center mx-auto mb-6">
             <span className="text-2xl">
               <CircleAlert />
@@ -131,7 +137,7 @@ export default function SKDashboard() {
           <h2 className="text-2xl font-black text-primary mb-3 tracking-tight">
             Access Restricted
           </h2>
-          <p className="text-sm text-slate-500 mb-8 leading-relaxed">
+          <p className="text-sm text-secondary-foreground mb-8 leading-relaxed">
             You do not have the required credentials or an active session to
             view this official dashboard.
           </p>
@@ -149,209 +155,186 @@ export default function SKDashboard() {
   const totalAllocated = 1250000;
   const totalSpent = 165000;
   const percentageSpent = (totalSpent / totalAllocated) * 100;
+  const availableFunds = totalAllocated - totalSpent;
+  const pendingCount = INITIAL_PROJECTS.filter(
+    (p) => p.status === "Pending",
+  ).length;
+  const today = new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 
   return (
-    <div className="flex min-h-screen bg-[#f8fafc] selection:bg-tertiary selection:text-primary">
+    <div className="flex min-h-screen gap-4 bg-background p-4 selection:bg-tertiary selection:text-primary">
       <SideBar
         userName={currentUser.full_name}
         roleType={currentUser.role_type}
         barangay={currentUser.barangay}
       />
 
-      <main className="flex-1 flex flex-col h-screen overflow-y-auto relative">
-        {/* TOP NAVBAR */}
-        <header className="h-24 px-10 flex items-center justify-between shrink-0 animate-fadein">
-          <div className="flex items-center gap-3 text-sm font-bold text-slate-500 uppercase tracking-widest">
-            <Calendar className="w-4 h-4 text-tertiary" />
-            {new Date().toLocaleDateString("en-US", {
-              weekday: "long",
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}
-          </div>
-          <div className="flex items-center gap-4">
-            <button className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-primary hover:border-primary/30 transition-all shadow-sm">
-              <Activity className="w-4 h-4" />
-            </button>
-          </div>
-        </header>
+      <main className="min-w-0 flex-1 space-y-6 py-2 animate-fadein">
+        <TopBar
+          userName={currentUser.full_name}
+          userEmail={currentUser.email}
+          hideSearch
+        />
 
-        <div className="px-8 pb-12 space-y-8 max-w-7xl mx-auto w-full">
-          {/* WELCOME BANNER (Compact, engaging) */}
-          <section className="bg-primary rounded-4xl p-8 md:p-10 relative overflow-hidden text-white shadow-xl shadow-primary/20 border border-primary">
-            <div className="absolute top-0 right-0 w-full h-full overflow-hidden pointer-events-none z-0">
-              <div className="absolute -top-28 -right-16 w-28 h-28 bg-white/5 rounded-full blur-3xl"></div>
-              <div className="absolute -bottom-32 right-16 w-24 h-24 bg-tertiary/10 rounded-full blur-3xl"></div>
-            </div>
-
-            <div className="relative z-10 grid gap-8 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,0.9fr)] items-center">
-              <div>
-                <p className="text-tertiary font-bold tracking-widest uppercase text-[11px] mb-3">
-                  Barangay {currentUser.barangay}
-                </p>
-                <h2 className="text-3xl md:text-4xl font-black mb-4 tracking-tight leading-tight">
-                  Welcome back, <br /> {currentUser.full_name.split(" ")[0]}!
-                </h2>
-                <p className="text-white/75 text-base md:text-lg leading-relaxed max-w-xl">
-                  You have{" "}
-                  <strong className="text-white">
-                    3 projects pending approval
-                  </strong>{" "}
-                  and the fiscal year budget is currently operating at optimal
-                  capacity.
-                </p>
-
-                <div className="mt-8 flex flex-wrap gap-3">
-                  <button
-                    onClick={() => setIsModalOpen(true)}
-                    className="bg-blue-600 text-white px-6 py-3 rounded-2xl text-sm font-black tracking-wide hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-600/20 transition-all active:scale-95 flex items-center gap-2"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Propose New Project
-                  </button>
-                  <button className="bg-white/10 backdrop-blur-md border border-white/20 text-white px-6 py-3 rounded-2xl text-sm font-bold tracking-wide hover:bg-white/20 transition-all active:scale-95 flex items-center gap-2">
-                    <FileText className="w-4 h-4" />
-                    View Ledger
-                  </button>
-                </div>
-              </div>
-
-              <div className="grid gap-4">
-                <div className="rounded-4xl border border-white/15 bg-white/10 p-5 shadow-inner shadow-white/10">
-                  <p className="text-xs uppercase tracking-[0.3em] text-white/60 mb-3">
-                    Current Fiscal Summary
-                  </p>
-                  <p className="text-3xl font-black text-white">
-                    {formatCurrency(totalAllocated)}
-                  </p>
-                  <p className="text-sm text-white/75 mt-2">
-                    {percentageSpent.toFixed(0)}% used •{" "}
-                    {formatCurrency(totalAllocated - totalSpent)} remaining
-                  </p>
-                </div>
-                <div className="rounded-4xl border border-white/15 bg-white/10 p-5 shadow-inner shadow-white/10">
-                  <p className="text-xs uppercase tracking-[0.3em] text-white/60 mb-3">
-                    Approval Queue
-                  </p>
-                  <p className="text-3xl font-black text-white">4 pending</p>
-                  <p className="text-sm text-white/75 mt-2">
-                    Projects in the review queue are ready for your next action.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* ALLOCATE FUNDS FORM SECTION */}
-          <section className="bg-white rounded-[2.5rem] p-8 md:p-10 border border-slate-200 shadow-sm">
-            <div className="mb-6">
-              <h2 className="text-2xl font-black text-primary tracking-tight">
-                Blockchain Budget Allocation
-              </h2>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
-                Record official SK funds directly on the Sepolia ledger
-              </p>
-            </div>
-
-            <div className="max-w-xl mx-auto">
-              <AllocateFundsForm />
-            </div>
-          </section>
-
-          {/* ACTIVE PROPOSALS SECTION */}
-          <section className="bg-white rounded-[2.5rem] p-8 md:p-10 border border-slate-200 shadow-sm">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
-              <div>
-                <h2 className="text-2xl font-black text-primary tracking-tight">
-                  Active Proposals
-                </h2>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
-                  Recent entries in the ledger
-                </p>
-              </div>
-              <button className="text-xs font-black text-primary hover:text-tertiary transition-colors uppercase tracking-widest flex items-center gap-1 bg-slate-50 px-4 py-2 rounded-xl">
-                View All <ChevronRight className="w-4 h-4" />
+        <PageHeader
+          eyebrow={`Barangay ${currentUser.barangay}`}
+          title={`Welcome back, ${currentUser.full_name.split(" ")[0]}!`}
+          subtitle={`${today} · ${pendingCount} project(s) pending approval and the fiscal year budget is operating at optimal capacity.`}
+          actions={
+            <>
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white shadow-[0_6px_16px_-6px_rgba(1,56,168,0.5)] transition hover:bg-primary/90"
+              >
+                <Plus className="h-4 w-4" />
+                Propose New Project
               </button>
-            </div>
+              <button className="inline-flex items-center gap-2 rounded-xl border border-border bg-white px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-secondary">
+                <FileText className="h-4 w-4" />
+                View Ledger
+              </button>
+            </>
+          }
+        />
 
-            <div className="space-y-4">
-              {INITIAL_PROJECTS.map((p) => (
-                <div
-                  key={p.id}
-                  className="flex flex-col md:flex-row md:items-center justify-between p-5 md:p-6 bg-slate-50/50 hover:bg-slate-50 border border-slate-100 hover:border-slate-200 rounded-2xl transition-all group gap-4"
-                >
-                  <div className="flex items-center gap-5 md:w-1/3">
-                    <div className="w-12 h-12 rounded-2xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 group-hover:text-primary transition-colors shrink-0 shadow-sm">
-                      <Folder className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <p className="font-black text-primary text-base group-hover:text-tertiary transition-colors leading-tight mb-1">
-                        {p.name}
-                      </p>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-                        ID: PRJ-{p.id.padStart(4, "0")}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="md:w-1/4">
-                    <span className="inline-flex px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest bg-white border border-slate-200 text-slate-500 shadow-sm">
-                      {p.category}
-                    </span>
-                  </div>
-
-                  <div className="md:w-1/4">
-                    <span
-                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest ${
-                        p.status === "Approved"
-                          ? "bg-success/10 text-success"
-                          : p.status === "Pending"
-                            ? "bg-pending/10 text-pending"
-                            : "bg-danger/10 text-danger"
-                      }`}
-                    >
-                      {p.status === "Approved" && (
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                      )}
-                      {p.status === "Pending" && (
-                        <Clock className="w-3.5 h-3.5" />
-                      )}
-                      {p.status}
-                    </span>
-                  </div>
-
-                  <div className="text-left md:text-right md:w-1/4">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
-                      Budget
-                    </p>
-                    <span className="font-black text-primary text-lg tracking-tight">
-                      {formatCurrency(p.budget)}
-                    </span>
-                  </div>
-                </div>
-              ))}
-
-              {INITIAL_PROJECTS.length === 0 && (
-                <div className="p-12 text-center border-2 border-dashed border-slate-200 rounded-3xl">
-                  <Folder className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                  <p className="text-sm font-bold text-slate-500">
-                    No active projects found.
-                  </p>
-                </div>
-              )}
-            </div>
-          </section>
+        {/* STAT ROW */}
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+          <StatCard
+            label="Total Allocation"
+            value={formatCurrency(totalAllocated)}
+            icon={Wallet}
+            variant="brand"
+            trend={`${INITIAL_PROJECTS.length} projects proposed`}
+            trendIcon={FolderKanban}
+          />
+          <StatCard
+            label="Total Spent"
+            value={formatCurrency(totalSpent)}
+            icon={Receipt}
+            trend={`${percentageSpent.toFixed(0)}% utilized`}
+            trendIcon={TrendingUp}
+          />
+          <StatCard
+            label="Available Funds"
+            value={formatCurrency(availableFunds)}
+            icon={PiggyBank}
+            trend="Remaining for the fiscal year"
+          />
+          <StatCard
+            label="Pending Reviews"
+            value={pendingCount}
+            icon={Clock}
+            trend={`${INITIAL_PROJECTS.length - pendingCount} approved so far`}
+            trendIcon={CheckCircle2}
+          />
         </div>
 
-        <ProposeProjectModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          onSubmitSuccess={() => {
-            console.log("Proposal successfully dispatched!");
-          }}
-        />
+        {/* ALLOCATE FUNDS */}
+        <Card>
+          <CardHeader
+            eyebrow="Blockchain"
+            title="Budget Allocation"
+            subtitle="Record official SK funds directly on the Sepolia ledger"
+          />
+          <div className="max-w-xl">
+            <AllocateFundsForm />
+          </div>
+        </Card>
+
+        {/* ACTIVE PROPOSALS */}
+        <Card>
+          <CardHeader
+            eyebrow="Ledger"
+            title="Active Proposals"
+            subtitle="Recent entries in the ledger"
+            action={
+              <button className="inline-flex items-center gap-1 rounded-xl bg-secondary px-4 py-2 text-xs font-bold uppercase tracking-widest text-primary transition hover:bg-secondary-foreground/10">
+                View All <ChevronRight className="h-4 w-4" />
+              </button>
+            }
+          />
+
+          <div className="space-y-4">
+            {INITIAL_PROJECTS.map((p) => (
+              <div
+                key={p.id}
+                className="flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-2xl border border-border bg-secondary/40 p-5 transition-all group hover:bg-secondary"
+              >
+                <div className="flex items-center gap-5 md:w-1/3">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-border bg-white text-secondary-foreground shadow-sm transition-colors group-hover:text-primary">
+                    <FolderKanban className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-primary-foreground leading-tight transition-colors group-hover:text-primary">
+                      {p.name}
+                    </p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
+                      ID: PRJ-{p.id.padStart(4, "0")}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="md:w-1/4">
+                  <span className="inline-flex rounded-lg border border-border bg-white px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-secondary-foreground shadow-sm">
+                    {p.category}
+                  </span>
+                </div>
+
+                <div className="md:w-1/4">
+                  <span
+                    className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[10px] font-bold uppercase tracking-widest ${
+                      p.status === "Approved"
+                        ? "bg-success/10 text-success"
+                        : p.status === "Pending"
+                          ? "bg-pending/10 text-pending"
+                          : "bg-danger/10 text-danger"
+                    }`}
+                  >
+                    {p.status === "Approved" && (
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                    )}
+                    {p.status === "Pending" && (
+                      <Clock className="h-3.5 w-3.5" />
+                    )}
+                    {p.status}
+                  </span>
+                </div>
+
+                <div className="text-left md:text-right md:w-1/4">
+                  <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
+                    Budget
+                  </p>
+                  <span className="text-lg font-bold tracking-tight text-primary-foreground">
+                    {formatCurrency(p.budget)}
+                  </span>
+                </div>
+              </div>
+            ))}
+
+            {INITIAL_PROJECTS.length === 0 && (
+              <div className="p-12 text-center border-2 border-dashed border-border rounded-3xl">
+                <FolderKanban className="h-12 w-12 text-secondary-foreground/30 mx-auto mb-4" />
+                <p className="text-sm font-bold text-secondary-foreground">
+                  No active projects found.
+                </p>
+              </div>
+            )}
+          </div>
+        </Card>
       </main>
+
+      <ProposeProjectModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmitSuccess={() => {
+          console.log("Proposal successfully dispatched!");
+        }}
+      />
     </div>
   );
 }

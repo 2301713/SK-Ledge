@@ -4,19 +4,23 @@ import LogoLoader from "@/components/LogoLoader";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import SideBar from "@/components/dashboard/SideBar";
+import TopBar from "@/components/dashboard/ui/TopBar";
+import PageHeader from "@/components/dashboard/ui/PageHeader";
+import StatCard from "@/components/dashboard/ui/StatCard";
+import DonutGauge from "@/components/dashboard/ui/DonutGauge";
+import { Card, CardHeader } from "@/components/dashboard/ui/Card";
 import { supabase } from "@/lib/supabase";
 import { UserAccount } from "@/lib/useAuthStore";
-import { LegendItemProps } from "../types";
+import { BRAND, SUCCESS, PENDING, DANGER } from "@/components/dashboard/ui/chartColors";
 import {
   FileDown,
   FilePieChart,
   Users2,
-  BarChart3,
   ShieldCheck,
-  Filter,
   CheckCircle2,
   XCircle,
   ExternalLink,
+  TrendingUp,
 } from "lucide-react";
 
 export default function SKFederationDashboard() {
@@ -77,14 +81,6 @@ export default function SKFederationDashboard() {
     fetchUserProfile();
   }, [router]);
 
-  // UTILITY
-  const formatCurrency = (budget: number) => {
-    return new Intl.NumberFormat("en-PH", {
-      style: "currency",
-      currency: "PHP",
-    }).format(budget);
-  };
-
   // LOADING STATE
   if (isLoading) return <LogoLoader />;
 
@@ -92,208 +88,179 @@ export default function SKFederationDashboard() {
   if (!currentUser) return null;
 
   return (
-    <div className="flex min-h-screen bg-[#f8fafc] selection:bg-blue-200 selection:text-blue-900">
-      {/* SIDEBAR */}
+    <div className="flex min-h-screen gap-4 bg-background p-4 selection:bg-tertiary selection:text-primary">
       <SideBar
         userName={currentUser.full_name}
         roleType={currentUser.role_type}
         barangay={currentUser.barangay}
       />
 
-      {/* MAIN CONTENT AREA */}
-      <main className="flex-1 flex flex-col h-screen overflow-y-auto relative">
-        <div className="p-10 space-y-8 animate-in fade-in duration-500">
-          {/* HEADER & EXPORT CONTROLS */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h2 className="text-3xl font-black text-slate-800 uppercase tracking-tight leading-none">
-                Oversight Reports
-              </h2>
-              <p className="text-slate-500 italic text-sm font-medium mt-2">
-                City-Wide Analytics Engine & Performance Matrix
-              </p>
-            </div>
-            <button className="flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-[#002855] transition shadow-lg shadow-blue-900/20">
-              <FileDown size={18} />
+      <main className="min-w-0 flex-1 space-y-6 py-2 animate-fadein">
+        <TopBar
+          userName={currentUser.full_name}
+          userEmail={currentUser.email}
+          hideSearch
+        />
+
+        <PageHeader
+          eyebrow="SK Federation"
+          title="Oversight Reports"
+          subtitle="City-wide analytics engine & performance matrix."
+          actions={
+            <button className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white shadow-[0_6px_16px_-6px_rgba(1,56,168,0.5)] transition hover:bg-primary/90">
+              <FileDown className="h-4 w-4" />
               Generate City-Wide LGU Report
             </button>
-          </div>
+          }
+        />
 
-          {/* TOP ANALYTICS */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* 1. City-Wide Financial Breakdown */}
-            <div className="lg:col-span-2 bg-white p-8 rounded-4xl border border-slate-200 shadow-sm">
-              <div className="flex justify-between items-center mb-8">
-                <h3 className="font-bold text-slate-800 flex items-center gap-2 uppercase text-xs tracking-widest">
-                  <BarChart3 size={16} className="text-primary" />
-                  Budget Allocation Breakdown
-                </h3>
-                <span className="text-[10px] bg-blue-50 text-primary px-3 py-1 rounded-full font-black">
-                  FY 2026
-                </span>
-              </div>
+        {/* STAT ROW */}
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+          <StatCard
+            label="Projects Completed"
+            value="248"
+            icon={TrendingUp}
+            variant="brand"
+            trend="Across the federation"
+          />
+          <StatCard
+            label="Youth Beneficiaries"
+            value="14.2k"
+            icon={Users2}
+            trend="City-wide outreach"
+          />
+          <StatCard
+            label="Total Fund"
+            value="₱16.6M"
+            icon={FilePieChart}
+            trend="FY 2026 allocation"
+          />
+        </div>
 
-              <div className="flex flex-col md:flex-row items-center gap-12">
-                {/* Visual Doughnut Chart */}
-                <div className="relative w-44 h-44 rounded-full border-18 border-blue-600 border-t-green-500 border-l-yellow-400 border-r-rose-500 flex items-center justify-center shadow-inner">
-                  <div className="text-center">
-                    <p className="text-2xl font-black text-slate-800 leading-none">
-                      16.6M
-                    </p>
-                    <p className="text-[9px] text-slate-400 font-bold uppercase mt-1">
-                      Total Fund
+        {/* BUDGET ALLOCATION BREAKDOWN */}
+        <Card>
+          <CardHeader
+            eyebrow="Budget Allocation"
+            title="City-Wide Financial Breakdown"
+            subtitle="Fund distribution across priority programs"
+            action={
+              <span className="rounded-full bg-primary/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-primary">
+                FY 2026
+              </span>
+            }
+          />
+
+          <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-[auto_1fr]">
+            <DonutGauge
+              centerValue="16.6M"
+              centerLabel="Total Fund"
+              segments={[
+                { label: "Sports & Dev", value: 40, color: BRAND },
+                { label: "Education", value: 30, color: SUCCESS },
+                { label: "Health & Env", value: 20, color: PENDING },
+                { label: "Governance", value: 10, color: DANGER },
+              ]}
+            />
+
+            <div className="space-y-3">
+              {[
+                { color: BRAND, label: "Sports & Development", pct: "40%", budget: "₱6.64M" },
+                { color: SUCCESS, label: "Education / Scholarships", pct: "30%", budget: "₱4.98M" },
+                { color: PENDING, label: "Health & Environment", pct: "20%", budget: "₱3.32M" },
+                { color: DANGER, label: "Governance & Admin", pct: "10%", budget: "₱1.66M" },
+              ].map((item) => (
+                <div
+                  key={item.label}
+                  className="flex items-center justify-between rounded-2xl border border-border bg-secondary/40 px-4 py-3"
+                >
+                  <div className="flex items-center gap-3">
+                    <span
+                      className="h-3 w-3 rounded-full"
+                      style={{ backgroundColor: item.color }}
+                    />
+                    <span className="text-sm font-medium text-primary-foreground">
+                      {item.label}
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-sm font-bold text-primary-foreground">
+                      {item.pct}
+                    </span>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
+                      {item.budget}
                     </p>
                   </div>
                 </div>
-                {/* Legend System */}
-                <div className="flex-1 space-y-4 w-full">
-                  <LegendItem
-                    color="bg-blue-600"
-                    label="Sports & Development"
-                    percentage="40%"
-                    budget={formatCurrency(6640000)}
-                  />
-                  <LegendItem
-                    color="bg-green-500"
-                    label="Education / Scholarships"
-                    percentage="30%"
-                    budget={formatCurrency(4980000)}
-                  />
-                  <LegendItem
-                    color="bg-yellow-400"
-                    label="Health & Environment"
-                    percentage="20%"
-                    budget={formatCurrency(3320000)}
-                  />
-                  <LegendItem
-                    color="bg-rose-500"
-                    label="Governance & Admin"
-                    percentage="10%"
-                    budget={formatCurrency(3320000)}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* 2. Project Impact Metrics */}
-            <div className="space-y-6">
-              <div className="bg-white p-8 rounded-4xl border border-slate-200 shadow-sm flex flex-col items-center justify-center text-center">
-                <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-primary mb-4">
-                  <FilePieChart size={24} />
-                </div>
-                <h4 className="text-4xl font-black text-slate-800 leading-none">
-                  248
-                </h4>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2">
-                  Projects Completed
-                </p>
-              </div>
-              <div className="bg-white p-8 rounded-4xl border border-slate-200 shadow-sm flex flex-col items-center justify-center text-center">
-                <div className="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center text-green-600 mb-4">
-                  <Users2 size={24} />
-                </div>
-                <h4 className="text-4xl font-black text-slate-800 leading-none">
-                  14.2k
-                </h4>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2">
-                  Youth Beneficiaries
-                </p>
-              </div>
+              ))}
             </div>
           </div>
+        </Card>
 
-          {/* 3. COMPLIANCE MATRIX */}
-          <div className="bg-white rounded-4xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="p-6 border-b border-slate-900/20 bg-slate-50/50 flex justify-between items-center">
-              <h3 className="font-bold text-slate-800 uppercase text-xs tracking-widest flex items-center gap-2">
-                <ShieldCheck size={18} className="text-green-600" />
-                Barangay Compliance Matrix
-              </h3>
-              <div className="flex gap-2">
-                <button className="p-2 hover:bg-slate-200 rounded-xl transition text-slate-400">
-                  <Filter size={18} />
-                </button>
+        {/* COMPLIANCE MATRIX */}
+        <Card>
+          <CardHeader
+            eyebrow="Compliance"
+            title="Barangay Compliance Matrix"
+            subtitle="Submission status and impact scoring per barangay"
+            action={
+              <div className="inline-flex items-center gap-2 rounded-xl border border-border bg-secondary/60 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
+                <ShieldCheck className="h-3.5 w-3.5 text-success" />
+                Live
               </div>
-            </div>
+            }
+          />
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead className="bg-slate-50/80 text-[10px] font-black text-slate-400 uppercase">
-                  <tr>
-                    <th className="p-6">Barangay Name</th>
-                    <th className="p-6 text-center">Submitted CBYDP</th>
-                    <th className="p-6 text-center">Submitted ABYIP</th>
-                    <th className="p-6 text-center">On-time Liquidation</th>
-                    <th className="p-6 text-center">Impact Score</th>
-                    <th className="p-6 text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-sm">
-                  {/* Example row - Repeat this for data mapping */}
-                  <tr className="hover:bg-slate-50 transition-colors group">
-                    <td className="p-6 font-bold text-slate-700">
-                      Barangay San Jose
-                    </td>
-                    <td className="p-6 text-center">
-                      <div className="flex justify-center">
-                        <CheckCircle2 className="text-green-500" size={20} />
-                      </div>
-                    </td>
-                    <td className="p-6 text-center">
-                      <div className="flex justify-center">
-                        <CheckCircle2 className="text-green-500" size={20} />
-                      </div>
-                    </td>
-                    <td className="p-6 text-center">
-                      <div className="flex justify-center">
-                        <XCircle className="text-rose-400" size={20} />
-                      </div>
-                    </td>
-                    <td className="p-6">
-                      <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-border text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
+                  <th className="p-4">Barangay Name</th>
+                  <th className="p-4 text-center">Submitted CBYDP</th>
+                  <th className="p-4 text-center">Submitted ABYIP</th>
+                  <th className="p-4 text-center">On-time Liquidation</th>
+                  <th className="p-4">Impact Score</th>
+                  <th className="p-4 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border text-sm">
+                <tr className="transition-colors hover:bg-secondary/50">
+                  <td className="p-4 font-bold text-primary-foreground">
+                    Barangay San Jose
+                  </td>
+                  <td className="p-4 text-center">
+                    <CheckCircle2 className="mx-auto text-success" size={20} />
+                  </td>
+                  <td className="p-4 text-center">
+                    <CheckCircle2 className="mx-auto text-success" size={20} />
+                  </td>
+                  <td className="p-4 text-center">
+                    <XCircle className="mx-auto text-danger/60" size={20} />
+                  </td>
+                  <td className="p-4">
+                    <div className="flex items-center gap-2">
+                      <div className="h-1.5 w-full max-w-24 overflow-hidden rounded-full bg-border">
                         <div
-                          className="bg-primary h-full"
+                          className="h-full rounded-full bg-primary"
                           style={{ width: "65%" }}
-                        ></div>
+                        />
                       </div>
-                    </td>
-                    <td className="p-6 text-right">
-                      <button className="text-primary font-black text-[10px] uppercase flex items-center gap-1 ml-auto hover:bg-primary hover:text-white px-3 py-2 rounded-lg transition-all">
-                        <ExternalLink size={14} />
-                        Barangay Drill-Down
-                      </button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+                      <span className="text-xs font-bold text-primary-foreground">
+                        65%
+                      </span>
+                    </div>
+                  </td>
+                  <td className="p-4 text-right">
+                    <button className="inline-flex items-center gap-1 rounded-xl px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-primary transition hover:bg-primary hover:text-white">
+                      <ExternalLink size={14} />
+                      Drill-Down
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-        </div>
+        </Card>
       </main>
     </div>
   );
-
-  function LegendItem({ color, label, percentage, budget }: LegendItemProps) {
-    const displayBudget =
-      typeof budget === "number" ? formatCurrency(budget) : budget;
-
-    return (
-      <div className="flex items-center justify-between group">
-        <div className="flex items-center gap-3">
-          <div className={`w-3 h-3 rounded-full ${color} shadow-sm`}></div>
-          <span className="text-sm font-medium text-slate-600 group-hover:text-slate-900 transition">
-            {label}
-          </span>
-        </div>
-        <div className="text-right">
-          <span className="text-sm font-black text-slate-800">
-            {percentage}
-          </span>
-          <p className="text-[9px] text-slate-400 font-bold leading-none">
-            {displayBudget}
-          </p>
-        </div>
-      </div>
-    );
-  }
 }

@@ -2,15 +2,15 @@ import type { StatusBadgeProps } from "../../app/open_bidding/types";
 
 export default function StatusBadge({ status, isLarge }: StatusBadgeProps) {
   const styles: Record<string, string> = {
-    "Accepting Bids": "bg-emerald-100 text-emerald-700 border-emerald-200",
-    Awarded: "bg-sky-100 text-sky-700 border-sky-200",
-    Evaluation: "bg-amber-100 text-amber-700 border-amber-200",
+    "Accepting Bids": "bg-success/10 text-success border-success/20",
+    Awarded: "bg-primary/10 text-primary border-primary/20",
+    Evaluation: "bg-pending/10 text-pending border-pending/20",
   };
 
   return (
     <span
-      className={`flex items-center gap-2 w-fit px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${
-        styles[status] || "bg-slate-100 text-slate-700 border-slate-200"
+      className={`inline-flex items-center gap-2 w-fit px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${
+        styles[status] || "bg-secondary text-secondary-foreground border-border"
       } ${isLarge ? "py-2 px-6" : ""}`}
     >
       <div

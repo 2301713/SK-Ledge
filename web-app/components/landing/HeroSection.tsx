@@ -6,7 +6,7 @@ export default function HeroSection() {
   return (
     <section
       id="home"
-      className="relative min-h-screen flex flex-col justify-center overflow-hidden bg-slate-950 px-6"
+      className="relative min-h-screen flex flex-col justify-center overflow-hidden bg-slate-950 px-6 scroll-mt-24"
     >
       {/* Blockchain GIF Background */}
       <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">

@@ -2,7 +2,7 @@ export default function MetricCard({
   label,
   value,
   sub,
-  valueColor = "text-primary",
+  valueColor = "text-primary-foreground",
   accent,
   icon,
 }: {
@@ -14,19 +14,19 @@ export default function MetricCard({
   icon?: React.ReactNode;
 }) {
   return (
-    <div className="bg-secondary rounded-2xl p-6 border border-black/20 hover:border-black/40 transition-all duration-200 relative overflow-hidden flex flex-col justify-between group">
-      {/* Left accent bar */}
+    <div className="relative rounded-3xl border border-border bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(15,23,42,0.10)] transition-all duration-200 hover:shadow-[0_8px_28px_-10px_rgba(1,56,168,0.25)] overflow-hidden flex flex-col justify-between group">
+      {/* Top accent bar */}
       <div
-        className={`absolute left-0 top-4 bottom-4 w-0.75 rounded-full ${accent}`}
+        className={`absolute top-0 left-6 right-6 h-1 rounded-b-full ${accent}`}
       />
 
-      <div className="pl-3">
-        <div className="flex items-start justify-between mb-3">
-          <p className="text-[10px] font-bold text-primary uppercase tracking-[0.15em]">
+      <div className="pt-2">
+        <div className="flex items-start justify-between mb-4">
+          <p className="text-[10px] font-bold text-secondary-foreground uppercase tracking-[0.15em]">
             {label}
           </p>
           {icon && (
-            <div className="opacity-50 group-hover:opacity-60 transition-opacity">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-secondary transition-colors group-hover:bg-secondary-foreground/10">
               {icon}
             </div>
           )}
@@ -36,7 +36,7 @@ export default function MetricCard({
         >
           {value}
         </p>
-        <p className="text-[10px] text-slate-600 font-semibold mt-2 uppercase tracking-wider">
+        <p className="text-[10px] text-secondary-foreground font-semibold mt-2 uppercase tracking-wider">
           {sub}
         </p>
       </div>

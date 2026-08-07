@@ -3,27 +3,33 @@
 import LogoLoader from "@/components/LogoLoader";
 import { useEffect, useState } from "react";
 import SideBar from "@/components/dashboard/SideBar";
+import TopBar from "@/components/dashboard/ui/TopBar";
+import PageHeader from "@/components/dashboard/ui/PageHeader";
+import StatCard from "@/components/dashboard/ui/StatCard";
+import { Card, CardHeader } from "@/components/dashboard/ui/Card";
+import StatusBadge from "@/components/dashboard/ui/StatusBadge";
 import { supabase } from "@/lib/supabase";
 import { pendingDisbursements } from "../types";
 import { useRouter } from "next/navigation";
 import { UserAccount } from "@/lib/useAuthStore";
 import {
-  AlertTriangle,
-  CheckCircle2,
   Download,
   Eye,
   FileText,
-  Filter,
   MoreHorizontal,
-  Search,
   ShieldCheck,
-  XCircle,
+  BadgeCheck,
+  AlertTriangle,
+  FileClock,
 } from "lucide-react";
 
 export default function DisbursementsPage() {
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "clean" | "flagged" | "pending docs"
+  >("all");
   const router = useRouter();
 
   useEffect(() => {
@@ -89,195 +95,202 @@ export default function DisbursementsPage() {
     }).format(amount);
   };
 
+  const cleanCount = pendingDisbursements.filter(
+    (item) => item.compliance === "Clean",
+  ).length;
+  const flaggedCount = pendingDisbursements.filter(
+    (item) => item.compliance === "Flagged",
+  ).length;
+  const incompleteCount = pendingDisbursements.filter(
+    (item) => item.compliance === "Pending Docs",
+  ).length;
+
+  const filtered = pendingDisbursements.filter((item) => {
+    const matchesSearch =
+      item.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.payee.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus =
+      statusFilter === "all" || item.compliance === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
   if (isLoading) return <LogoLoader />;
 
+  if (!currentUser) return null;
+
   return (
-    <div className="flex min-h-screen bg-background selection:bg-tertiary selection:text-primary">
-      {currentUser && (
-        <SideBar
+    <div className="flex min-h-screen gap-4 bg-background p-4 selection:bg-tertiary selection:text-primary">
+      <SideBar
+        userName={currentUser.full_name}
+        roleType={currentUser.role_type}
+        barangay={currentUser.barangay}
+      />
+
+      <main className="min-w-0 flex-1 space-y-6 py-2 animate-fadein">
+        <TopBar
           userName={currentUser.full_name}
-          roleType={currentUser.role_type}
-          barangay={currentUser.barangay}
+          userEmail={currentUser.email}
+          searchValue={searchQuery}
+          onSearchChange={setSearchQuery}
         />
-      )}
 
-      <main className="flex-1 flex flex-col h-screen overflow-hidden bg-slate-50">
-        {/* HEADER */}
-        <header className="h-20 bg-white border-b border-slate-200 px-8 flex items-center justify-between z-10 shrink-0 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-emerald-50 text-emerald-700 rounded-lg">
-              <ShieldCheck size={24} strokeWidth={2.5} />
-            </div>
-            <div>
-              <h1 className="text-xl font-black text-slate-900 tracking-tight">
-                COA Audit Ledger
-              </h1>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mt-0.5">
-                Pending Disbursements Review
-              </p>
-            </div>
-          </div>
-
-          {/* Toolbar */}
-          <div className="flex items-center gap-3">
-            <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-50 transition-colors">
-              <Filter size={14} /> Filter
+        <PageHeader
+          eyebrow="Audit Ledger"
+          title="Pending Disbursements"
+          subtitle="Review vouchers, verify supporting documents, and conduct audit actions."
+          actions={
+            <button className="inline-flex items-center gap-2 rounded-xl border border-border bg-white px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-secondary">
+              <Download className="h-4 w-4" />
+              Export Report
             </button>
-            <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-50 transition-colors">
-              <Download size={14} /> Export Report
-            </button>
-          </div>
-        </header>
+          }
+        />
 
-        {/* MAIN CONTENT AREA */}
-        <div className="flex-1 overflow-y-auto p-8 z-10">
-          <div className="max-w-7xl mx-auto space-y-6">
-            {/* SEARCH AND QUICK FILTERS */}
-            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-              <div className="w-full md:w-96 flex items-center bg-white border border-slate-200 rounded-xl px-4 py-2.5 focus-within:ring-2 ring-emerald-500/20 focus-within:border-emerald-500 transition-all shadow-sm">
-                <Search className="text-slate-400 mr-3" size={18} />
-                <input
-                  type="text"
-                  placeholder="Search DV Number or Payee..."
-                  className="bg-transparent border-none outline-none text-sm w-full font-medium text-slate-800 placeholder:text-slate-400"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-
-              <div className="flex items-center gap-2 text-sm">
-                <span className="text-slate-500 font-bold text-[10px] uppercase tracking-widest mr-2">
-                  Quick Views:
-                </span>
-                <button className="px-3 py-1.5 bg-primary text-white rounded-md text-xs font-bold">
-                  All Pending
-                </button>
-                <button className="px-3 py-1.5 bg-white border border-slate-200 text-rose-600 hover:bg-rose-50 rounded-md text-xs font-bold flex items-center gap-1">
-                  <AlertTriangle size={12} /> Flagged
-                </button>
-              </div>
-            </div>
-
-            {/* AUDIT TABLE CONTAINER (modern compact) */}
-            <section className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-slate-100">
-                  <thead className="bg-slate-50/80 border-b border-slate-200">
-                    <tr>
-                      <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 text-left">
-                        DV Reference
-                      </th>
-                      <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 text-left">
-                        Payee / Entity
-                      </th>
-                      <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500">
-                        Category
-                      </th>
-                      <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">
-                        Amount
-                      </th>
-                      <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 text-center">
-                        Docs Status
-                      </th>
-                      <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">
-                        Audit Action
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-slate-100">
-                    {pendingDisbursements.map((item) => (
-                      <tr
-                        key={item.id}
-                        className="hover:bg-slate-50 transition-colors duration-150"
-                      >
-                        <td className="px-4 py-4 align-middle">
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 bg-slate-100 rounded text-slate-500">
-                              <FileText size={16} />
-                            </div>
-                            <div>
-                              <p className="font-black text-slate-900 text-sm tracking-tight">
-                                {item.id}
-                              </p>
-                              <p className="text-[11px] text-slate-400 font-semibold">
-                                {item.dateSubmitted}
-                              </p>
-                            </div>
-                          </div>
-                        </td>
-
-                        <td className="px-4 py-4 align-middle">
-                          <p className="font-bold text-slate-800 text-sm">
-                            {item.payee}
-                          </p>
-                          <p className="text-[11px] text-slate-500 mt-0.5">
-                            {item.brgy}
-                          </p>
-                        </td>
-
-                        <td className="px-4 py-4 align-middle">
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest bg-slate-100 text-slate-600">
-                            {item.category}
-                          </span>
-                        </td>
-
-                        <td className="px-4 py-4 align-middle text-right">
-                          <span className="font-black text-slate-900 tracking-tight text-sm">
-                            {formatCurrency(item.amount)}
-                          </span>
-                        </td>
-
-                        <td className="px-4 py-4 align-middle text-center">
-                          {item.compliance === "Clean" && (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-black uppercase tracking-widest border border-emerald-200">
-                              <CheckCircle2 size={12} /> Clean
-                            </span>
-                          )}
-                          {item.compliance === "Flagged" && (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 text-[10px] font-black uppercase tracking-widest border border-rose-200">
-                              <XCircle size={12} /> Flagged
-                            </span>
-                          )}
-                          {item.compliance === "Pending Docs" && (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 text-[10px] font-black uppercase tracking-widest border border-amber-200">
-                              <AlertTriangle size={12} /> Incomplete
-                            </span>
-                          )}
-                        </td>
-
-                        <td className="px-4 py-4 align-middle text-right">
-                          <div className="flex items-center justify-end gap-3">
-                            <button
-                              className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors"
-                              title="Review Vouchers"
-                            >
-                              <Eye size={18} />
-                            </button>
-                            <button className="p-1.5 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-md transition-colors">
-                              <MoreHorizontal size={18} />
-                            </button>
-                            <button className="px-3 py-1.5 bg-primary hover:bg-primary/90 text-white rounded-md text-[10px] font-black uppercase tracking-widest transition-colors shadow-sm">
-                              Audit
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-
-                {pendingDisbursements.length === 0 && (
-                  <div className="p-12 text-center flex flex-col items-center justify-center border-t border-slate-100">
-                    <ShieldCheck size={40} className="text-slate-300 mb-3" />
-                    <p className="text-sm font-bold text-slate-500">
-                      No pending disbursements found.
-                    </p>
-                  </div>
-                )}
-              </div>
-            </section>
-          </div>
+        {/* STAT ROW */}
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+          <StatCard
+            label="Clean"
+            value={cleanCount}
+            icon={BadgeCheck}
+            variant="brand"
+            trend="Compliant vouchers"
+          />
+          <StatCard
+            label="Flagged"
+            value={flaggedCount}
+            icon={AlertTriangle}
+            trend="Require follow-up"
+          />
+          <StatCard
+            label="Incomplete Docs"
+            value={incompleteCount}
+            icon={FileClock}
+            trend="Pending documents"
+          />
         </div>
+
+        {/* QUICK FILTERS */}
+        <div className="flex flex-wrap items-center gap-2">
+          {(
+            [
+              ["all", "All Pending"],
+              ["clean", "Clean"],
+              ["flagged", "Flagged"],
+              ["pending docs", "Incomplete"],
+            ] as const
+          ).map(([key, label]) => (
+            <button
+              key={key}
+              onClick={() => setStatusFilter(key)}
+              className={`rounded-xl px-4 py-2 text-xs font-bold uppercase tracking-widest transition ${
+                statusFilter === key
+                  ? "bg-primary text-white shadow-sm"
+                  : "border border-border bg-white text-secondary-foreground hover:bg-secondary"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* AUDIT TABLE */}
+        <Card>
+          <CardHeader
+            eyebrow="Voucher Review"
+            title="Disbursement Ledger"
+            subtitle="Latest pending disbursements awaiting audit"
+          />
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-border text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
+                  <th className="px-4 py-3">DV Reference</th>
+                  <th className="px-4 py-3">Payee / Entity</th>
+                  <th className="px-4 py-3">Category</th>
+                  <th className="px-4 py-3 text-right">Amount</th>
+                  <th className="px-4 py-3 text-center">Docs Status</th>
+                  <th className="px-4 py-3 text-right">Audit Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {filtered.map((item) => (
+                  <tr
+                    key={item.id}
+                    className="transition-colors hover:bg-secondary/50"
+                  >
+                    <td className="px-4 py-4 align-middle">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border bg-secondary text-secondary-foreground">
+                          <FileText className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold tracking-tight text-primary-foreground">
+                            {item.id}
+                          </p>
+                          <p className="text-[11px] font-semibold text-secondary-foreground">
+                            {item.dateSubmitted}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+
+                    <td className="px-4 py-4 align-middle">
+                      <p className="text-sm font-bold text-primary-foreground">
+                        {item.payee}
+                      </p>
+                      <p className="mt-0.5 text-[11px] text-secondary-foreground">
+                        {item.brgy}
+                      </p>
+                    </td>
+
+                    <td className="px-4 py-4 align-middle">
+                      <span className="inline-flex rounded-lg border border-border bg-secondary/60 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
+                        {item.category}
+                      </span>
+                    </td>
+
+                    <td className="px-4 py-4 align-middle text-right">
+                      <span className="text-sm font-bold tracking-tight text-primary-foreground tabular-nums">
+                        {formatCurrency(item.amount)}
+                      </span>
+                    </td>
+
+                    <td className="px-4 py-4 align-middle text-center">
+                      <StatusBadge status={item.compliance} />
+                    </td>
+
+                    <td className="px-4 py-4 align-middle text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          className="rounded-xl p-2 text-secondary-foreground transition hover:bg-success/10 hover:text-success"
+                          title="Review Vouchers"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
+                        <button className="rounded-xl p-2 text-secondary-foreground transition hover:bg-secondary">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </button>
+                        <button className="rounded-xl bg-primary px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-white shadow-sm transition hover:bg-primary/90">
+                          Audit
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {filtered.length === 0 && (
+              <div className="flex flex-col items-center justify-center border-t border-border p-12 text-center">
+                <ShieldCheck className="mb-3 h-10 w-10 text-secondary-foreground/30" />
+                <p className="text-sm font-bold text-secondary-foreground">
+                  No disbursements match your filters.
+                </p>
+              </div>
+            )}
+          </div>
+        </Card>
       </main>
     </div>
   );

@@ -85,8 +85,8 @@ export const projectsData: Project[] = [
 ];
 
 export const chartColors = [
-  "#003366",
-  "#FFCC00",
+  "#0138A8",
+  "#FBD219",
   "#10B981",
   "#3B82F6",
   "#F59E0B",

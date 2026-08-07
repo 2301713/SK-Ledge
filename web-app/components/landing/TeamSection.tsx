@@ -35,7 +35,10 @@ const TEAM = [
 
 export default function TeamSection() {
   return (
-    <section id="team" className="py-16 bg-white px-6 animate-fadein">
+    <section
+      id="team"
+      className="py-16 bg-white px-6 animate-fadein scroll-mt-24"
+    >
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-10 pb-8 border-b border-slate-100">
@@ -56,31 +59,31 @@ export default function TeamSection() {
         </div>
 
         {/* Team grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {TEAM.map((member, idx) => (
             <div
               key={idx}
-              className="group flex items-center gap-3 p-4 rounded-lg border border-slate-100 hover:border-slate-200 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 cursor-pointer bg-white"
+              className="group flex flex-col items-center p-6 rounded-3xl border border-slate-100 bg-white text-center hover:border-primary/30 hover:ring-2 hover:ring-primary/10 hover:shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_32px_-16px_rgba(15,23,42,0.14)] hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
             >
               {/* Avatar */}
-              <div className="w-14 h-14 shrink-0 rounded-lg overflow-hidden border border-slate-100">
+              <div className="w-16 h-16 shrink-0 rounded-2xl overflow-hidden border border-slate-100 mb-4 ring-4 ring-slate-50">
                 <Image
                   src={member.image}
                   alt={`${member.name} Profile`}
                   className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500 scale-105 group-hover:scale-100"
-                  width={56}
-                  height={56}
+                  width={64}
+                  height={64}
                 />
               </div>
 
               {/* Text */}
               <div className="min-w-0">
-                <h3 className="text-sm font-bold text-slate-900 leading-tight truncate">
+                <h3 className="text-sm font-bold text-slate-900 leading-tight">
                   {member.name}
                 </h3>
-                <p className="text-xs text-slate-400 mt-1 leading-snug line-clamp-2">
+                <span className="mt-2 inline-block rounded-full bg-primary/5 border border-primary/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-primary">
                   {member.role}
-                </p>
+                </span>
               </div>
             </div>
           ))}

@@ -3,37 +3,24 @@
 import LogoLoader from "@/components/LogoLoader";
 import { useEffect, useRef } from "react";
 import SideBar from "@/components/dashboard/SideBar";
+import TopBar from "@/components/dashboard/ui/TopBar";
+import PageHeader from "@/components/dashboard/ui/PageHeader";
+import StatCard from "@/components/dashboard/ui/StatCard";
+import AccountsBarChart from "@/components/dashboard/ui/AccountsBarChart";
+import { Card, CardHeader } from "@/components/dashboard/ui/Card";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/useAuthStore";
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-} from "chart.js";
-import { Bar } from "react-chartjs-2";
-import {
-  Calendar,
-  Activity,
-  TrendingUp,
   CheckSquare,
   FileText,
+  TrendingUp,
   AlertCircle,
+  Wallet,
+  BadgeCheck,
+  PiggyBank,
   CircleAlert,
 } from "lucide-react";
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-);
 
 export default function COADashboard() {
   const { currentUser, isLoading, setCurrentUser, setIsLoading } =
@@ -44,6 +31,8 @@ export default function COADashboard() {
   // For the overview chart/KPIs
   const pendingApprovalCount = 3;
   const pendingDisbursementCount = 2;
+  const totalRequestsYTD = 1204;
+  const urgentFlags = 5;
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -118,62 +107,26 @@ export default function COADashboard() {
     }
   }, [currentUser, setCurrentUser, setIsLoading, router]);
 
-  const chartData = {
-    labels: ["Approvals", "Disbursements"],
-    datasets: [
-      {
-        label: "Pending Volume",
-        data: [pendingApprovalCount, pendingDisbursementCount],
-        backgroundColor: ["#003366", "#D4AF37"],
-        borderRadius: 8,
-        barThickness: 48,
-        borderSkipped: false,
-      },
-    ],
-  };
+  const today = new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        backgroundColor: "#003366",
-        padding: 16,
-        titleFont: { size: 14, weight: "bold" as const },
-        bodyFont: { size: 13 },
-        cornerRadius: 12,
-        displayColors: false,
-      },
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        ticks: {
-          stepSize: 1,
-          color: "#94a3b8",
-          font: { size: 12, weight: "bold" as const },
-        },
-        grid: { color: "#f1f5f9", drawTicks: false },
-        border: { display: false },
-      },
-      x: {
-        ticks: {
-          color: "#64748b",
-          font: { size: 12, weight: "bold" as const },
-        },
-        grid: { display: false },
-        border: { display: false },
-      },
-    },
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("en-PH", {
+      style: "currency",
+      currency: "PHP",
+    }).format(amount);
   };
 
   if (isLoading) return <LogoLoader />;
 
   if (!currentUser) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
-        <div className="max-w-md w-full bg-white rounded-4xl shadow-xl border border-slate-200 p-10 text-center">
+      <div className="min-h-screen flex items-center justify-center bg-background p-6">
+        <div className="max-w-md w-full bg-white rounded-4xl shadow-xl border border-border p-10 text-center">
           <div className="h-16 w-16 bg-danger/10 text-danger rounded-2xl flex items-center justify-center mx-auto mb-6">
             <span className="text-2xl">
               <CircleAlert />
@@ -182,7 +135,7 @@ export default function COADashboard() {
           <h2 className="text-2xl font-black text-primary mb-3 tracking-tight">
             Access Restricted
           </h2>
-          <p className="text-sm text-slate-500 mb-8 leading-relaxed">
+          <p className="text-sm text-secondary-foreground mb-8 leading-relaxed">
             You do not have the required credentials to view the COA Dashboard.
           </p>
           <button
@@ -197,186 +150,137 @@ export default function COADashboard() {
   }
 
   return (
-    <div className="flex min-h-screen bg-[#f8fafc] selection:bg-tertiary selection:text-primary">
+    <div className="flex min-h-screen gap-4 bg-background p-4 selection:bg-tertiary selection:text-primary">
       <SideBar
         userName={currentUser.full_name}
         roleType={currentUser.role_type}
         barangay={currentUser.barangay}
       />
 
-      <main className="flex-1 flex flex-col h-screen overflow-y-auto relative">
-        {/* TOP NAVBAR */}
-        <header className="h-24 px-10 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-3 text-sm font-bold text-slate-500 uppercase tracking-widest">
-            <Calendar className="w-4 h-4 text-tertiary" />
-            {new Date().toLocaleDateString("en-US", {
-              weekday: "long",
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}
-          </div>
-          <div className="flex items-center gap-4">
-            <button className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-primary hover:border-primary/30 transition-all shadow-sm">
-              <Activity className="w-4 h-4" />
-            </button>
-          </div>
-        </header>
+      <main className="min-w-0 flex-1 space-y-6 py-2 animate-fadein">
+        <TopBar
+          userName={currentUser.full_name}
+          userEmail={currentUser.email}
+          hideSearch
+        />
 
-        <div className="px-10 pb-12 space-y-8 max-w-350 mx-auto w-full">
-          {/* WELCOME BANNER (Compact) */}
-          <section className="bg-slate-900 rounded-2xl p-6 md:p-8 relative overflow-hidden text-white shadow-md shadow-slate-900/10 border border-slate-800">
-            {/* Decorative accents (smaller) */}
-            <div className="absolute top-0 right-0 w-full h-full overflow-hidden pointer-events-none z-0">
-              <div className="absolute -top-20 -right-12 w-28 h-28 bg-tertiary/20 rounded-full blur-3xl"></div>
-              <div className="absolute -bottom-20 right-12 w-20 h-20 bg-primary/30 rounded-full blur-3xl"></div>
-            </div>
+        <PageHeader
+          eyebrow="Commission on Audit"
+          title="Audit Overview"
+          subtitle={`${today} · ${pendingApprovalCount} pending approvals and ${pendingDisbursementCount} pending disbursements across municipal jurisdictions.`}
+          actions={
+            <>
+              <button className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white shadow-[0_6px_16px_-6px_rgba(1,56,168,0.5)] transition hover:bg-primary/90">
+                <CheckSquare className="h-4 w-4" />
+                Review Approvals
+              </button>
+              <button className="inline-flex items-center gap-2 rounded-xl border border-border bg-white px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-secondary">
+                <FileText className="h-4 w-4" />
+                Review Disbursements
+              </button>
+            </>
+          }
+        />
 
-            <div className="relative z-10 w-full lg:w-4/5">
-              <p className="text-tertiary font-semibold uppercase tracking-wider text-[11px] mb-2 flex items-center gap-2">
-                <AlertCircle className="w-4 h-4" /> Action Required
-              </p>
-              <h2 className="text-2xl md:text-3xl font-extrabold mb-2 leading-snug">
-                Commission on Audit Overview
-              </h2>
-              <p className="text-white/70 text-sm leading-snug max-w-2xl">
-                There are{" "}
-                <strong className="text-white">
-                  {pendingApprovalCount} pending approvals
-                </strong>{" "}
-                and{" "}
-                <strong className="text-white">
-                  {pendingDisbursementCount} pending disbursements
-                </strong>{" "}
-                across municipal jurisdictions.
-              </p>
+        {/* STAT ROW */}
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+          <StatCard
+            label="Pending Approvals"
+            value={pendingApprovalCount}
+            icon={CheckSquare}
+            variant="brand"
+            trend="Across municipal jurisdictions"
+            trendIcon={TrendingUp}
+          />
+          <StatCard
+            label="Pending Disbursements"
+            value={pendingDisbursementCount}
+            icon={FileText}
+            trend="Awaiting audit review"
+          />
+          <StatCard
+            label="Total Requests YTD"
+            value={totalRequestsYTD.toLocaleString()}
+            icon={TrendingUp}
+            trend="Last sync: 2h ago"
+          />
+          <StatCard
+            label="Urgent Flags"
+            value={urgentFlags}
+            icon={AlertCircle}
+            trend="Require immediate follow-up"
+          />
+        </div>
 
-              <div className="mt-6 flex flex-wrap gap-3">
-                <button className="bg-tertiary text-primary px-4 py-2 rounded-xl text-xs font-bold hover:bg-white hover:shadow transition-all active:scale-95 flex items-center gap-2">
-                  <CheckSquare className="w-4 h-4" />
-                  Review Approvals
-                </button>
-                <button className="bg-white/10 backdrop-blur-md border border-white/20 text-white px-4 py-2 rounded-xl text-xs font-semibold hover:bg-white/15 transition-all active:scale-95 flex items-center gap-2">
-                  <FileText className="w-4 h-4" />
-                  Review Disbursements
-                </button>
-              </div>
-            </div>
-          </section>
-
-          {/* ASYMMETRICAL CHART & METRICS (Compact) */}
-          <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {/* MAIN CHART CARD (compact) */}
-            <div className="lg:col-span-2 bg-white rounded-2xl p-4 md:p-6 border border-slate-200 shadow-sm flex flex-col">
-              <div className="flex justify-between items-center mb-4">
-                <div>
-                  <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">
-                    Volume Analysis
-                  </h3>
-                  <p className="text-lg md:text-xl font-extrabold text-primary tracking-tight">
-                    Pending Requests
-                  </p>
-                </div>
-                <div className="px-3 py-1 bg-slate-50 border border-slate-100 rounded-lg text-[11px] font-semibold text-slate-500">
+        {/* CHART + FINANCIAL SUMMARY */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <Card className="lg:col-span-2">
+            <CardHeader
+              eyebrow="Volume Analysis"
+              title="Pending Request Volume"
+              subtitle="Approvals vs disbursements awaiting action"
+              action={
+                <span className="rounded-lg border border-border bg-secondary/60 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
                   Last 7d
-                </div>
-              </div>
+                </span>
+              }
+            />
+            <AccountsBarChart
+              data={[
+                { label: "Approvals", value: pendingApprovalCount },
+                { label: "Disbursements", value: pendingDisbursementCount },
+              ]}
+              highlightIndex={0}
+              unit="pending"
+            />
+          </Card>
 
-              <div className="relative flex-1 min-h-40 w-full">
-                <Bar data={chartData} options={chartOptions} />
-              </div>
-            </div>
-
-            {/* SYSTEM STATS STACK (compact) */}
-            <div className="flex flex-col gap-3">
-              <div className="grid grid-cols-1 gap-3 w-full">
-                <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-sm flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-tertiary/20 flex items-center justify-center text-tertiary">
-                    <TrendingUp className="w-4 h-4" />
+          <div className="space-y-6">
+            <Card>
+              <CardHeader eyebrow="Financial" title="Budget Overview" />
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 rounded-2xl border border-border bg-secondary/40 p-4">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-tertiary/20 text-tertiary">
+                    <Wallet className="h-5 w-5" />
                   </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-extrabold text-primary">1,204</p>
-                    <p className="text-[10px] text-slate-400 uppercase tracking-widest">
-                      Total Requests YTD
+                  <div>
+                    <p className="text-lg font-bold tracking-tight text-primary-foreground">
+                      {formatCurrency(120000)}
+                    </p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
+                      Total Budget
                     </p>
                   </div>
                 </div>
-
-                <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-sm flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-success/10 flex items-center justify-center text-success">
-                    <Activity className="w-4 h-4" />
+                <div className="flex items-center gap-3 rounded-2xl border border-border bg-secondary/40 p-4">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-success/10 text-success">
+                    <BadgeCheck className="h-5 w-5" />
                   </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-extrabold text-primary">
-                      Operational
+                  <div>
+                    <p className="text-lg font-bold tracking-tight text-primary-foreground">
+                      {formatCurrency(45000)}
                     </p>
-                    <p className="text-[10px] text-slate-400 uppercase tracking-widest">
-                      Last Sync: 2h ago
-                    </p>
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-sm flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                    <FileText className="w-4 h-4" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-extrabold text-primary">5</p>
-                    <p className="text-[10px] text-slate-400 uppercase tracking-widest">
-                      Urgent Flags
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
+                      Approved
                     </p>
                   </div>
                 </div>
-              </div>
-
-              {/* Compact financial tiles (styled like other stat cards) */}
-              <div>
-                <div className="flex flex-col gap-2">
-                  <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-sm flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-tertiary/20 flex items-center justify-center text-tertiary">
-                      <TrendingUp className="w-4 h-4" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-extrabold text-primary">
-                        ₱120,000
-                      </p>
-                      <p className="text-[10px] text-slate-400 uppercase tracking-widest">
-                        Total Budget
-                      </p>
-                    </div>
+                <div className="flex items-center gap-3 rounded-2xl border border-border bg-secondary/40 p-4">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <PiggyBank className="h-5 w-5" />
                   </div>
-
-                  <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-sm flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-success/10 flex items-center justify-center text-success">
-                      <Activity className="w-4 h-4" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-extrabold text-primary">
-                        ₱45,000
-                      </p>
-                      <p className="text-[10px] text-slate-400 uppercase tracking-widest">
-                        Approved
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-sm flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                      <FileText className="w-4 h-4" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-extrabold text-primary">
-                        ₱75,000
-                      </p>
-                      <p className="text-[10px] text-slate-400 uppercase tracking-widest">
-                        Remaining
-                      </p>
-                    </div>
+                  <div>
+                    <p className="text-lg font-bold tracking-tight text-primary-foreground">
+                      {formatCurrency(75000)}
+                    </p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
+                      Remaining
+                    </p>
                   </div>
                 </div>
               </div>
-            </div>
-          </section>
+            </Card>
+          </div>
         </div>
       </main>
     </div>

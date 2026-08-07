@@ -2,7 +2,10 @@ import { Target, Sparkles, XCircle, CheckCircle2 } from "lucide-react";
 
 export default function AboutSection() {
   return (
-    <section id="about" className="py-16 bg-white px-6 animate-fadein">
+    <section
+      id="about"
+      className="py-16 bg-white px-6 animate-fadein scroll-mt-24"
+    >
       <div className="max-w-6xl mx-auto">
         {/* Top: Compact editorial statement */}
         <div className="mb-12 pb-10 border-b border-slate-100">
@@ -11,9 +14,9 @@ export default function AboutSection() {
           </p>
           <h2 className="text-3xl md:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight max-w-4xl">
             Governance{" "}
-            <span className="italic font-extrabold text-slate-300">{`shouldn't`}</span>{" "}
+            <span className="italic font-extrabold text-slate-500">{`shouldn't`}</span>{" "}
             rely on{" "}
-            <span className="line-through decoration-tertiary decoration-[6px] text-slate-200">
+            <span className="line-through decoration-tertiary decoration-[6px] text-slate-500">
               paper trails.
             </span>
           </h2>
@@ -39,24 +42,27 @@ export default function AboutSection() {
             </div>
 
             {/* Mission & Vision */}
-            <div className="grid sm:grid-cols-2 gap-3 pt-2">
-              <div className="p-4 rounded-lg bg-slate-950 text-white">
-                <div className="w-7 h-7 rounded-lg bg-tertiary/20 text-tertiary flex items-center justify-center mb-2">
-                  <Target className="w-3.5 h-3.5" />
+            <div className="grid sm:grid-cols-2 gap-4 pt-2">
+              {/* Mission — brand anchor card */}
+              <div className="p-6 rounded-3xl bg-primary text-white shadow-[0_8px_28px_-10px_rgba(1,56,168,0.45)]">
+                <div className="w-9 h-9 rounded-xl bg-white/15 text-tertiary flex items-center justify-center mb-3">
+                  <Target className="w-4 h-4" />
                 </div>
-                <h4 className="font-bold text-white mb-1 text-xs">
+                <h4 className="font-bold text-white mb-1.5 text-sm">
                   Our Mission
                 </h4>
-                <p className="text-xs text-slate-400 leading-relaxed">
+                <p className="text-xs text-white/75 leading-relaxed">
                   Centralize and secure SK financial records, eliminating lost
                   data and manual accounting errors.
                 </p>
               </div>
-              <div className="p-4 rounded-lg border border-slate-200 bg-slate-50">
-                <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center mb-2">
-                  <Sparkles className="w-3.5 h-3.5" />
+
+              {/* Vision — light card */}
+              <div className="p-6 rounded-3xl border border-slate-200 bg-slate-50 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(15,23,42,0.10)]">
+                <div className="w-9 h-9 rounded-xl bg-tertiary/20 text-primary flex items-center justify-center mb-3">
+                  <Sparkles className="w-4 h-4" />
                 </div>
-                <h4 className="font-bold text-slate-900 mb-1 text-xs">
+                <h4 className="font-bold text-slate-900 mb-1.5 text-sm">
                   Our Vision
                 </h4>
                 <p className="text-xs text-slate-500 leading-relaxed">
@@ -68,15 +74,15 @@ export default function AboutSection() {
           </div>
 
           {/* RIGHT: Before / After comparison */}
-          <div className="space-y-2">
+          <div className="space-y-4">
             <p className="text-xs font-bold text-slate-400 uppercase tracking-[0.15em] mb-4">
               The Difference
             </p>
 
             {/* Old Way */}
-            <div className="p-4 rounded-lg border border-slate-200">
+            <div className="p-5 rounded-3xl border border-slate-200 bg-white">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-6 h-6 rounded-md bg-red-50 flex items-center justify-center">
+                <div className="w-7 h-7 rounded-xl bg-red-50 flex items-center justify-center">
                   <XCircle className="w-3.5 h-3.5 text-red-400" />
                 </div>
                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">
@@ -102,7 +108,7 @@ export default function AboutSection() {
             </div>
 
             {/* SK-Ledge Way */}
-            <div className="p-4 rounded-lg bg-slate-950 border border-white/10 relative overflow-hidden">
+            <div className="p-5 rounded-3xl bg-slate-950 border border-white/10 relative overflow-hidden">
               <div className="absolute -top-2 -right-2">
                 <span className="relative flex h-4 w-4">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary/80 opacity-75" />
@@ -110,7 +116,7 @@ export default function AboutSection() {
                 </span>
               </div>
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-6 h-6 rounded-md bg-tertiary/20 flex items-center justify-center">
+                <div className="w-7 h-7 rounded-xl bg-tertiary/20 flex items-center justify-center">
                   <CheckCircle2 className="w-3.5 h-3.5 text-tertiary" />
                 </div>
                 <span className="text-xs font-bold text-white uppercase tracking-wide">
