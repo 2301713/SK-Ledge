@@ -46,30 +46,30 @@ export default function ProjectsPage() {
     budget?: string;
   }>({});
 
-  // FETCH ALLOCATIONS FROM SUPABASE
-  const fetchAllocations = async () => {
+  // FETCH PROJECTS FROM SUPABASE
+  const fetchProjects = async () => {
     try {
       const { data, error } = await supabase
-        .from("allocations")
+        .from("projects")
         .select("*")
         .order("created_at", { ascending: false });
 
       if (error) {
-        console.error("Error fetching allocations:", error);
+        console.error("Error fetching projects:", error);
         return;
       }
 
       if (data) {
-        // Map Supabase allocation fields to UI Project type
+        // Map Supabase project fields to UI Project type
         const mappedProjects: Project[] = data.map((item) => ({
           id: String(item.id),
-          name: item.purpose || "Unnamed Allocation",
+          name: item.name || "Unnamed Project",
           category: item.category || "General Fund",
           status: (item.status as ProjectStatus) || "Pending",
-          budget: Number(item.amount) || 0,
-          proposedBy: item.barangay || "SK Official",
-          dateProposed: item.created_at
-            ? new Date(item.created_at).toLocaleDateString("en-US", {
+          budget: Number(item.budget) || 0,
+          proposedBy: item.proposedBy || "SK Official",
+          dateProposed: item.dateProposed
+            ? new Date(item.dateProposed).toLocaleDateString("en-US", {
                 month: "short",
                 day: "numeric",
                 year: "numeric",
@@ -115,8 +115,8 @@ export default function ProjectsPage() {
           });
         }
 
-        // Fetch records from allocations
-        await fetchAllocations();
+        // Fetch records from projects
+        await fetchProjects();
       } catch (error) {
         console.error("Error fetching user session:", error);
       } finally {
@@ -157,15 +157,16 @@ export default function ProjectsPage() {
     setIsSubmitting(true);
 
     try {
-      // Save to Supabase 'allocations' table
-      const { error } = await supabase.from("allocations").insert([
+      // Save to Supabase 'projects' table
+      const { error } = await supabase.from("projects").insert([
         {
           user_id: currentUser?.id,
-          barangay: currentUser?.barangay,
-          amount: budgetNum,
-          purpose: formName.trim(),
+          name: formName.trim(),
           category: formCategory,
           status: "Pending",
+          budget: budgetNum,
+          proposedBy: currentUser?.full_name,
+          dateProposed: new Date().toISOString(),
         },
       ]);
 
@@ -176,7 +177,7 @@ export default function ProjectsPage() {
       }
 
       // Refresh UI data
-      await fetchAllocations();
+      await fetchProjects();
 
       setFormName("");
       setFormCategory("");

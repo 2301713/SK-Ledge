@@ -56,7 +56,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { amount, purpose, barangay, official_address, blockchain_tx_hash } =
+    const { amount, purpose, barangay, official_address, blockchain_tx_hash, contract_address } =
       body;
 
     if (
@@ -80,6 +80,7 @@ export async function POST(request: Request) {
         barangay,
         official_address,
         blockchain_tx_hash,
+        contract_address,
       },
     ]);
 

@@ -14,6 +14,7 @@ export async function POST(request: Request) {
       type, 
       user_id, 
       blockchain_tx_hash, 
+      contract_address,
       official_address, 
       barangay, 
       amount, 
@@ -35,6 +36,7 @@ export async function POST(request: Request) {
         {
           user_id,
           blockchain_tx_hash,
+          contract_address,
           official_address,
           barangay,
           amount,

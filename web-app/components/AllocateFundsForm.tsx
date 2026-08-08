@@ -110,6 +110,7 @@ export default function AllocateFundsForm() {
           type: "allocation",
           user_id: currentUser?.id || "",
           blockchain_tx_hash: hash,
+          contract_address: CONTRACT_ADDRESS,
           official_address: address || "",
           barangay: barangay || "General",
           amount: Number(amountPhp),

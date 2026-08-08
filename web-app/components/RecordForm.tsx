@@ -61,6 +61,7 @@ export function RecordForm() {
           type: recordType.toLowerCase(),
           user_id: currentUser?.id || "",
           blockchain_tx_hash: hash,
+          contract_address: CONTRACT_ADDRESS,
           official_address: address || "",
           barangay,
           amount: Number(amount),

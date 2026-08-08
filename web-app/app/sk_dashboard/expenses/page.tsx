@@ -286,6 +286,7 @@ export default function ExpensesPage() {
           type: "expense",
           user_id: currentUser?.id || "",
           blockchain_tx_hash: hash,
+          contract_address: CONTRACT_ADDRESS,
           official_address: address || "",
           barangay: data.barangay,
           amount: data.amount,
