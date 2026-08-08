@@ -5,8 +5,7 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/lib/useAuthStore";
-import { useToast } from "@/lib/useToast";
-import {
+import { useToast } from "@/lib/useToast";import {
   LayoutDashboard,
   FolderKanban,
   UploadCloud,
@@ -29,6 +28,7 @@ interface SidebarProps {
   userName: string;
   roleType: string;
   barangay?: string;
+  avatarUrl?: string;
 }
 
 const ROLE_LINKS: Record<
@@ -214,11 +214,14 @@ export default function Sidebar({
   userName,
   roleType,
   barangay,
+  avatarUrl,
 }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const toast = useToast();
-  const { clearSession } = useAuthStore();
+  const { clearSession, currentUser } = useAuthStore();
+
+  const resolvedAvatarUrl = avatarUrl || currentUser?.avatar_url;
 
   const navLinks = ROLE_LINKS[roleType] || [];
 
@@ -305,8 +308,18 @@ export default function Sidebar({
         <SectionLabel>General</SectionLabel>
         <div className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-secondary/40 p-3">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-white">
-              {userName.charAt(0).toUpperCase()}
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary text-sm font-bold text-white">
+              {resolvedAvatarUrl ? (
+                <Image
+                  src={resolvedAvatarUrl}
+                  alt={userName}
+                  width={40}
+                  height={40}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                userName.charAt(0).toUpperCase()
+              )}
             </div>
             <div className="min-w-0">
               <p

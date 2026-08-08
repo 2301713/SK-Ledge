@@ -11,28 +11,43 @@ import OnChainVerifier from "../../components/public_portal/OnChainVerifier";
 import PortalFooter from "../../components/public_portal/PortalFooter";
 import { Project } from "../../components/public_portal/ProjectRegistry";
 
+type Disbursement = {
+  amount: number;
+  created_at?: string;
+};
+
 export default function PublicDashboard() {
   const [projects, setProjects] = useState<Project[]>([]);
+  const [disbursements, setDisbursements] = useState<Disbursement[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    async function fetchProjects() {
-
+    async function fetchPortalData() {
       try {
-        const { data, error } = await supabase
-          .from("projects")
-          .select("*");
+        const [projectsRes, allocationsRes, expensesRes] = await Promise.all([
+          supabase.from("projects").select("*"),
+          supabase.from("allocations").select("amount, created_at"),
+          supabase.from("expenses").select("amount, created_at"),
+        ]);
 
-        if (error) {
-        } else if (data) {
-          setProjects(data);
+        if (!projectsRes.error && projectsRes.data) {
+          setProjects(projectsRes.data);
         }
+
+        const merged: Disbursement[] = [];
+        if (!allocationsRes.error && allocationsRes.data) {
+          merged.push(...allocationsRes.data);
+        }
+        if (!expensesRes.error && expensesRes.data) {
+          merged.push(...expensesRes.data);
+        }
+        setDisbursements(merged);
       } catch (err) {
         console.error("❌ Network/Fetch Error:", err);
       }
     }
 
-    fetchProjects();
+    fetchPortalData();
   }, []);
 
   const filteredProjects = useMemo(() => {
@@ -55,8 +70,8 @@ export default function PublicDashboard() {
       <PortalNav />
       <main>
         <PortalHero />
-        <MetricsRow />
-        <AnalyticsSection />
+        <MetricsRow projects={projects} />
+        <AnalyticsSection projects={projects} disbursements={disbursements} />
         <OnChainVerifier />
         <ProjectRegistry
           searchQuery={searchQuery}

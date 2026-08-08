@@ -127,6 +127,7 @@ export default function CompleteProfilePage() {
           role_type: formData.role_type,
           barangay: isSKRole ? formData.barangay : "N/A",
           approval_status: "pending",
+          avatar_url: user.user_metadata?.avatar_url || null,
         },
       ]);
 
@@ -140,6 +141,7 @@ export default function CompleteProfilePage() {
               role_type: formData.role_type,
               barangay: isSKRole ? formData.barangay : "N/A",
               approval_status: "pending",
+              avatar_url: user.user_metadata?.avatar_url || null,
             })
             .eq("id", user.id);
 

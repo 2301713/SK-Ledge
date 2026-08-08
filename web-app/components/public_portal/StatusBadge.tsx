@@ -6,6 +6,7 @@ export default function StatusBadge({ status }: { status: StatusType }) {
     Completed: "bg-success/10 text-success border-success/20",
     Pending: "bg-pending/10 text-pending border-pending/20",
     Approved: "bg-primary/10 text-primary border-primary/20",
+    Rejected: "bg-danger/10 text-danger border-danger/20",
   };
 
   const labels: Record<StatusType, string> = {
@@ -13,6 +14,7 @@ export default function StatusBadge({ status }: { status: StatusType }) {
     Completed: "Completed",
     Pending: "Pending",
     Approved: "Approved",
+    Rejected: "Rejected",
   };
 
   return (

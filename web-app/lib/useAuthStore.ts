@@ -10,6 +10,7 @@ export interface UserAccount {
   barangay: string;
   email?: string;
   approval_status?: string;
+  avatar_url?: string;
 }
 
 interface AuthState {

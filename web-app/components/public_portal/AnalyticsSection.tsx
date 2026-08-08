@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import {
   Chart as ChartJS,
   ArcElement,
@@ -11,7 +12,6 @@ import {
   Title,
 } from "chart.js";
 import { Pie, Bar } from "react-chartjs-2";
-import { chartColors } from "../../app/public_portal/data";
 
 ChartJS.register(
   ArcElement,
@@ -23,7 +23,77 @@ ChartJS.register(
   Title,
 );
 
-export default function AnalyticsSection() {
+const chartColors = [
+  "#0138A8",
+  "#FBD219",
+  "#10B981",
+  "#3B82F6",
+  "#F59E0B",
+  "#6366F1",
+  "#EC4899",
+];
+
+type Project = {
+  category?: string;
+  budget?: number | string;
+  amount?: number | string;
+};
+
+type Disbursement = {
+  amount: number;
+  created_at?: string;
+};
+
+const toNumber = (value: number | string | undefined): number => {
+  if (typeof value === "number") return value;
+  if (typeof value === "string") {
+    const num = parseFloat(value.replace(/[₱,\s]/g, ""));
+    return isNaN(num) ? 0 : num;
+  }
+  return 0;
+};
+
+export default function AnalyticsSection({
+  projects,
+  disbursements,
+}: {
+  projects: Project[];
+  disbursements: Disbursement[];
+}) {
+  const categoryData = useMemo(() => {
+    const totals = new Map<string, number>();
+    for (const p of projects) {
+      const cat = p.category || "General";
+      totals.set(cat, (totals.get(cat) || 0) + toNumber(p.budget ?? p.amount));
+    }
+    const sorted = [...totals.entries()].sort((a, b) => b[1] - a[1]);
+    return {
+      labels: sorted.map(([label]) => label),
+      data: sorted.map(([, value]) => value),
+    };
+  }, [projects]);
+
+  const quarterData = useMemo(() => {
+    const totals = new Map<string, number>();
+    for (const d of disbursements) {
+      const date = d.created_at ? new Date(d.created_at) : null;
+      if (!date || isNaN(date.getTime())) continue;
+      const quarter = `Q${Math.floor(date.getMonth() / 3) + 1} ${date.getFullYear()}`;
+      totals.set(quarter, (totals.get(quarter) || 0) + toNumber(d.amount));
+    }
+    const sorted = [...totals.entries()].sort((a, b) => {
+      const [qa, ya] = a[0].split(" ");
+      const [qb, yb] = b[0].split(" ");
+      return (
+        Number(ya) - Number(yb) || Number(qa.slice(1)) - Number(qb.slice(1))
+      );
+    });
+    return {
+      labels: sorted.map(([label]) => label),
+      data: sorted.map(([, value]) => value),
+    };
+  }, [disbursements]);
+
   return (
     <section className="px-4 sm:px-6 mb-8">
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -40,18 +110,10 @@ export default function AnalyticsSection() {
           <div className="h-64">
             <Pie
               data={{
-                labels: [
-                  "Youth Dev",
-                  "Sports",
-                  "Health",
-                  "Livelihood",
-                  "Env",
-                  "Peace",
-                  "Arts",
-                ],
+                labels: categoryData.labels,
                 datasets: [
                   {
-                    data: [1, 2, 2, 1, 1, 1, 1],
+                    data: categoryData.data,
                     backgroundColor: chartColors,
                     borderWidth: 0,
                   },
@@ -88,11 +150,11 @@ export default function AnalyticsSection() {
           <div className="h-64">
             <Bar
               data={{
-                labels: ["Q1 2023", "Q2 2023", "Q3 2023", "Q4 2023", "Q1 2024"],
+                labels: quarterData.labels,
                 datasets: [
                   {
                     label: "Disbursed (₱)",
-                    data: [320000, 480000, 610000, 890000, 600000],
+                    data: quarterData.data,
                     backgroundColor: "#0138A8",
                     hoverBackgroundColor: "#FBD219",
                     borderRadius: 8,

@@ -1,8 +1,11 @@
+import Image from "next/image";
 import { Bell, Command, Mail, Search } from "lucide-react";
+import { useAuthStore } from "@/lib/useAuthStore";
 
 interface TopBarProps {
   userName: string;
   userEmail?: string;
+  avatarUrl?: string;
   searchValue?: string;
   onSearchChange?: (value: string) => void;
   hideSearch?: boolean;
@@ -12,12 +15,15 @@ interface TopBarProps {
 export default function TopBar({
   userName,
   userEmail,
+  avatarUrl,
   searchValue,
   onSearchChange,
   hideSearch = false,
   className = "",
 }: TopBarProps) {
+  const { currentUser } = useAuthStore();
   const hasSearch = typeof onSearchChange === "function";
+  const resolvedAvatarUrl = avatarUrl || currentUser?.avatar_url;
 
   return (
     <div className={`flex items-center gap-4 ${className}`}>
@@ -54,8 +60,18 @@ export default function TopBar({
         </button>
 
         <div className="flex items-center gap-3 border-l border-border pl-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-sm font-bold text-white">
-            {userName.charAt(0).toUpperCase()}
+          <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-primary text-sm font-bold text-white">
+            {resolvedAvatarUrl ? (
+              <Image
+                src={resolvedAvatarUrl}
+                alt={userName}
+                width={40}
+                height={40}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              userName.charAt(0).toUpperCase()
+            )}
           </div>
           <div className="hidden sm:block">
             <p className="text-sm font-semibold leading-tight text-primary-foreground">

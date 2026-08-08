@@ -1,7 +1,8 @@
 "use client";
 
 import LogoLoader from "@/components/LogoLoader";
-import { useEffect } from "react";
+import Image from "next/image";
+import { useEffect, useRef } from "react";
 import SideBar from "@/components/dashboard/SideBar";
 import TopBar from "@/components/dashboard/ui/TopBar";
 import PageHeader from "@/components/dashboard/ui/PageHeader";
@@ -15,6 +16,7 @@ import { useToast } from "@/lib/useToast";
 export default function AccountPage() {
   const toast = useToast();
   const router = useRouter();
+  const authAttemptedRef = useRef(false);
 
   const {
     currentUser,
@@ -51,7 +53,7 @@ export default function AccountPage() {
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .select(
-            "id, username, full_name, role_type, barangay, email, approval_status",
+            "id, username, full_name, role_type, barangay, email, approval_status, avatar_url",
           )
           .eq("id", user.id)
           .single();
@@ -78,6 +80,7 @@ export default function AccountPage() {
             barangay: profileData.barangay || "No Barangay Assigned",
             email: profileData.email,
             approval_status: profileData.approval_status,
+            avatar_url: profileData.avatar_url || undefined,
           };
 
           setCurrentUser(profile as UserAccount);
@@ -90,17 +93,11 @@ export default function AccountPage() {
       }
     };
 
-    if (currentUser && (!userProfile || userProfile.id !== currentUser.id)) {
+    if (!authAttemptedRef.current) {
+      authAttemptedRef.current = true;
       fetchUserProfile();
     }
-  }, [
-    currentUser,
-    setCurrentUser,
-    setIsLoading,
-    setUserProfile,
-    userProfile,
-    router,
-  ]);
+  }, [setCurrentUser, setIsLoading, setUserProfile, router]);
 
   // HANDLERS
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -225,10 +222,20 @@ export default function AccountPage() {
         {/* PROFILE OVERVIEW CARD */}
         <Card className="relative overflow-hidden">
           <div className="relative z-10 flex flex-col items-center gap-8 md:flex-row md:items-start">
-            <div className="z-10 flex h-28 w-28 shrink-0 items-center justify-center rounded-full bg-primary text-5xl font-bold text-white shadow-md ring-4 ring-white">
-              {userProfile?.full_name
-                ? userProfile.full_name.charAt(0).toUpperCase()
-                : "U"}
+            <div className="z-10 flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary text-5xl font-bold text-white shadow-md ring-4 ring-white">
+              {userProfile?.avatar_url ? (
+                <Image
+                  src={userProfile.avatar_url}
+                  alt={userProfile.full_name || "User"}
+                  width={112}
+                  height={112}
+                  className="h-full w-full object-cover"
+                />
+              ) : userProfile?.full_name ? (
+                userProfile.full_name.charAt(0).toUpperCase()
+              ) : (
+                "U"
+              )}
             </div>
 
             <div className="z-10 flex-1 text-center md:text-left">
@@ -339,6 +346,7 @@ export default function AccountPage() {
                       barangay: currentUser.barangay,
                       email: currentUser.email,
                       approval_status: currentUser.approval_status,
+                      avatar_url: currentUser.avatar_url,
                     });
                   }
                 }}

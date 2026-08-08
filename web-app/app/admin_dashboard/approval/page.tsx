@@ -1,6 +1,7 @@
 "use client";
 
 import LogoLoader from "@/components/LogoLoader";
+import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import SideBar from "@/components/dashboard/SideBar";
@@ -20,6 +21,7 @@ interface AccountRow {
   role_type: string;
   barangay: string;
   approval_status: string;
+  avatar_url?: string | null;
 }
 
 export default function AccountsPage() {
@@ -84,7 +86,7 @@ export default function AccountsPage() {
         const { data: accountRows, error: accountsError } = await supabase
           .from("profiles")
           .select(
-            "id, username, full_name, role_type, barangay, email, approval_status",
+            "id, username, full_name, role_type, barangay, email, approval_status, avatar_url",
           )
           .order("full_name", { ascending: true });
 
@@ -239,12 +241,29 @@ export default function AccountsPage() {
                         className="transition hover:bg-secondary/40"
                       >
                         <td className="px-3 py-4">
-                          <p className="font-semibold text-primary-foreground">
-                            {account.full_name}
-                          </p>
-                          <p className="text-xs text-secondary-foreground">
-                            {account.email}
-                          </p>
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary text-xs font-bold text-white">
+                              {account.avatar_url ? (
+                                <Image
+                                  src={account.avatar_url}
+                                  alt={account.full_name}
+                                  width={36}
+                                  height={36}
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                (account.full_name || "?").charAt(0).toUpperCase()
+                              )}
+                            </div>
+                            <div>
+                              <p className="font-semibold text-primary-foreground">
+                                {account.full_name}
+                              </p>
+                              <p className="text-xs text-secondary-foreground">
+                                {account.email}
+                              </p>
+                            </div>
+                          </div>
                         </td>
                         <td className="px-3 py-4 text-primary-foreground">
                           {account.role_type}
