@@ -8,7 +8,7 @@ export const projectsData: Project[] = [
     date: "Mar 2024",
     budget: "₱85,000",
     category: "Youth Development",
-    status: "done",
+    status: "Completed",
   },
   {
     name: "SK Basketball League",
@@ -17,7 +17,7 @@ export const projectsData: Project[] = [
     date: "Feb 2024",
     budget: "₱60,000",
     category: "Sports & Recreation",
-    status: "ongoing",
+    status: "Ongoing",
   },
   {
     name: "Free Medical & Dental Mission",
@@ -26,7 +26,7 @@ export const projectsData: Project[] = [
     date: "Jan 2024",
     budget: "₱45,000",
     category: "Health",
-    status: "ongoing",
+    status: "Ongoing",
   },
   {
     name: "Anti-Drug Campaign Seminar",
@@ -35,7 +35,7 @@ export const projectsData: Project[] = [
     date: "Dec 2023",
     budget: "₱30,000",
     category: "Peace & Order",
-    status: "done",
+    status: "Completed",
   },
   {
     name: "Tree Planting & Clean-Up Drive",
@@ -44,7 +44,7 @@ export const projectsData: Project[] = [
     date: "Dec 2023",
     budget: "₱25,000",
     category: "Environment",
-    status: "done",
+    status: "Completed",
   },
   {
     name: "Nutrition & Health Awareness",
@@ -53,7 +53,7 @@ export const projectsData: Project[] = [
     date: "Oct 2023",
     budget: "₱35,000",
     category: "Health",
-    status: "done",
+    status: "Completed",
   },
   {
     name: "Kabataan Film Festival",
@@ -62,7 +62,7 @@ export const projectsData: Project[] = [
     date: "Oct 2023",
     budget: "₱55,000",
     category: "Arts & Culture",
-    status: "pending",
+    status: "Pending",
   },
   {
     name: "Youth Entrepreneurship Forum",
@@ -71,7 +71,7 @@ export const projectsData: Project[] = [
     date: "Sep 2023",
     budget: "₱68,000",
     category: "Livelihood",
-    status: "ongoing",
+    status: "Ongoing",
   },
   {
     name: "Sports Equipment Procurement",
@@ -80,7 +80,7 @@ export const projectsData: Project[] = [
     date: "Aug 2023",
     budget: "₱50,000",
     category: "Sports & Recreation",
-    status: "pending",
+    status: "Pending",
   },
 ];
 
