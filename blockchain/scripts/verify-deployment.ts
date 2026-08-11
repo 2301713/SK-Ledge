@@ -7,7 +7,7 @@ async function main() {
   console.log("Activity: verify-deployment.ts");
   console.log("----------------------------------------------------------------");
 
-  const CONTRACT_ADDRESS = "0x88869e187614518bd95effBBc8c8Ea37AB30cA23";
+  const CONTRACT_ADDRESS = "0x857615c8b31CF1c51ef27B5F8FAA4F019C111549";
 
   console.log("\n1. Connecting to Sepolia Network...");
   const { ethers } = await network.create({ network: "sepolia" });

@@ -13,7 +13,7 @@ contract SkLedge {
     uint256 amount;
     uint256 timestamp;
     string purpose;
-    string recordType; // Either for Allocation or for Expense
+    string recordType; // "Allocation", "Expense", or "Award"
   }
 
   FinancialRecord[] public records;
@@ -65,7 +65,7 @@ contract SkLedge {
     * @param _barangay Barangay name.
     * @param _amount Amount of the transaction.
     * @param _purpose Purpose of the transaction.
-    * @param _recordType Transaction type ("Allocation" or "Expense").
+    * @param _recordType Transaction type ("Allocation", "Expense", or "Award").
   */
   function addRecord(
     string calldata _barangay,
@@ -78,8 +78,9 @@ contract SkLedge {
     bytes32 typeHash = keccak256(abi.encodePacked(_recordType));
     require(
       typeHash == keccak256(abi.encodePacked("Allocation")) ||
-      typeHash == keccak256(abi.encodePacked("Expense")),
-      "SkLedge: Type must be 'Allocation' or 'Expense'"
+      typeHash == keccak256(abi.encodePacked("Expense")) ||
+      typeHash == keccak256(abi.encodePacked("Award")),
+      "SkLedge: Type must be 'Allocation', 'Expense', or 'Award'"
     );
 
     records.push(FinancialRecord({

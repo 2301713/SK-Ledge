@@ -125,6 +125,22 @@ describe("SkLedge", function () {
       expect(records[0].recordType).to.equal("Allocation");
     });
 
+    it("Should allow adding an Award record", async function () {
+      const { skLedge, official } = await deploySkLedgeFixture();
+      await skLedge.setOfficialAuthorization(official.address, true);
+
+      const tx = await skLedge.connect(official).addRecord("Barangay 1", 435000, "BID-2026-039 Award: TechFlow Solutions Inc.", "Award");
+      
+      await expect(tx)
+        .to.emit(skLedge, "RecordAdded")
+        .withArgs(1, official.address, "Barangay 1", 435000, anyValue, "Award");
+
+      const records = await skLedge.getAllRecords();
+      expect(records.length).to.equal(1);
+      expect(records[0].purpose).to.equal("BID-2026-039 Award: TechFlow Solutions Inc.");
+      expect(records[0].recordType).to.equal("Award");
+    });
+
     it("Should store multiple records with incrementing ids", async function () {
       const { skLedge } = await deploySkLedgeFixture();
 
