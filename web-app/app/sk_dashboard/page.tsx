@@ -1,17 +1,15 @@
 "use client";
 
 import LogoLoader from "@/components/LogoLoader";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import SideBar from "@/components/dashboard/SideBar";
 import TopBar from "@/components/dashboard/ui/TopBar";
 import PageHeader from "@/components/dashboard/ui/PageHeader";
 import StatCard from "@/components/dashboard/ui/StatCard";
 import { Card, CardHeader } from "@/components/dashboard/ui/Card";
-import { INITIAL_PROJECTS } from "@/lib/dummyData";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/useAuthStore";
-import ProposeProjectModal from "@/components/dashboard/ProposeProjectModal";
 import AllocateFundsForm from "@/components/AllocateFundsForm";
 import {
   Plus,
@@ -28,16 +26,12 @@ import {
 } from "lucide-react";
 
 export default function SKDashboard() {
-  const {
-    currentUser,
-    isLoading,
-    setCurrentUser,
-    setIsLoading,
-    isModalOpen,
-    setIsModalOpen,
-  } = useAuthStore();
+  const { currentUser, isLoading, setCurrentUser, setIsLoading } = useAuthStore();
   const router = useRouter();
   const authAttemptedRef = useRef(false);
+  const [projects, setProjects] = useState<
+    { id: string; name: string; category: string; status: string; budget: number }[]
+  >([]);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -116,6 +110,34 @@ export default function SKDashboard() {
     }
   }, [setCurrentUser, setIsLoading, router, currentUser]);
 
+  useEffect(() => {
+    const fetchProjects = async () => {
+      const { data, error } = await supabase
+        .from("projects")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching projects:", error.message);
+        return;
+      }
+
+      if (data) {
+        setProjects(
+          data.map((item) => ({
+            id: String(item.id),
+            name: item.name || "Unnamed Project",
+            category: item.category || "General Fund",
+            status: (item.status as string) || "Pending",
+            budget: Number(item.budget) || 0,
+          })),
+        );
+      }
+    };
+
+    fetchProjects();
+  }, []);
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-PH", {
       style: "currency",
@@ -156,9 +178,8 @@ export default function SKDashboard() {
   const totalSpent = 165000;
   const percentageSpent = (totalSpent / totalAllocated) * 100;
   const availableFunds = totalAllocated - totalSpent;
-  const pendingCount = INITIAL_PROJECTS.filter(
-    (p) => p.status === "Pending",
-  ).length;
+  const pendingCount = projects.filter((p) => p.status === "Pending").length;
+  const approvedCount = projects.filter((p) => p.status === "Approved").length;
   const today = new Date().toLocaleDateString("en-US", {
     weekday: "long",
     year: "numeric",
@@ -188,12 +209,12 @@ export default function SKDashboard() {
           actions={
             <>
               <button
-                onClick={() => setIsModalOpen(true)}
+                onClick={() => router.push("/sk_dashboard/projects")}
                 className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white shadow-[0_6px_16px_-6px_rgba(1,56,168,0.5)] transition hover:bg-primary/90"
               >
-                <Plus className="h-4 w-4" />
-                Propose New Project
-              </button>
+            <Plus className="h-4 w-4" />
+            Propose New Project
+          </button>
               <button className="inline-flex items-center gap-2 rounded-xl border border-border bg-white px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-secondary">
                 <FileText className="h-4 w-4" />
                 View Ledger
@@ -209,7 +230,7 @@ export default function SKDashboard() {
             value={formatCurrency(totalAllocated)}
             icon={Wallet}
             variant="brand"
-            trend={`${INITIAL_PROJECTS.length} projects proposed`}
+            trend={`${projects.length} projects proposed`}
             trendIcon={FolderKanban}
           />
           <StatCard
@@ -229,7 +250,7 @@ export default function SKDashboard() {
             label="Pending Reviews"
             value={pendingCount}
             icon={Clock}
-            trend={`${INITIAL_PROJECTS.length - pendingCount} approved so far`}
+            trend={`${approvedCount} approved so far`}
             trendIcon={CheckCircle2}
           />
         </div>
@@ -260,7 +281,7 @@ export default function SKDashboard() {
           />
 
           <div className="space-y-4">
-            {INITIAL_PROJECTS.map((p) => (
+            {projects.map((p) => (
               <div
                 key={p.id}
                 className="flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-2xl border border-border bg-secondary/40 p-5 transition-all group hover:bg-secondary"
@@ -274,7 +295,10 @@ export default function SKDashboard() {
                       {p.name}
                     </p>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
-                      ID: PRJ-{p.id.padStart(4, "0")}
+                      ID: PRJ-
+                      {p.id.length > 8
+                        ? p.id.slice(0, 8).toUpperCase()
+                        : p.id.padStart(4, "0")}
                     </p>
                   </div>
                 </div>
@@ -316,7 +340,7 @@ export default function SKDashboard() {
               </div>
             ))}
 
-            {INITIAL_PROJECTS.length === 0 && (
+            {projects.length === 0 && (
               <div className="p-12 text-center border-2 border-dashed border-border rounded-3xl">
                 <FolderKanban className="h-12 w-12 text-secondary-foreground/30 mx-auto mb-4" />
                 <p className="text-sm font-bold text-secondary-foreground">
@@ -327,14 +351,6 @@ export default function SKDashboard() {
           </div>
         </Card>
       </main>
-
-      <ProposeProjectModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSubmitSuccess={() => {
-          console.log("Proposal successfully dispatched!");
-        }}
-      />
     </div>
   );
 }

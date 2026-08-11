@@ -167,6 +167,7 @@ export default function ProjectsPage() {
           budget: budgetNum,
           proposedBy: currentUser?.full_name,
           dateProposed: new Date().toISOString(),
+          barangay: currentUser?.barangay ?? null,
         },
       ]);
 

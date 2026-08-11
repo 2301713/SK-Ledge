@@ -16,9 +16,3 @@ export interface BroadcastMemoModalProps {
   onClose: () => void;
   onSubmitSuccess: () => void;
 }
-
-export interface ProposeProjectModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmitSuccess: () => void;
-}
