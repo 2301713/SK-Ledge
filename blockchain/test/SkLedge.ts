@@ -23,6 +23,7 @@ describe("SkLedge Contract Test Suite", function () {
   describe("Deployment and Authorization", function () {
     it("Should set deployer as owner and default authorized official", async function () {
       const { skLedge, owner } = await deploySkLedgeFixture();
+      expect(await skLedge.owner()).to.equal(owner.address);
       expect(await skLedge.isAuthorizedOfficial(owner.address)).to.equal(true);
     });
 
@@ -65,14 +66,24 @@ describe("SkLedge Contract Test Suite", function () {
       expect(records[0].amount).to.equal(5000);
       expect(records[0].purpose).to.equal("Youth Sports");
       expect(records[0].recordType).to.equal("Allocation");
+      expect(records[0].approved).to.equal(false);
     });
 
     it("Should allow an authorized official to add an Expense record", async function () {
-      const { skLedge, owner } = await deploySkLedgeFixture();
-      await skLedge.connect(owner).addRecord("Barangay 2", 1500, "Equipment Purchase", "Expense");
+      const { skLedge, owner, nonOfficial } = await deploySkLedgeFixture();
+      await skLedge.connect(owner).setOfficialAuthorization(nonOfficial.address, true);
+      await skLedge.connect(nonOfficial).addRecord("Barangay 2", 1500, "Equipment Purchase", "Expense");
       const records = await skLedge.getAllRecords();
       expect(records.length).to.equal(1);
       expect(records[0].recordType).to.equal("Expense");
+    });
+
+    it("Should allow an authorized official to add an Award record", async function () {
+      const { skLedge, owner } = await deploySkLedgeFixture();
+      await skLedge.connect(owner).addRecord("Barangay 3", 2000, "Bidding Award", "Award");
+      const records = await skLedge.getAllRecords();
+      expect(records.length).to.equal(1);
+      expect(records[0].recordType).to.equal("Award");
     });
 
     it("Should revert if an unauthorized wallet attempts to add a record", async function () {
@@ -121,6 +132,75 @@ describe("SkLedge Contract Test Suite", function () {
       await expect(
         skLedge.connect(official1).addRecord("Barangay 3", 500, "Second Action", "Expense")
       ).to.be.revertedWith("SkLedge: Your wallet is not an authorized SK Official.");
+    });
+  });
+
+  describe("Allocation Ceiling", function () {
+    it("Should REVERT when allocations exceed the barangay ceiling", async function () {
+      const { skLedge, owner } = await deploySkLedgeFixture();
+
+      await skLedge.setAllocationCeiling("Barangay San Jose", 1000);
+
+      await skLedge.addRecord("Barangay San Jose", 600, "First Allocation", "Allocation");
+
+      await expect(
+        skLedge.addRecord("Barangay San Jose", 500, "Second Allocation", "Allocation")
+      ).to.be.revertedWith("SkLedge: Allocation exceeds ceiling");
+    });
+
+    it("Should correctly return the total allocated amount", async function () {
+      const { skLedge, owner } = await deploySkLedgeFixture();
+
+      await skLedge.setAllocationCeiling("Barangay San Jose", 5000);
+
+      await skLedge.addRecord("Barangay San Jose", 1000, "First Allocation", "Allocation");
+      await skLedge.addRecord("Barangay San Jose", 1500, "Second Allocation", "Allocation");
+
+      expect(await skLedge.getAllocated("Barangay San Jose")).to.equal(2500);
+    });
+
+    it("Should REVERT when setting a zero or empty ceiling", async function () {
+      const { skLedge, owner } = await deploySkLedgeFixture();
+
+      await expect(
+        skLedge.setAllocationCeiling("Barangay San Jose", 0)
+      ).to.be.revertedWith("SkLedge: Ceiling must be greater than zero");
+
+      await expect(
+        skLedge.setAllocationCeiling("", 1000)
+      ).to.be.revertedWith("SkLedge: Invalid barangay");
+    });
+  });
+
+  describe("Record Approval", function () {
+    it("Should allow the owner to approve and unapprove a record", async function () {
+      const { skLedge, owner } = await deploySkLedgeFixture();
+
+      await skLedge.addRecord("Barangay San Jose", 5000, "Test Expense", "Expense");
+
+      await skLedge.setRecordApproval(1, true);
+
+      let records = await skLedge.getAllRecords();
+
+      expect(records[0].approved).to.be.true;
+      expect(records[0].approvedBy).to.equal(owner.address);
+
+      await skLedge.setRecordApproval(1, false);
+
+      records = await skLedge.getAllRecords();
+
+      expect(records[0].approved).to.be.false;
+      expect(records[0].approvedBy).to.equal(
+        "0x0000000000000000000000000000000000000000"
+      );
+    });
+
+    it("Should REVERT when approving a nonexistent record", async function () {
+      const { skLedge } = await deploySkLedgeFixture();
+
+      await expect(
+        skLedge.setRecordApproval(999, true)
+      ).to.be.revertedWith("SkLedge: Record does not exist");
     });
   });
 
