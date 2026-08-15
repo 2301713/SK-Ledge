@@ -1,32 +1,28 @@
 import React from "react";
-import { StyleSheet, Text, TouchableOpacity } from "react-native";
+import { Text, TouchableOpacity } from "react-native";
 
 export default function PrimaryButton({
   children,
   onPress,
+  disabled,
+  className = "",
 }: {
   children: React.ReactNode;
   onPress?: () => void;
+  disabled?: boolean;
+  className?: string;
 }) {
   return (
     <TouchableOpacity
       accessibilityRole="button"
       accessibilityLabel="Primary action"
       activeOpacity={0.8}
+      disabled={disabled}
       onPress={onPress}
-      style={styles.btn}
+      className={`items-center justify-center rounded-2xl bg-tertiary py-4 ${className}`}
+      style={{ shadowColor: "#FBD219", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 10, elevation: 5 }}
     >
-      <Text style={styles.text}>{children}</Text>
+      <Text className="font-inter-extrabold text-lg text-primary-foreground">{children}</Text>
     </TouchableOpacity>
   );
 }
-
-const styles = StyleSheet.create({
-  btn: {
-    backgroundColor: "#FFCC00",
-    padding: 12,
-    borderRadius: 10,
-    alignItems: "center",
-  },
-  text: { color: "#001019", fontWeight: "800" },
-});

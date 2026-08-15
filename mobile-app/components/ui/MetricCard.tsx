@@ -1,5 +1,5 @@
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Text, View } from "react-native";
 
 export default function MetricCard({
   label,
@@ -9,21 +9,12 @@ export default function MetricCard({
   value: string;
 }) {
   return (
-    <View style={styles.card} accessibilityRole="summary">
-      <Text style={styles.value}>{value}</Text>
-      <Text style={styles.label}>{label}</Text>
+    <View
+      className="mr-3 min-w-[120px] rounded-2xl bg-background p-3"
+      accessibilityRole="summary"
+    >
+      <Text className="font-inter-extrabold text-lg text-primary">{value}</Text>
+      <Text className="font-inter mt-1 text-xs text-secondary-foreground">{label}</Text>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: "#F8FAFC",
-    padding: 12,
-    borderRadius: 10,
-    marginRight: 12,
-    minWidth: 120,
-  },
-  value: { fontSize: 18, fontWeight: "800", color: "#003366" },
-  label: { fontSize: 12, color: "#64748B", marginTop: 4 },
-});

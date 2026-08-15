@@ -1,15 +1,8 @@
+import StatusBadge from "@/components/ui/StatusBadge";
 import { supabase } from "@/lib/supabase";
 import { CreditCard, LogOut } from "lucide-react-native";
 import React, { useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { ActivityIndicator, Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Profile() {
@@ -42,56 +35,67 @@ export default function Profile() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top"]}>
+    <SafeAreaView className="flex-1 bg-primary" edges={["top"]}>
       <ScrollView
-        contentContainerStyle={styles.scrollContainer}
+        contentContainerStyle={{ flexGrow: 1, backgroundColor: "#F8FAFC" }}
         showsVerticalScrollIndicator={false}
       >
         {/* HERO HEADER */}
-        <View style={styles.header}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>
+        <View className="flex-row items-center bg-primary px-6 pb-[50px] pt-5">
+          <View
+            className="h-[72px] w-[72px] items-center justify-center rounded-full bg-primary"
+            style={{ shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 6, elevation: 4 }}
+          >
+            <Text className="font-inter-extrabold text-[28px] text-white">
               {companyName ? companyName.charAt(0).toUpperCase() : "V"}
             </Text>
           </View>
 
-          <View style={styles.headerInfo}>
-            <Text style={styles.companyName}>{companyName}</Text>
-            <View style={styles.statusBadge}>
-              <View style={styles.statusDot} />
-              <Text style={styles.statusText}>
-                Verified Vendor • Since 2026
-              </Text>
-            </View>
+          <View className="ml-4 flex-1">
+            <Text className="font-inter-extrabold mb-2 text-[22px] text-white">
+              {companyName}
+            </Text>
+            <StatusBadge status="verified" showDot />
           </View>
         </View>
 
         {/* MAIN BODY CONTENT */}
-        <View style={styles.body}>
+        <View className="flex-1 rounded-t-[30px] bg-background pb-10 pt-[30px]">
           {/* PAYMENT CARD */}
-          <View style={styles.card}>
-            <View style={styles.cardHeader}>
-              <View style={styles.iconContainer}>
-                <CreditCard size={20} color="#003366" />
+          <View
+            className="mx-5 rounded-3xl border border-border bg-white p-5"
+            style={{ shadowColor: "#000", shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.04, shadowRadius: 10, elevation: 3 }}
+          >
+            <View className="mb-5 flex-row items-center">
+              <View className="mr-3.5 h-[46px] w-[46px] items-center justify-center rounded-[14px] bg-background">
+                <CreditCard size={20} color="#0138A8" />
               </View>
               <View>
-                <Text style={styles.cardTitle}>Payout Details</Text>
-                <Text style={styles.cardSubtitle}>Banking & verification</Text>
+                <Text className="font-inter-extrabold text-[15px] text-primary">
+                  Payout Details
+                </Text>
+                <Text className="font-inter mt-0.5 text-[13px] text-secondary-foreground">
+                  Banking & verification
+                </Text>
               </View>
             </View>
 
-            <View style={styles.cardContent}>
+            <View className="mb-5 rounded-2xl border border-border bg-background p-4">
               {hasPaymentMethod ? (
                 <View>
-                  <Text style={styles.monoText}>Account: **** 1234</Text>
-                  <Text style={styles.monoText}>Bank: Mock Bank</Text>
+                  <Text className="font-inter-semibold mb-1 text-[15px] text-slate-700">
+                    Account: **** 1234
+                  </Text>
+                  <Text className="font-inter-semibold text-[15px] text-slate-700">
+                    Bank: Mock Bank
+                  </Text>
                 </View>
               ) : (
                 <View>
-                  <Text style={styles.unlinkedText}>
+                  <Text className="font-inter-bold mb-1.5 text-[15px] text-slate-600">
                     No banking credentials attached.
                   </Text>
-                  <Text style={styles.unlinkedSubtext}>
+                  <Text className="font-inter text-[13px] leading-[18px] text-secondary-foreground">
                     Connect your business banking to clear verification and
                     accept direct contract deposits.
                   </Text>
@@ -99,8 +103,11 @@ export default function Profile() {
               )}
             </View>
 
-            <TouchableOpacity style={styles.actionButton} activeOpacity={0.85}>
-              <Text style={styles.actionButtonText}>
+            <TouchableOpacity
+              className="items-center rounded-[14px] bg-primary py-4"
+              activeOpacity={0.85}
+            >
+              <Text className="font-inter-extrabold text-sm tracking-[0.5px] text-tertiary">
                 {hasPaymentMethod
                   ? "Modify Financial Routing"
                   : "Link Verification Bank Account"}
@@ -110,7 +117,7 @@ export default function Profile() {
 
           {/* LOGOUT BUTTON */}
           <TouchableOpacity
-            style={styles.logoutButton}
+            className="mx-5 mt-8 flex-row items-center justify-center rounded-2xl border border-[#FFE4E6] bg-[#FFF1F2] py-3.5"
             onPress={handleLogout}
             disabled={loading}
             activeOpacity={0.7}
@@ -119,10 +126,10 @@ export default function Profile() {
               <ActivityIndicator color="#EF4444" />
             ) : (
               <>
-                <View style={styles.logoutIconContainer}>
+                <View className="mr-2.5 h-9 w-9 items-center justify-center rounded-[10px] bg-[#FFE4E6]">
                   <LogOut size={18} color="#EF4444" />
                 </View>
-                <Text style={styles.logoutText}>Log out</Text>
+                <Text className="font-inter-extrabold text-base text-danger">Log out</Text>
               </>
             )}
           </TouchableOpacity>
@@ -131,180 +138,3 @@ export default function Profile() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: "#003366",
-  },
-  scrollContainer: {
-    flexGrow: 1,
-    backgroundColor: "#F8FAFC",
-  },
-  header: {
-    backgroundColor: "#003366",
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 24,
-    paddingTop: 20,
-    paddingBottom: 50,
-  },
-  avatar: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: "#FFFFFF",
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 4,
-  },
-  avatarText: {
-    fontSize: 28,
-    fontWeight: "800",
-    color: "#003366",
-  },
-  headerInfo: {
-    flex: 1,
-    marginLeft: 16,
-  },
-  companyName: {
-    fontSize: 22,
-    fontWeight: "800",
-    color: "#FFFFFF",
-    marginBottom: 8,
-  },
-  statusBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 999,
-    alignSelf: "flex-start",
-  },
-  statusDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: "#22C55E",
-    marginRight: 6,
-  },
-  statusText: {
-    fontSize: 12,
-    color: "#003366",
-    fontWeight: "700",
-  },
-  body: {
-    flex: 1,
-    backgroundColor: "#F8FAFC",
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    marginTop: -30,
-    paddingTop: 30,
-    paddingBottom: 40,
-  },
-  card: {
-    marginHorizontal: 20,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 22,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.04,
-    shadowRadius: 10,
-    elevation: 3,
-  },
-  cardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  iconContainer: {
-    width: 46,
-    height: 46,
-    borderRadius: 14,
-    backgroundColor: "#F1F5F9",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 14,
-  },
-  cardTitle: {
-    fontSize: 15,
-    fontWeight: "800",
-    color: "#003366",
-  },
-  cardSubtitle: {
-    fontSize: 13,
-    color: "#94A3B8",
-    marginTop: 2,
-  },
-  cardContent: {
-    backgroundColor: "#F8FAFC",
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-  },
-  monoText: {
-    fontSize: 15,
-    color: "#334155",
-    fontWeight: "600",
-    marginBottom: 4,
-  },
-  unlinkedText: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#475569",
-    marginBottom: 6,
-  },
-  unlinkedSubtext: {
-    fontSize: 13,
-    color: "#94A3B8",
-    lineHeight: 18,
-  },
-  actionButton: {
-    backgroundColor: "#003366",
-    paddingVertical: 16,
-    borderRadius: 14,
-    alignItems: "center",
-  },
-  actionButtonText: {
-    color: "#FFCC00",
-    fontSize: 14,
-    fontWeight: "800",
-    letterSpacing: 0.5,
-  },
-  logoutButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginHorizontal: 20,
-    marginTop: 32,
-    paddingVertical: 14,
-    borderRadius: 16,
-    backgroundColor: "#FFF1F2",
-    borderWidth: 1,
-    borderColor: "#FFE4E6",
-  },
-  logoutIconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: "#FFE4E6",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 10,
-  },
-  logoutText: {
-    color: "#EF4444",
-    fontSize: 16,
-    fontWeight: "800",
-  },
-});

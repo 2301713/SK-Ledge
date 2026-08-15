@@ -1,10 +1,6 @@
+import PrimaryButton from "@/components/ui/PrimaryButton";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import {
-  ArrowLeft,
-  CheckCircle,
-  FileUp,
-  UploadCloud,
-} from "lucide-react-native";
+import { ArrowLeft, CheckCircle, UploadCloud } from "lucide-react-native";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
@@ -12,7 +8,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
@@ -64,16 +59,13 @@ export default function SubmitBidPage() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top"]}>
+    <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
       {/* Custom Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backButton}
-        >
+      <View className="flex-row items-center justify-between border-b border-border bg-background px-4 py-3">
+        <TouchableOpacity onPress={() => router.back()} className="p-2">
           <ArrowLeft size={24} color="#1E293B" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Submit Proposal</Text>
+        <Text className="font-inter-bold text-lg text-primary-foreground">Submit Proposal</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -82,26 +74,28 @@ export default function SubmitBidPage() {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={{ padding: 24, paddingBottom: 100 }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.infoBanner}>
-            <Text style={styles.infoText}>
+          <View className="mb-6 rounded-xl bg-[#E0E7FF] p-4">
+            <Text className="text-sm text-[#4338CA]">
               You are submitting a bid for contract ID:{" "}
-              <Text style={{ fontWeight: "bold" }}>{id}</Text>
+              <Text className="font-inter-bold">{id}</Text>
             </Text>
           </View>
 
           {/* Form Fields */}
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Total Bid Amount (PHP) *</Text>
-            <View style={styles.inputWrapper}>
-              <Text style={styles.currencyPrefix}>₱</Text>
+          <View className="mb-5">
+            <Text className="font-inter-semibold mb-2 text-sm text-primary-foreground">
+              Total Bid Amount (PHP) *
+            </Text>
+            <View className="flex-row items-center rounded-2xl border border-border bg-white px-4">
+              <Text className="font-inter-bold mr-2 text-base text-secondary-foreground">₱</Text>
               <TextInput
-                style={styles.inputWithPrefix}
+                className="font-inter flex-1 py-3.5 text-base text-primary-foreground"
                 placeholder="0.00"
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor="#64748B"
                 keyboardType="numeric"
                 value={amount}
                 onChangeText={setAmount}
@@ -109,53 +103,65 @@ export default function SubmitBidPage() {
             </View>
           </View>
 
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Estimated Timeline *</Text>
+          <View className="mb-5">
+            <Text className="font-inter-semibold mb-2 text-sm text-primary-foreground">
+              Estimated Timeline *
+            </Text>
             <TextInput
-              style={styles.input}
+              className="rounded-2xl border border-border bg-white px-4 py-3.5 text-base text-primary-foreground"
               placeholder="e.g., 6 Months, 45 Days"
-              placeholderTextColor="#94A3B8"
+              placeholderTextColor="#64748B"
               value={timeline}
               onChangeText={setTimeline}
             />
           </View>
 
           {/* Document Upload */}
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Technical Proposal (PDF) *</Text>
+          <View className="mb-5">
+            <Text className="font-inter-semibold mb-2 text-sm text-primary-foreground">
+              Technical Proposal (PDF) *
+            </Text>
 
             <TouchableOpacity
-              style={[
-                styles.uploadBox,
-                fileUploaded && styles.uploadBoxSuccess,
-              ]}
+              className={`items-center justify-center rounded-2xl border-2 border-dashed bg-white p-8 ${
+                fileUploaded ? "border-success bg-success/10" : "border-border"
+              }`}
               onPress={handleMockUpload}
               activeOpacity={0.7}
             >
               {fileUploaded ? (
                 <>
                   <CheckCircle size={32} color="#16A34A" />
-                  <Text style={styles.uploadTextSuccess}>
+                  <Text className="font-inter-bold mb-1 mt-3 text-base text-success">
                     Document_Ready.pdf
                   </Text>
-                  <Text style={styles.uploadSubtext}>Tap to replace file</Text>
+                  <Text className="font-inter text-xs text-secondary-foreground">
+                    Tap to replace file
+                  </Text>
                 </>
               ) : (
                 <>
-                  <UploadCloud size={32} color="#003366" />
-                  <Text style={styles.uploadText}>Upload Document</Text>
-                  <Text style={styles.uploadSubtext}>Max size: 25MB</Text>
+                  <UploadCloud size={32} color="#0138A8" />
+                  <Text className="font-inter-bold mb-1 mt-3 text-base text-primary">
+                    Upload Document
+                  </Text>
+                  <Text className="font-inter text-xs text-secondary-foreground">
+                    Max size: 25MB
+                  </Text>
                 </>
               )}
             </TouchableOpacity>
           </View>
 
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Additional Notes (Optional)</Text>
+          <View className="mb-5">
+            <Text className="font-inter-semibold mb-2 text-sm text-primary-foreground">
+              Additional Notes (Optional)
+            </Text>
             <TextInput
-              style={[styles.input, styles.textArea]}
+              className="rounded-2xl border border-border bg-white px-4 py-3.5 text-base text-primary-foreground"
+              style={{ height: 100, paddingTop: 14, textAlignVertical: "top" }}
               placeholder="Clarifications or special terms..."
-              placeholderTextColor="#94A3B8"
+              placeholderTextColor="#64748B"
               multiline
               textAlignVertical="top"
               value={notes}
@@ -166,175 +172,15 @@ export default function SubmitBidPage() {
       </KeyboardAvoidingView>
 
       {/* Sticky Bottom Action Bar */}
-      <View style={styles.bottomBar}>
-        <TouchableOpacity
-          style={[
-            styles.primaryButton,
-            isSubmitting && styles.primaryButtonDisabled,
-          ]}
-          activeOpacity={0.8}
-          onPress={handleSubmit}
-          disabled={isSubmitting}
-        >
+      <View className="absolute bottom-0 left-0 right-0 border-t border-border bg-white px-6 pt-4 pb-8">
+        <PrimaryButton onPress={handleSubmit} disabled={isSubmitting}>
           {isSubmitting ? (
-            <ActivityIndicator color="#003366" />
+            <ActivityIndicator color="#1E293B" />
           ) : (
-            <>
-              <FileUp size={20} color="#003366" />
-              <Text style={styles.primaryButtonText}>Sign & Submit Bid</Text>
-            </>
+            "Sign & Submit Bid"
           )}
-        </TouchableOpacity>
+        </PrimaryButton>
       </View>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: "#F8FAFC",
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: "#F8FAFC",
-    borderBottomWidth: 1,
-    borderBottomColor: "#E2E8F0",
-  },
-  backButton: {
-    padding: 8,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#1E293B",
-  },
-  scrollContent: {
-    padding: 24,
-    paddingBottom: 100,
-  },
-  infoBanner: {
-    backgroundColor: "#E0E7FF",
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 24,
-  },
-  infoText: {
-    color: "#4338CA",
-    fontSize: 14,
-  },
-  formGroup: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#1E293B",
-    marginBottom: 8,
-  },
-  input: {
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 16,
-    color: "#1E293B",
-  },
-  inputWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    borderRadius: 12,
-    paddingHorizontal: 16,
-  },
-  currencyPrefix: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#64748B",
-    marginRight: 8,
-  },
-  inputWithPrefix: {
-    flex: 1,
-    paddingVertical: 14,
-    fontSize: 16,
-    color: "#1E293B",
-  },
-  textArea: {
-    height: 100,
-    paddingTop: 14,
-  },
-  uploadBox: {
-    borderWidth: 2,
-    borderColor: "#E2E8F0",
-    borderStyle: "dashed",
-    borderRadius: 16,
-    backgroundColor: "#FFFFFF",
-    padding: 32,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  uploadBoxSuccess: {
-    borderColor: "#16A34A",
-    backgroundColor: "#DCFCE7",
-  },
-  uploadText: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#003366",
-    marginTop: 12,
-    marginBottom: 4,
-  },
-  uploadTextSuccess: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#16A34A",
-    marginTop: 12,
-    marginBottom: 4,
-  },
-  uploadSubtext: {
-    fontSize: 12,
-    color: "#64748B",
-  },
-  bottomBar: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: "#FFFFFF",
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 32,
-    borderTopWidth: 1,
-    borderTopColor: "#E2E8F0",
-  },
-  primaryButton: {
-    flexDirection: "row",
-    backgroundColor: "#FFCC00",
-    height: 56,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    shadowColor: "#FFCC00",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 5,
-  },
-  primaryButtonDisabled: {
-    opacity: 0.7,
-  },
-  primaryButtonText: {
-    color: "#003366",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-});

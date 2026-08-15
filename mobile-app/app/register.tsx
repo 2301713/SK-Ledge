@@ -1,3 +1,4 @@
+import PrimaryButton from "@/components/ui/PrimaryButton";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "expo-router";
 import { Briefcase, Lock, Mail } from "lucide-react-native";
@@ -8,7 +9,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
@@ -69,37 +69,48 @@ export default function RegisterPage() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top"]}>
+    <SafeAreaView className="flex-1 bg-primary" edges={["top"]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.keyboardView}
+        className="flex-1"
       >
         <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
+          className="flex-1"
+          contentContainerStyle={{ flexGrow: 1 }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
           {/* HERO HEADER */}
-          <View style={styles.headerContainer}>
-            <View style={styles.logoContainer}>
-              <Text style={styles.logoText}>SK</Text>
+          <View className="items-center bg-primary pb-[70px] pt-[30px]">
+            <View
+              className="mb-5 h-[90px] w-[90px] items-center justify-center rounded-3xl bg-tertiary"
+              style={{ shadowColor: "#000", shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.2, shadowRadius: 12, elevation: 8 }}
+            >
+              <Text className="font-inter-black text-[34px] text-primary">SK</Text>
             </View>
-            <Text style={styles.titleText}>Apply as Vendor</Text>
-            <Text style={styles.subtitleText}>Join the SK-Ledge network</Text>
+            <Text className="font-inter-extrabold mb-1.5 text-[32px] tracking-tight text-white">
+              Apply as Vendor
+            </Text>
+            <Text className="font-inter-medium text-[15px] text-secondary-foreground">
+              Join the SK-Ledge network
+            </Text>
           </View>
 
           {/* OVERLAPPING BODY */}
-          <View style={styles.body}>
-            <View style={styles.formContainer}>
+          <View className="flex-1 rounded-t-[30px] bg-background px-8 pb-[60px] pt-10">
+            <View className="gap-6">
               <View>
-                <Text style={styles.labelText}>Company / Vendor Name</Text>
-                <View style={styles.inputContainer}>
-                  <Briefcase size={20} color="#94A3B8" />
+                <Text className="font-inter-bold mb-2 ml-1 text-xs uppercase tracking-[1px] text-secondary-foreground">
+                  Company / Vendor Name
+                </Text>
+                <View className="h-14 flex-row items-center rounded-2xl border border-border bg-white px-4"
+                  style={{ shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.02, shadowRadius: 4, elevation: 1 }}
+                >
+                  <Briefcase size={20} color="#64748B" />
                   <TextInput
-                    style={styles.input}
+                    className="font-inter-medium ml-3 flex-1 text-base text-primary-foreground"
                     placeholder="Acme Corp"
-                    placeholderTextColor="#94A3B8"
+                    placeholderTextColor="#64748B"
                     value={companyName}
                     onChangeText={setCompanyName}
                     editable={!loading}
@@ -108,13 +119,17 @@ export default function RegisterPage() {
               </View>
 
               <View>
-                <Text style={styles.labelText}>Corporate Email</Text>
-                <View style={styles.inputContainer}>
-                  <Mail size={20} color="#94A3B8" />
+                <Text className="font-inter-bold mb-2 ml-1 text-xs uppercase tracking-[1px] text-secondary-foreground">
+                  Corporate Email
+                </Text>
+                <View className="h-14 flex-row items-center rounded-2xl border border-border bg-white px-4"
+                  style={{ shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.02, shadowRadius: 4, elevation: 1 }}
+                >
+                  <Mail size={20} color="#64748B" />
                   <TextInput
-                    style={styles.input}
+                    className="font-inter-medium ml-3 flex-1 text-base text-primary-foreground"
                     placeholder="vendor@company.com"
-                    placeholderTextColor="#94A3B8"
+                    placeholderTextColor="#64748B"
                     value={email}
                     onChangeText={setEmail}
                     autoCapitalize="none"
@@ -125,13 +140,17 @@ export default function RegisterPage() {
               </View>
 
               <View>
-                <Text style={styles.labelText}>Secure Password</Text>
-                <View style={styles.inputContainer}>
-                  <Lock size={20} color="#94A3B8" />
+                <Text className="font-inter-bold mb-2 ml-1 text-xs uppercase tracking-[1px] text-secondary-foreground">
+                  Secure Password
+                </Text>
+                <View className="h-14 flex-row items-center rounded-2xl border border-border bg-white px-4"
+                  style={{ shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.02, shadowRadius: 4, elevation: 1 }}
+                >
+                  <Lock size={20} color="#64748B" />
                   <TextInput
-                    style={styles.input}
+                    className="font-inter-medium ml-3 flex-1 text-base text-primary-foreground"
                     placeholder="••••••••"
-                    placeholderTextColor="#94A3B8"
+                    placeholderTextColor="#64748B"
                     value={password}
                     onChangeText={setPassword}
                     secureTextEntry
@@ -142,31 +161,24 @@ export default function RegisterPage() {
             </View>
 
             {/* Action Buttons */}
-            <View style={styles.actionContainer}>
-              <TouchableOpacity
-                onPress={handleSignUp}
-                disabled={loading}
-                activeOpacity={0.8}
-                style={[styles.primaryButton, loading && styles.buttonDisabled]}
-              >
+            <View className="mt-10 gap-5">
+              <PrimaryButton onPress={handleSignUp} disabled={loading}>
                 {loading ? (
-                  <ActivityIndicator color="#003366" />
+                  <ActivityIndicator color="#1E293B" />
                 ) : (
-                  <Text style={styles.primaryButtonText}>
-                    Submit Application
-                  </Text>
+                  "Submit Application"
                 )}
-              </TouchableOpacity>
+              </PrimaryButton>
 
               <TouchableOpacity
                 activeOpacity={0.6}
-                style={styles.secondaryButton}
+                className="items-center py-2"
                 onPress={() => router.back()}
                 disabled={loading}
               >
-                <Text style={styles.secondaryText}>
+                <Text className="font-inter-medium text-sm text-secondary-foreground">
                   Already an SK registered vendor?{" "}
-                  <Text style={styles.secondaryLinkText}>Sign In</Text>
+                  <Text className="font-inter-bold text-primary">Sign In</Text>
                 </Text>
               </TouchableOpacity>
             </View>
@@ -176,139 +188,3 @@ export default function RegisterPage() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: "#003366",
-  },
-  keyboardView: {
-    flex: 1,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-  },
-  headerContainer: {
-    backgroundColor: "#003366",
-    alignItems: "center",
-    paddingTop: 30,
-    paddingBottom: 70,
-  },
-  logoContainer: {
-    width: 90,
-    height: 90,
-    backgroundColor: "#FFCC00",
-    borderRadius: 24,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  logoText: {
-    color: "#003366",
-    fontSize: 34,
-    fontWeight: "900",
-  },
-  titleText: {
-    fontSize: 32,
-    fontWeight: "800",
-    color: "#FFFFFF",
-    marginBottom: 6,
-    letterSpacing: -0.5,
-  },
-  subtitleText: {
-    fontSize: 15,
-    fontWeight: "500",
-    color: "#94A3B8",
-  },
-  body: {
-    flex: 1,
-    backgroundColor: "#F8FAFC",
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    marginTop: -30,
-    paddingHorizontal: 32,
-    paddingTop: 40,
-    paddingBottom: 60,
-  },
-  formContainer: {
-    gap: 24,
-  },
-  labelText: {
-    fontSize: 12,
-    fontWeight: "bold",
-    color: "#64748B",
-    marginBottom: 8,
-    textTransform: "uppercase",
-    letterSpacing: 1,
-    marginLeft: 4,
-  },
-  inputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    height: 56,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.02,
-    shadowRadius: 4,
-    elevation: 1,
-  },
-  input: {
-    flex: 1,
-    marginLeft: 12,
-    fontSize: 16,
-    fontWeight: "500",
-    color: "#1E293B",
-  },
-  actionContainer: {
-    marginTop: 40,
-    gap: 20,
-  },
-  primaryButton: {
-    width: "100%",
-    backgroundColor: "#FFCC00",
-    height: 56,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#FFCC00",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 5,
-  },
-  buttonDisabled: {
-    opacity: 0.7,
-  },
-  primaryButtonText: {
-    color: "#003366",
-    fontSize: 18,
-    fontWeight: "bold",
-    letterSpacing: 0.5,
-  },
-  secondaryButton: {
-    alignItems: "center",
-    paddingVertical: 8,
-  },
-  secondaryText: {
-    color: "#64748B",
-    fontWeight: "500",
-    fontSize: 14,
-  },
-  secondaryLinkText: {
-    color: "#003366",
-    fontWeight: "bold",
-  },
-});

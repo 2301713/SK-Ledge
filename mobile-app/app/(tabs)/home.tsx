@@ -6,14 +6,7 @@ import {
   Trophy,
 } from "lucide-react-native";
 import React, { useEffect, useState } from "react";
-import {
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { ScrollView, StatusBar, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function HomePage() {
@@ -33,120 +26,149 @@ export default function HomePage() {
   }, []);
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#003366" />
+    <View className="flex-1 bg-background">
+      <StatusBar barStyle="light-content" backgroundColor="#0138A8" />
 
       {/* Dark Brand Header */}
-      <SafeAreaView style={styles.headerBackground} edges={["top"]}>
-        <View style={styles.headerContent}>
+      <SafeAreaView
+        className="rounded-b-[32px] bg-primary pb-10"
+        edges={["top"]}
+      >
+        <View className="flex-row items-center justify-between px-6 pt-2.5">
           <View>
-            <Text style={styles.greetingText}>Welcome back,</Text>
-            <Text style={styles.companyText}>{companyName}</Text>
+            <Text className="font-inter-medium mb-1 text-base text-secondary-foreground">
+              Welcome back,
+            </Text>
+            <Text className="font-inter-extrabold text-[28px] tracking-tight text-white">
+              {companyName}
+            </Text>
           </View>
-          <View style={styles.avatarBadge}>
-            <Text style={styles.avatarText}>{companyName.charAt(0)}</Text>
+          <View
+            className="h-12 w-12 items-center justify-center rounded-full bg-tertiary"
+            style={{ shadowColor: "#FBD219", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8 }}
+          >
+            <Text className="font-inter-bold text-[22px] text-primary">
+              {companyName.charAt(0)}
+            </Text>
           </View>
         </View>
       </SafeAreaView>
 
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={{ paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
       >
         {/* Floating Dashboard Stats Card */}
-        <View style={styles.statsFloatingCard}>
-          <View style={styles.statItem}>
-            <View style={[styles.iconWrapper, { backgroundColor: "#F0F9FF" }]}>
+        <View
+          className="mx-6 mt-5 flex-row items-center justify-between rounded-3xl bg-white px-4 py-5"
+          style={{ shadowColor: "#0138A8", shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.12, shadowRadius: 16, elevation: 8 }}
+        >
+          <View className="flex-1 items-center">
+            <View className="mb-2.5 h-11 w-11 items-center justify-center rounded-[14px] bg-[#F0F9FF]">
               <Briefcase size={22} color="#0284C7" />
             </View>
-            <Text style={styles.statNumber}>12</Text>
-            <Text style={styles.statLabel}>Active Bids</Text>
+            <Text className="font-inter-extrabold mb-0.5 text-[22px] text-primary-foreground">12</Text>
+            <Text className="font-inter-semibold text-xs text-secondary-foreground">Active Bids</Text>
           </View>
 
-          <View style={styles.statDivider} />
+          <View className="h-10 w-px bg-background" />
 
-          <View style={styles.statItem}>
-            <View style={[styles.iconWrapper, { backgroundColor: "#FEF3C7" }]}>
+          <View className="flex-1 items-center">
+            <View className="mb-2.5 h-11 w-11 items-center justify-center rounded-[14px] bg-[#FEF3C7]">
               <CircleDollarSign size={22} color="#D97706" />
             </View>
-            <Text style={styles.statNumber}>3</Text>
-            <Text style={styles.statLabel}>Pending</Text>
+            <Text className="font-inter-extrabold mb-0.5 text-[22px] text-primary-foreground">3</Text>
+            <Text className="font-inter-semibold text-xs text-secondary-foreground">Pending</Text>
           </View>
 
-          <View style={styles.statDivider} />
+          <View className="h-10 w-px bg-background" />
 
-          <View style={styles.statItem}>
-            <View style={[styles.iconWrapper, { backgroundColor: "#DCFCE7" }]}>
+          <View className="flex-1 items-center">
+            <View className="mb-2.5 h-11 w-11 items-center justify-center rounded-[14px] bg-[#DCFCE7]">
               <Trophy size={22} color="#16A34A" />
             </View>
-            <Text style={styles.statNumber}>8</Text>
-            <Text style={styles.statLabel}>Contracts</Text>
+            <Text className="font-inter-extrabold mb-0.5 text-[22px] text-primary-foreground">8</Text>
+            <Text className="font-inter-semibold text-xs text-secondary-foreground">Contracts</Text>
           </View>
         </View>
 
         {/* Recent Opportunities Section */}
-        <View style={styles.sectionHeader}>
-          <View style={styles.sectionTitleRow}>
-            <Text style={styles.sectionTitle}>New Opportunities</Text>
+        <View className="mb-4 mt-8 flex-row items-center justify-between px-6">
+          <View className="flex-row items-center gap-2">
+            <Text className="font-inter-extrabold ml-1.5 text-xl text-primary-foreground">
+              New Opportunities
+            </Text>
           </View>
           <TouchableOpacity activeOpacity={0.6}>
-            <Text style={styles.seeAllText}>See All</Text>
+            <Text className="font-inter-bold text-sm text-primary">See All</Text>
           </TouchableOpacity>
         </View>
 
-        <View style={styles.opportunitiesList}>
+        <View className="gap-4 px-6">
           {/* Modern Opportunity Card 1 */}
-          <TouchableOpacity style={styles.opportunityCard} activeOpacity={0.8}>
-            <View style={styles.cardHeader}>
-              <View style={styles.departmentBadge}>
-                <Text style={styles.departmentText}>Dept. of Technology</Text>
+          <TouchableOpacity
+            className="rounded-3xl border border-background bg-white p-5"
+            style={{ shadowColor: "#64748B", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.08, shadowRadius: 12, elevation: 2 }}
+            activeOpacity={0.8}
+          >
+            <View className="mb-3 flex-row items-center justify-between">
+              <View className="rounded-lg border border-border bg-background px-2.5 py-1.5">
+                <Text className="font-inter-bold text-[11px] uppercase tracking-[0.5px] text-slate-600">
+                  Dept. of Technology
+                </Text>
               </View>
-              <Text style={styles.timeText}>Closes in 5d</Text>
+              <Text className="font-inter-semibold text-xs text-danger">Closes in 5d</Text>
             </View>
 
-            <Text style={styles.opportunityTitle}>
+            <Text className="font-inter-bold mb-4 text-lg leading-6 text-primary-foreground">
               IT Infrastructure Upgrade Phase 2
             </Text>
 
-            <View style={styles.cardFooter}>
-              <View style={styles.tagContainer}>
-                <View style={styles.tag}>
-                  <Text style={styles.tagText}>Hardware</Text>
+            <View className="flex-row items-center justify-between">
+              <View className="flex-row gap-2">
+                <View className="rounded-[10px] bg-background px-3 py-1.5">
+                  <Text className="font-inter-semibold text-[13px] text-slate-600">Hardware</Text>
                 </View>
-                <View style={[styles.tag, styles.tagHighlight]}>
-                  <Text style={styles.tagTextHighlight}>₱50k - ₱100k</Text>
+                <View className="rounded-[10px] bg-[#FEF3C7] px-3 py-1.5">
+                  <Text className="font-inter-bold text-[13px] text-[#D97706]">₱50k - ₱100k</Text>
                 </View>
               </View>
-              <View style={styles.actionButton}>
-                <ChevronRight size={18} color="#003366" />
+              <View className="h-9 w-9 items-center justify-center rounded-full bg-background">
+                <ChevronRight size={18} color="#0138A8" />
               </View>
             </View>
           </TouchableOpacity>
 
           {/* Modern Opportunity Card 2 */}
-          <TouchableOpacity style={styles.opportunityCard} activeOpacity={0.8}>
-            <View style={styles.cardHeader}>
-              <View style={styles.departmentBadge}>
-                <Text style={styles.departmentText}>General Services</Text>
+          <TouchableOpacity
+            className="rounded-3xl border border-background bg-white p-5"
+            style={{ shadowColor: "#64748B", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.08, shadowRadius: 12, elevation: 2 }}
+            activeOpacity={0.8}
+          >
+            <View className="mb-3 flex-row items-center justify-between">
+              <View className="rounded-lg border border-border bg-background px-2.5 py-1.5">
+                <Text className="font-inter-bold text-[11px] uppercase tracking-[0.5px] text-slate-600">
+                  General Services
+                </Text>
               </View>
-              <Text style={styles.timeText}>Closes in 12d</Text>
+              <Text className="font-inter-semibold text-xs text-danger">Closes in 12d</Text>
             </View>
 
-            <Text style={styles.opportunityTitle}>
+            <Text className="font-inter-bold mb-4 text-lg leading-6 text-primary-foreground">
               Office Supplies Provisioning 2026
             </Text>
 
-            <View style={styles.cardFooter}>
-              <View style={styles.tagContainer}>
-                <View style={styles.tag}>
-                  <Text style={styles.tagText}>Logistics</Text>
+            <View className="flex-row items-center justify-between">
+              <View className="flex-row gap-2">
+                <View className="rounded-[10px] bg-background px-3 py-1.5">
+                  <Text className="font-inter-semibold text-[13px] text-slate-600">Logistics</Text>
                 </View>
-                <View style={[styles.tag, styles.tagHighlight]}>
-                  <Text style={styles.tagTextHighlight}>₱10k - ₱25k</Text>
+                <View className="rounded-[10px] bg-[#FEF3C7] px-3 py-1.5">
+                  <Text className="font-inter-bold text-[13px] text-[#D97706]">₱10k - ₱25k</Text>
                 </View>
               </View>
-              <View style={styles.actionButton}>
-                <ChevronRight size={18} color="#003366" />
+              <View className="h-9 w-9 items-center justify-center rounded-full bg-background">
+                <ChevronRight size={18} color="#0138A8" />
               </View>
             </View>
           </TouchableOpacity>
@@ -155,208 +177,3 @@ export default function HomePage() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F8FAFC",
-  },
-  headerBackground: {
-    backgroundColor: "#003366",
-    paddingBottom: 40,
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
-  },
-  headerContent: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 24,
-    paddingTop: 10,
-  },
-  greetingText: {
-    fontSize: 16,
-    color: "#94A3B8",
-    fontWeight: "500",
-    marginBottom: 4,
-  },
-  companyText: {
-    fontSize: 28,
-    fontWeight: "800",
-    color: "#FFFFFF",
-    letterSpacing: -0.5,
-  },
-  avatarBadge: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "#FFCC00",
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#FFCC00",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-  },
-  avatarText: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#003366",
-  },
-  scrollContent: {
-    paddingBottom: 40,
-  },
-  statsFloatingCard: {
-    flexDirection: "row",
-    backgroundColor: "#FFFFFF",
-    marginHorizontal: 24,
-    marginTop: 20,
-    borderRadius: 24,
-    paddingVertical: 20,
-    paddingHorizontal: 16,
-    shadowColor: "#003366",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
-    elevation: 8,
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  statItem: {
-    flex: 1,
-    alignItems: "center",
-  },
-  statDivider: {
-    width: 1,
-    height: 40,
-    backgroundColor: "#F1F5F9",
-  },
-  iconWrapper: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 10,
-  },
-  statNumber: {
-    fontSize: 22,
-    fontWeight: "800",
-    color: "#1E293B",
-    marginBottom: 2,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: "#64748B",
-    fontWeight: "600",
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 24,
-    marginTop: 32,
-    marginBottom: 16,
-  },
-  sectionTitleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  sectionTitle: {
-    marginLeft: 6,
-    fontSize: 20,
-    fontWeight: "800",
-    color: "#1E293B",
-  },
-  seeAllText: {
-    color: "#003366",
-    fontWeight: "700",
-    fontSize: 14,
-  },
-  opportunitiesList: {
-    paddingHorizontal: 24,
-    gap: 16,
-  },
-  opportunityCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 24,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: "#F1F5F9",
-    shadowColor: "#94A3B8",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 2,
-  },
-  cardHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  departmentBadge: {
-    backgroundColor: "#F8FAFC",
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-  },
-  departmentText: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: "#475569",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  timeText: {
-    fontSize: 12,
-    color: "#EF4444",
-    fontWeight: "600",
-  },
-  opportunityTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#1E293B",
-    marginBottom: 16,
-    lineHeight: 24,
-  },
-  cardFooter: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  tagContainer: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  tag: {
-    backgroundColor: "#F1F5F9",
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 10,
-  },
-  tagHighlight: {
-    backgroundColor: "#FEF3C7",
-  },
-  tagText: {
-    fontSize: 13,
-    color: "#475569",
-    fontWeight: "600",
-  },
-  tagTextHighlight: {
-    fontSize: 13,
-    color: "#D97706",
-    fontWeight: "700",
-  },
-  actionButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#F8FAFC",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});
