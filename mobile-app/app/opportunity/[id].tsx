@@ -9,6 +9,7 @@ import {
 } from "lucide-react-native";
 import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
@@ -16,52 +17,76 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-// A mock function to simulate fetching data from Supabase using the ID
-const fetchOpportunityDetails = (id: string) => {
-  return {
-    id,
-    title: "IT Infrastructure Upgrade Phase 2",
-    department: "Department of Technology",
-    budget: "₱50k - ₱100k",
-    deadline: "May 22, 2026",
-    category: "IT & Tech",
-    status: "Open",
-    description:
-      "The Department of Technology is seeking a highly qualified vendor to overhaul and upgrade the core network infrastructure across 3 primary municipal buildings. The chosen vendor will be responsible for hardware procurement, installation, and initial configuration.",
-    requirements: [
-      "Minimum 5 years of experience in enterprise network deployments.",
-      "Valid ISO 27001 Certification.",
-      "Ability to provide 24/7 SLA support for 90 days post-installation.",
-    ],
-    documents: [
-      { id: "d1", name: "Scope_of_Work_v2.pdf", size: "2.4 MB" },
-      { id: "d2", name: "Vendor_Compliance_Terms.pdf", size: "845 KB" },
-    ],
-  };
-};
+import { supabase } from "../../lib/supabase";
 
 export default function OpportunityDetailsPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const [opportunity, setOpportunity] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // In production, this is where you would do:
-    // const { data } = await supabase.from('opportunities').select('*').eq('id', id).single();
     if (id) {
-      const data = fetchOpportunityDetails(id);
-      setOpportunity(data);
+      fetchOpportunityDetails();
     }
   }, [id]);
+
+  const fetchOpportunityDetails = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("opportunities")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (error) {
+        console.error("Error fetching opportunity details:", error.message);
+      } else {
+        setOpportunity(data);
+      }
+    } catch (err) {
+      console.error("Exception fetching opportunity:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#003366" />
+          <Text style={styles.loadingText}>Loading contract details...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   if (!opportunity) {
     return (
       <SafeAreaView style={styles.safeArea}>
-        <Text style={{ padding: 24 }}>Loading contract details...</Text>
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>Contract details not found.</Text>
+          <TouchableOpacity
+            style={styles.backButtonInline}
+            onPress={() => router.back()}
+          >
+            <Text style={styles.backButtonText}>Go Back</Text>
+          </TouchableOpacity>
+        </View>
       </SafeAreaView>
     );
   }
+
+  const requirements = opportunity.requirements || [
+    "Minimum experience in relevant domain required.",
+    "Valid compliance and business permits.",
+  ];
+
+  const documents = opportunity.documents || [
+    { id: "d1", name: "Terms_and_Conditions.pdf", size: "1.2 MB" },
+  ];
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
@@ -82,11 +107,13 @@ export default function OpportunityDetailsPage() {
       >
         <View style={styles.topSection}>
           <View style={styles.badgeContainer}>
-            <View style={styles.categoryBadge}>
-              <Text style={styles.categoryText}>{opportunity.category}</Text>
-            </View>
+            {opportunity.category && (
+              <View style={styles.categoryBadge}>
+                <Text style={styles.categoryText}>{opportunity.category}</Text>
+              </View>
+            )}
             <View style={styles.statusBadge}>
-              <Text style={styles.statusText}>{opportunity.status}</Text>
+              <Text style={styles.statusText}>{opportunity.status || "Open"}</Text>
             </View>
           </View>
 
@@ -115,12 +142,14 @@ export default function OpportunityDetailsPage() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Scope of Work</Text>
-          <Text style={styles.paragraph}>{opportunity.description}</Text>
+          <Text style={styles.paragraph}>
+            {opportunity.description || "No detailed description provided."}
+          </Text>
         </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Minimum Requirements</Text>
-          {opportunity.requirements.map((req: string, index: number) => (
+          {requirements.map((req: string, index: number) => (
             <View key={index} style={styles.bulletRow}>
               <View style={styles.bulletPoint} />
               <Text style={styles.bulletText}>{req}</Text>
@@ -130,8 +159,8 @@ export default function OpportunityDetailsPage() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Attached Documents</Text>
-          {opportunity.documents.map((doc: any) => (
-            <TouchableOpacity key={doc.id} style={styles.documentCard}>
+          {documents.map((doc: any, idx: number) => (
+            <TouchableOpacity key={doc.id || idx} style={styles.documentCard}>
               <View style={styles.docIconWrapper}>
                 <FileText size={20} color="#003366" />
               </View>
@@ -335,7 +364,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     paddingHorizontal: 24,
     paddingTop: 16,
-    paddingBottom: 32, // Accommodates home indicator on iOS
+    paddingBottom: 32,
     borderTopWidth: 1,
     borderTopColor: "#E2E8F0",
   },
@@ -355,5 +384,36 @@ const styles = StyleSheet.create({
     color: "#003366",
     fontSize: 18,
     fontWeight: "bold",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 15,
+    color: "#64748B",
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: "#64748B",
+    marginBottom: 16,
+  },
+  backButtonInline: {
+    backgroundColor: "#003366",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 12,
+  },
+  backButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "600",
   },
 });

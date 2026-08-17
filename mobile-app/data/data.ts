@@ -1,3 +1,26 @@
+export interface Opportunity {
+  id: string;
+  title: string;
+  department: string;
+  budget: string;
+  deadline: string;
+  category: string;
+  description?: string;
+  created_at?: string;
+}
+
+export interface Bid {
+  id: string;
+  contractTitle: string;
+  department: string;
+  amount: string;
+  submittedOn: string;
+  status: "Pending" | "Won" | "Lost";
+  proposalUrl?: string;
+  opportunityId?: string;
+  user_id?: string;
+}
+
 export const MOCK_OPPORTUNITIES = [
   {
     id: "1",
@@ -49,7 +72,6 @@ export const CATEGORIES = [
   "Vehicles",
 ];
 
-// Mock data for submitted bids
 export const MOCK_BIDS = [
   {
     id: "b1",

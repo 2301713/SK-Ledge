@@ -1,20 +1,67 @@
 import { CheckCircle, Clock, XCircle } from "lucide-react-native";
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   FlatList,
+  RefreshControl,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { MOCK_BIDS, TABS } from "../../data/data";
+import { TABS } from "../../data/data";
+import { supabase } from "../../lib/supabase";
+
+type BidItem = {
+  id: string;
+  contract_title: string;
+  department: string;
+  status: string;
+  submitted_on: string;
+  amount: string;
+};
 
 export default function MyBidsPage() {
   const [activeTab, setActiveTab] = useState("All");
+  const [bids, setBids] = useState<BidItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Filter bids based on the selected tab
-  const filteredBids = MOCK_BIDS.filter(
+  const fetchBids = async () => {
+    try {
+      const { data: authData } = await supabase.auth.getUser();
+      if (!authData.user) return;
+
+      const { data, error } = await supabase
+        .from("bids")
+        .select("*")
+        .eq("user_id", authData.user.id)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      if (data) {
+        setBids(data as BidItem[]);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBids();
+  }, []);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchBids();
+  }, []);
+
+  const filteredBids = bids.filter(
     (bid) => activeTab === "All" || bid.status === activeTab,
   );
 
@@ -42,14 +89,14 @@ export default function MyBidsPage() {
     }
   };
 
-  const renderItem = ({ item }: { item: (typeof MOCK_BIDS)[0] }) => {
+  const renderItem = ({ item }: { item: BidItem }) => {
     const statusConfig = getStatusConfig(item.status);
 
     return (
       <View style={styles.card}>
         <View style={styles.cardTopRow}>
           <View style={styles.titleContainer}>
-            <Text style={styles.titleText}>{item.contractTitle}</Text>
+            <Text style={styles.titleText}>{item.contract_title}</Text>
             <Text style={styles.departmentText}>{item.department}</Text>
           </View>
           <View
@@ -70,7 +117,7 @@ export default function MyBidsPage() {
         <View style={styles.cardFooter}>
           <View>
             <Text style={styles.amountLabel}>Submitted On</Text>
-            <Text style={styles.dateText}>{item.submittedOn}</Text>
+            <Text style={styles.dateText}>{item.submitted_on}</Text>
           </View>
           <View style={styles.amountContainer}>
             <Text style={styles.amountLabel}>Your Bid Amount</Text>
@@ -83,15 +130,12 @@ export default function MyBidsPage() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
-      {/* HERO HEADER */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>My Bids</Text>
         <Text style={styles.headerSubtitle}>Track your proposal history</Text>
       </View>
 
-      {/* OVERLAPPING BODY */}
       <View style={styles.body}>
-        {/* TABS */}
         <View style={styles.tabsContainer}>
           {TABS.map((tab) => (
             <TouchableOpacity
@@ -115,21 +159,31 @@ export default function MyBidsPage() {
           ))}
         </View>
 
-        {/* LIST */}
-        <FlatList
-          data={filteredBids}
-          keyExtractor={(item) => item.id}
-          renderItem={renderItem}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>
-                No bids found in this category.
-              </Text>
-            </View>
-          }
-        />
+        {loading ? (
+          <ActivityIndicator
+            size="large"
+            color="#003366"
+            style={{ marginTop: 40 }}
+          />
+        ) : (
+          <FlatList
+            data={filteredBids}
+            keyExtractor={(item) => item.id}
+            renderItem={renderItem}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
+            ListEmptyComponent={
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>
+                  No bids found in this category.
+                </Text>
+              </View>
+            }
+          />
+        )}
       </View>
     </SafeAreaView>
   );
@@ -138,13 +192,13 @@ export default function MyBidsPage() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#003366", // Matches the header to bleed into the status bar
+    backgroundColor: "#003366",
   },
   header: {
     backgroundColor: "#003366",
     paddingHorizontal: 24,
     paddingTop: 10,
-    paddingBottom: 50, // Extra padding to allow the body to overlap
+    paddingBottom: 50,
   },
   headerTitle: {
     fontSize: 32,
@@ -163,7 +217,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F8FAFC",
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
-    marginTop: -30, // Creates the overlapping effect
+    marginTop: -30,
     paddingTop: 24,
   },
   tabsContainer: {

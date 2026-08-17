@@ -1,3 +1,4 @@
+import * as DocumentPicker from "expo-document-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   ArrowLeft,
@@ -19,53 +20,111 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { supabase } from "../../lib/supabase";
 
 export default function SubmitBidPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
 
-  // Form State
   const [amount, setAmount] = useState("");
   const [timeline, setTimeline] = useState("");
   const [notes, setNotes] = useState("");
-  const [fileUploaded, setFileUploaded] = useState(false);
+  const [selectedFile, setSelectedFile] =
+    useState<DocumentPicker.DocumentPickerAsset | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleMockUpload = () => {
-    // In a real app, you'd use expo-document-picker here
-    setFileUploaded(true);
+  const handleDocumentPick = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: "application/pdf",
+        copyToCacheDirectory: true,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        setSelectedFile(result.assets[0]);
+      }
+    } catch (err) {
+      Alert.alert("Error", "Failed to select document.");
+    }
   };
 
-  const handleSubmit = () => {
-    if (!amount || !timeline || !fileUploaded) {
+  const handleSubmit = async () => {
+    if (!amount || !timeline || !selectedFile) {
       Alert.alert(
         "Missing Information",
-        "Please fill out all required fields and upload your proposal document.",
+        "Please fill out all required fields and upload your proposal document."
       );
       return;
     }
 
     setIsSubmitting(true);
 
-    // Simulate an API call to Supabase to insert the bid
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      const response = await fetch(selectedFile.uri);
+      const blob = await response.blob();
+      const fileName = `${Date.now()}_${selectedFile.name}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("proposals")
+        .upload(fileName, blob, {
+          contentType: "application/pdf",
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data: publicUrlData } = supabase.storage
+        .from("proposals")
+        .getPublicUrl(fileName);
+
+      const proposalUrl = publicUrlData.publicUrl;
+
+      const { data: oppData } = await supabase
+        .from("opportunities")
+        .select("title, department")
+        .eq("id", id)
+        .single();
+
+      const { data: authData } = await supabase.auth.getUser();
+      const userId = authData.user?.id;
+
+      const { error: insertError } = await supabase.from("bids").insert([
+        {
+          opportunity_id: id,
+          user_id: userId,
+          contract_title: oppData?.title || "Contract Proposal",
+          department: oppData?.department || "General",
+          amount: `₱${amount}`,
+          proposal_url: proposalUrl,
+          status: "Pending",
+          submitted_on: new Date().toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          }),
+        },
+      ]);
+
+      if (insertError) throw insertError;
+
       Alert.alert(
         "Bid Submitted!",
         "Your proposal has been securely transmitted to the agency.",
         [
           {
-            text: "View Dashboard",
-            onPress: () => router.replace("/(tabs)/home"),
+            text: "View My Bids",
+            onPress: () => router.replace("/(tabs)/my-bids"),
           },
-        ],
+        ]
       );
-    }, 1500);
+    } catch (error: any) {
+      Alert.alert("Submission Failed", error.message || "An error occurred.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
-      {/* Custom Header */}
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => router.back()}
@@ -93,7 +152,6 @@ export default function SubmitBidPage() {
             </Text>
           </View>
 
-          {/* Form Fields */}
           <View style={styles.formGroup}>
             <Text style={styles.label}>Total Bid Amount (PHP) *</Text>
             <View style={styles.inputWrapper}>
@@ -120,23 +178,22 @@ export default function SubmitBidPage() {
             />
           </View>
 
-          {/* Document Upload */}
           <View style={styles.formGroup}>
             <Text style={styles.label}>Technical Proposal (PDF) *</Text>
 
             <TouchableOpacity
               style={[
                 styles.uploadBox,
-                fileUploaded && styles.uploadBoxSuccess,
+                selectedFile && styles.uploadBoxSuccess,
               ]}
-              onPress={handleMockUpload}
+              onPress={handleDocumentPick}
               activeOpacity={0.7}
             >
-              {fileUploaded ? (
+              {selectedFile ? (
                 <>
                   <CheckCircle size={32} color="#16A34A" />
-                  <Text style={styles.uploadTextSuccess}>
-                    Document_Ready.pdf
+                  <Text style={styles.uploadTextSuccess} numberOfLines={1}>
+                    {selectedFile.name}
                   </Text>
                   <Text style={styles.uploadSubtext}>Tap to replace file</Text>
                 </>
@@ -165,7 +222,6 @@ export default function SubmitBidPage() {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* Sticky Bottom Action Bar */}
       <View style={styles.bottomBar}>
         <TouchableOpacity
           style={[
@@ -298,6 +354,8 @@ const styles = StyleSheet.create({
     color: "#16A34A",
     marginTop: 12,
     marginBottom: 4,
+    paddingHorizontal: 12,
+    textAlign: "center",
   },
   uploadSubtext: {
     fontSize: 12,

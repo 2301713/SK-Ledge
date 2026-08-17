@@ -1,8 +1,10 @@
 import { useRouter } from "expo-router";
 import { ChevronRight, Filter, Search } from "lucide-react-native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   FlatList,
+  RefreshControl,
   StyleSheet,
   Text,
   TextInput,
@@ -10,24 +12,58 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { CATEGORIES, MOCK_OPPORTUNITIES } from "../../data/data";
+import { CATEGORIES, Opportunity } from "../../data/data";
+import { supabase } from "../../lib/supabase";
 
 export default function OpportunitiesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
+  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
 
-  // Filter logic
-  const filteredData = MOCK_OPPORTUNITIES.filter((item) => {
+  // Fetch data mula sa Supabase DB
+  const fetchOpportunities = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("opportunities")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching opportunities:", error.message);
+      } else if (data) {
+        setOpportunities(data);
+      }
+    } catch (err) {
+      console.error("Fetch exception:", err);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOpportunities();
+  }, []);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchOpportunities();
+  };
+
+  // Filter logic para sa Search Bar at Category Pills
+  const filteredData = opportunities.filter((item) => {
     const matchesSearch = item.title
-      .toLowerCase()
+      ?.toLowerCase()
       .includes(searchQuery.toLowerCase());
     const matchesCategory =
       activeCategory === "All" || item.category === activeCategory;
     return matchesSearch && matchesCategory;
   });
 
-  const renderItem = ({ item }: { item: (typeof MOCK_OPPORTUNITIES)[0] }) => (
+  const renderItem = ({ item }: { item: Opportunity }) => (
     <TouchableOpacity
       style={styles.card}
       activeOpacity={0.7}
@@ -119,18 +155,32 @@ export default function OpportunitiesPage() {
         </View>
 
         {/* Opportunities List */}
-        <FlatList
-          data={filteredData}
-          keyExtractor={(item) => item.id}
-          renderItem={renderItem}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>No opportunities found.</Text>
-            </View>
-          }
-        />
+        {loading && !refreshing ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#003366" />
+          </View>
+        ) : (
+          <FlatList
+            data={filteredData}
+            keyExtractor={(item) => item.id}
+            renderItem={renderItem}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor="#003366"
+                colors={["#003366"]}
+              />
+            }
+            ListEmptyComponent={
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>No opportunities found.</Text>
+              </View>
+            }
+          />
+        )}
       </View>
     </SafeAreaView>
   );
@@ -305,6 +355,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#F1F5F9",
     alignItems: "center",
     justifyContent: "center",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingTop: 40,
   },
   emptyContainer: {
     paddingVertical: 60,
