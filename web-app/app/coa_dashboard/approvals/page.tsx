@@ -9,6 +9,7 @@ import StatCard from "@/components/dashboard/ui/StatCard";
 import { Card, CardHeader } from "@/components/dashboard/ui/Card";
 import StatusBadge from "@/components/dashboard/ui/StatusBadge";
 import { supabase } from "@/lib/supabase";
+import { parseExpensePurpose } from "@/lib/formatExpensePurpose";
 import { ApprovalRequest, UserAccount } from "../types";
 import { dummyApprovals } from "@/lib/dummyData";
 import { Check, CheckSquare, ClipboardList } from "lucide-react";
@@ -165,7 +166,9 @@ export default function ApprovalsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {approvalsData.map((item) => (
+                {approvalsData.map((item) => {
+                  const parsed = parseExpensePurpose(item.purpose);
+                  return (
                   <tr
                     key={item.id}
                     className="transition-colors hover:bg-secondary/50"
@@ -182,8 +185,13 @@ export default function ApprovalsPage() {
                     </td>
                     <td className="max-w-xl px-4 py-4 align-middle">
                       <span className="line-clamp-2 text-sm font-medium text-secondary-foreground leading-tight">
-                        {item.purpose}
+                        {parsed.description}
                       </span>
+                      {parsed.vendor && (
+                        <span className="mt-0.5 block text-[11px] font-semibold text-secondary-foreground/70">
+                          Vendor: {parsed.vendor}
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-4 align-middle">
                       <span className="text-base font-bold tabular-nums text-primary">
@@ -214,7 +222,8 @@ export default function ApprovalsPage() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>

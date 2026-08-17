@@ -25,6 +25,8 @@ import {
 } from "lucide-react";
 import { CONTRACT_ADDRESS, SK_LEDGE_ABI } from "@/lib/contractConfig";
 import { useAuthStore } from "@/lib/useAuthStore";
+import { useToast } from "@/lib/useToast";
+import { syncRecord } from "@/lib/syncRecord";
 
 export default function AllocateFundsForm() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -38,6 +40,7 @@ export default function AllocateFundsForm() {
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
   const { currentUser } = useAuthStore();
+  const toast = useToast();
 
   const {
     data: hash,
@@ -103,22 +106,21 @@ export default function AllocateFundsForm() {
       setCurrentStep(1);
 
       // Sync to Supabase via API
-      fetch("/api/sync-record", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "allocation",
-          user_id: currentUser?.id || "",
-          blockchain_tx_hash: hash,
-          contract_address: CONTRACT_ADDRESS,
-          official_address: address || "",
-          barangay: barangay || "General",
-          amount: Number(amountPhp),
-          purpose: programName,
-        }),
-      }).catch((err) => console.error("Sync failed:", err));
+      syncRecord({
+        type: "allocation",
+        user_id: currentUser?.id || "",
+        blockchain_tx_hash: hash,
+        contract_address: CONTRACT_ADDRESS,
+        official_address: address || "",
+        barangay: barangay || "General",
+        amount: Number(amountPhp),
+        purpose: programName,
+      }).catch((err) => {
+        console.error("Sync failed:", err);
+        toast.error("Recorded on-chain, but syncing to the database failed.");
+      });
     }
-  }, [isConfirmed, hash, currentUser, address, barangay, amountPhp, programName]);
+  }, [isConfirmed, hash, currentUser, address, barangay, amountPhp, programName, toast]);
 
   const formatCurrency = (val: string) => {
     const num = parseFloat(val);

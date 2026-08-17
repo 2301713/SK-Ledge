@@ -20,6 +20,8 @@
     "@x402/evm": "^2.19.0",
     "@x402/extensions": "^2.19.0",
     "@x402/svm": "^2.19.0",
+    "axios": "^1.19.0",
+    "axios-retry": "^4.5.0",
     "chart.js": "^4.5.1",
     "framer-motion": "^12.38.0",
     "lucide-react": "^1.14.0",

@@ -8,6 +8,8 @@ import {
 } from "wagmi";
 import { CONTRACT_ADDRESS, SK_LEDGE_ABI } from "@/lib/contractConfig";
 import { useAuthStore } from "@/lib/useAuthStore";
+import { useToast } from "@/lib/useToast";
+import { syncRecord } from "@/lib/syncRecord";
 
 export function RecordForm() {
   const [barangay, setBarangay] = useState("");
@@ -18,6 +20,7 @@ export function RecordForm() {
 
   const { isConnected, address } = useAccount();
   const { currentUser } = useAuthStore();
+  const toast = useToast();
   const {
     data: hash,
     error: writeError,
@@ -54,22 +57,21 @@ export function RecordForm() {
 
   useEffect(() => {
     if (isConfirmed && hash) {
-      fetch("/api/sync-record", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: recordType.toLowerCase(),
-          user_id: currentUser?.id || "",
-          blockchain_tx_hash: hash,
-          contract_address: CONTRACT_ADDRESS,
-          official_address: address || "",
-          barangay,
-          amount: Number(amount),
-          purpose,
-        }),
-      }).catch((err) => console.error("Sync failed:", err));
+      syncRecord({
+        type: recordType.toLowerCase() as "expense" | "allocation",
+        user_id: currentUser?.id || "",
+        blockchain_tx_hash: hash,
+        contract_address: CONTRACT_ADDRESS,
+        official_address: address || "",
+        barangay,
+        amount: Number(amount),
+        purpose,
+      }).catch((err) => {
+        console.error("Sync failed:", err);
+        toast.error("Recorded on-chain, but syncing to the database failed.");
+      });
     }
-  }, [isConfirmed, hash, recordType, currentUser, address, barangay, amount, purpose]);
+  }, [isConfirmed, hash, recordType, currentUser, address, barangay, amount, purpose, toast]);
 
   if (!isConnected) {
     return (

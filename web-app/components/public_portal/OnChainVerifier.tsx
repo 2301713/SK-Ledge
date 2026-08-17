@@ -2,11 +2,8 @@
 
 import { useState } from "react";
 import { useReadContract } from "wagmi";
-import {
-  CONTRACT_ADDRESS,
-  LEGACY_CONTRACT_ADDRESS,
-  SK_LEDGE_ABI,
-} from "@/lib/contractConfig";
+import { CONTRACT_ADDRESS, LEGACY_CONTRACT_ADDRESS, SK_LEDGE_ABI } from "@/lib/contractConfig";
+import { parseExpensePurpose } from "@/lib/formatExpensePurpose";
 import { ShieldCheck, RefreshCw, ExternalLink, Loader2 } from "lucide-react";
 
 type OnChainRecord = {
@@ -211,7 +208,9 @@ export default function OnChainVerifier() {
                     <tbody className="divide-y divide-border">
                       {[...records]
                         .reverse()
-                        .map((record: OnChainRecord) => (
+                        .map((record: OnChainRecord) => {
+                          const parsed = parseExpensePurpose(record.purpose);
+                          return (
                           <tr
                             key={`${record.deployment}-${String(record.id)}`}
                             className="hover:bg-secondary/40 transition-colors"
@@ -234,7 +233,14 @@ export default function OnChainVerifier() {
                               {record.barangay}
                             </td>
                             <td className="px-4 py-3 text-sm text-secondary-foreground max-w-50 truncate">
-                              {record.purpose}
+                              <span className="font-medium text-primary-foreground">
+                                {parsed.description}
+                              </span>
+                              {parsed.vendor && (
+                                <span className="block text-xs text-secondary-foreground">
+                                  Vendor: {parsed.vendor}
+                                </span>
+                              )}
                             </td>
                             <td className="px-4 py-3 text-sm font-bold text-primary-foreground text-right font-mono">
                               ₱{Number(record.amount).toLocaleString()}
@@ -252,7 +258,8 @@ export default function OnChainVerifier() {
                               </span>
                             </td>
                           </tr>
-                        ))}
+                          );
+                        })}
                     </tbody>
                   </table>
                 </div>

@@ -16,6 +16,7 @@ import {
   useAccount,
 } from "wagmi";
 import { CONTRACT_ADDRESS, SK_LEDGE_ABI } from "@/lib/contractConfig";
+import { syncRecord } from "@/lib/syncRecord";
 import {
   Upload,
   Building,
@@ -279,35 +280,21 @@ export default function ExpensesPage() {
 
       toast.success("Expense logged on blockchain!");
 
-      fetch("/api/sync-record", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "expense",
-          user_id: currentUser?.id || "",
-          blockchain_tx_hash: hash,
-          contract_address: CONTRACT_ADDRESS,
-          official_address: address || "",
-          barangay: data.barangay,
-          amount: data.amount,
-          purpose: data.purpose,
-        }),
-      })
-        .then(async (res) => {
-          if (!res.ok) {
-            const body = await res.json().catch(() => null);
-            console.error("Database sync failed:", res.status, body);
-            toast.error(
-              "Recorded on-chain, but syncing to the database failed. Contact an admin.",
-            );
-          }
-        })
-        .catch((err) => {
-          console.error("Sync failed:", err);
-          toast.error(
-            "Recorded on-chain, but syncing to the database failed. Contact an admin.",
-          );
-        });
+      syncRecord({
+        type: "expense",
+        user_id: currentUser?.id || "",
+        blockchain_tx_hash: hash,
+        contract_address: CONTRACT_ADDRESS,
+        official_address: address || "",
+        barangay: data.barangay,
+        amount: data.amount,
+        purpose: data.purpose,
+      }).catch((err) => {
+        console.error("Sync failed:", err);
+        toast.error(
+          "Recorded on-chain, but syncing to the database failed. Contact an admin.",
+        );
+      });
     }
   }, [isConfirmed, hash, currentUser, address, toast]);
 
