@@ -1,26 +1,66 @@
 import { useRouter } from "expo-router";
 import { ChevronRight, Filter, Search } from "lucide-react-native";
-import React, { useState } from "react";
-import { FlatList, Text, TextInput, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  FlatList,
+  RefreshControl,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { CATEGORIES, MOCK_OPPORTUNITIES } from "../../data/data";
+import { CATEGORIES, Opportunity } from "../../data/data";
+import { supabase } from "../../lib/supabase";
 
 export default function OpportunitiesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
+  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
 
-  // Filter logic
-  const filteredData = MOCK_OPPORTUNITIES.filter((item) => {
+  const fetchOpportunities = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("opportunities")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching opportunities:", error.message);
+      } else if (data) {
+        setOpportunities(data);
+      }
+    } catch (err) {
+      console.error("Fetch exception:", err);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOpportunities();
+  }, []);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchOpportunities();
+  };
+
+  const filteredData = opportunities.filter((item) => {
     const matchesSearch = item.title
-      .toLowerCase()
+      ?.toLowerCase()
       .includes(searchQuery.toLowerCase());
     const matchesCategory =
       activeCategory === "All" || item.category === activeCategory;
     return matchesSearch && matchesCategory;
   });
 
-  const renderItem = ({ item }: { item: (typeof MOCK_OPPORTUNITIES)[0] }) => (
+  const renderItem = ({ item }: { item: Opportunity }) => (
     <TouchableOpacity
       className="rounded-3xl border border-border bg-white p-5"
       style={{ shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 10, elevation: 2 }}
@@ -126,20 +166,34 @@ export default function OpportunitiesPage() {
         </View>
 
         {/* Opportunities List */}
-        <FlatList
-          data={filteredData}
-          keyExtractor={(item) => item.id}
-          renderItem={renderItem}
-          contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 40, gap: 16 }}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={
-            <View className="items-center py-[60px]">
-              <Text className="font-inter-medium text-[15px] text-secondary-foreground">
-                No opportunities found.
-              </Text>
-            </View>
-          }
-        />
+        {loading && !refreshing ? (
+          <View className="flex-1 items-center justify-center pt-10">
+            <ActivityIndicator size="large" color="#003366" />
+          </View>
+        ) : (
+          <FlatList
+            data={filteredData}
+            keyExtractor={(item) => item.id}
+            renderItem={renderItem}
+            contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 40, gap: 16 }}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor="#003366"
+                colors={["#003366"]}
+              />
+            }
+            ListEmptyComponent={
+              <View className="items-center py-[60px]">
+                <Text className="font-inter-medium text-[15px] text-secondary-foreground">
+                  No opportunities found.
+                </Text>
+              </View>
+            }
+          />
+        )}
       </View>
     </SafeAreaView>
   );

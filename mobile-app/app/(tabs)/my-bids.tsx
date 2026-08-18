@@ -1,18 +1,76 @@
 import StatusBadge from "@/components/ui/StatusBadge";
-import React, { useState } from "react";
-import { FlatList, Text, TouchableOpacity, View } from "react-native";
+import React, { useCallback, useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  FlatList,
+  RefreshControl,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { MOCK_BIDS, TABS } from "../../data/data";
+import { TABS } from "../../data/data";
+import { supabase } from "../../lib/supabase";
+
+type BidItem = {
+  id: string;
+  contract_title: string;
+  department: string;
+  status: string;
+  submitted_on: string;
+  amount: string;
+};
 
 export default function MyBidsPage() {
   const [activeTab, setActiveTab] = useState("All");
+  const [bids, setBids] = useState<BidItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [signedOut, setSignedOut] = useState(false);
 
-  // Filter bids based on the selected tab
-  const filteredBids = MOCK_BIDS.filter(
+  const fetchBids = async () => {
+    try {
+      const { data: authData } = await supabase.auth.getUser();
+      if (!authData.user) {
+        setSignedOut(true);
+        setBids([]);
+        return;
+      }
+      setSignedOut(false);
+
+      const { data, error } = await supabase
+        .from("bids")
+        .select("*")
+        .eq("user_id", authData.user.id)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      if (data) {
+        setBids(data as BidItem[]);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBids();
+  }, []);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchBids();
+  }, []);
+
+  const filteredBids = bids.filter(
     (bid) => activeTab === "All" || bid.status === activeTab,
   );
 
-  const renderItem = ({ item }: { item: (typeof MOCK_BIDS)[0] }) => {
+  const renderItem = ({ item }: { item: BidItem }) => {
     return (
       <View
         className="rounded-3xl border border-border bg-white p-5"
@@ -21,7 +79,7 @@ export default function MyBidsPage() {
         <View className="mb-4 flex-row items-start justify-between">
           <View className="flex-1 pr-3">
             <Text className="font-inter-extrabold mb-1 text-[17px] leading-[22px] text-primary-foreground">
-              {item.contractTitle}
+              {item.contract_title}
             </Text>
             <Text className="font-inter-medium text-[13px] text-secondary-foreground">
               {item.department}
@@ -38,7 +96,7 @@ export default function MyBidsPage() {
               Submitted On
             </Text>
             <Text className="font-inter-semibold mt-0.5 text-sm text-primary-foreground">
-              {item.submittedOn}
+              {item.submitted_on}
             </Text>
           </View>
           <View className="items-end">
@@ -92,20 +150,31 @@ export default function MyBidsPage() {
         </View>
 
         {/* LIST */}
-        <FlatList
-          data={filteredBids}
-          keyExtractor={(item) => item.id}
-          renderItem={renderItem}
-          contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 40, gap: 16 }}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={
-            <View className="items-center justify-center py-[60px]">
-              <Text className="font-inter-medium text-center text-[15px] text-secondary-foreground">
-                No bids found in this category.
-              </Text>
-            </View>
-          }
-        />
+        {loading ? (
+          <View className="flex-1 items-center justify-center gap-3">
+            <ActivityIndicator size="large" color="#003366" />
+          </View>
+        ) : (
+          <FlatList
+            data={filteredBids}
+            keyExtractor={(item) => item.id}
+            renderItem={renderItem}
+            contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 40, gap: 16 }}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
+            ListEmptyComponent={
+              <View className="items-center justify-center py-[60px] px-6">
+                <Text className="font-inter-medium text-center text-[15px] text-secondary-foreground">
+                  {signedOut
+                    ? "Please log in to view your bids."
+                    : "No bids found in this category."}
+                </Text>
+              </View>
+            }
+          />
+        )}
       </View>
     </SafeAreaView>
   );
