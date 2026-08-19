@@ -19,6 +19,13 @@ export const SK_LEDGE_ABI = [
   },
   {
     type: "function",
+    name: "isAuthorizedOfficial",
+    stateMutability: "view",
+    inputs: [{ name: "", type: "address" }],
+    outputs: [{ name: "", type: "bool" }],
+  },
+  {
+    type: "function",
     name: "getAllRecords",
     stateMutability: "view",
     inputs: [],
