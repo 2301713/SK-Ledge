@@ -33,8 +33,27 @@ export const SK_LEDGE_ABI = [
           { name: "timestamp", type: "uint256" },
           { name: "purpose", type: "string" },
           { name: "recordType", type: "string" },
+          { name: "approved", type: "bool" },
+          { name: "approvedBy", type: "address" },
         ],
       },
     ],
+  },
+  {
+    type: "function",
+    name: "setRecordApproval",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "_id", type: "uint256" },
+      { name: "_approved", type: "bool" },
+    ],
+    outputs: [],
+  },
+  {
+    type: "function",
+    name: "owner",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "address" }],
   },
 ] as const;

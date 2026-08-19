@@ -1,7 +1,5 @@
 // lib/dummyData.ts
 
-import { ApprovalRequest } from "@/app/coa_dashboard/types";
-
 export type ProjectStatus = "Approved" | "Pending" | "Rejected";
 
 export type Project = {
@@ -56,30 +54,6 @@ export const INITIAL_PROJECTS: Project[] = [
     budget: 12000,
     proposedBy: "Jose Reyes",
     dateProposed: "Apr 22, 2026",
-  },
-];
-
-export const dummyApprovals: ApprovalRequest[] = [
-  {
-    id: 1,
-    department: "HR",
-    purpose: "Hiring (2 staff)",
-    amount: "₱15,000",
-    status: "Pending",
-  },
-  {
-    id: 2,
-    department: "IT",
-    purpose: "Computer Maintenance",
-    amount: "₱10,000",
-    status: "Pending",
-  },
-  {
-    id: 3,
-    department: "Engineering",
-    purpose: "Road Repair",
-    amount: "₱20,000",
-    status: "Pending",
   },
 ];
 

@@ -1,10 +1,14 @@
-export interface ApprovalRequest {
-  id: number;
-  department: string;
+export type OnChainApprovalRecord = {
+  id: bigint;
+  official: string;
+  barangay: string;
+  amount: bigint;
+  timestamp: bigint;
   purpose: string;
-  amount: string;
-  status: "Pending" | "Approved";
-}
+  recordType: string;
+  approved: boolean;
+  approvedBy: string;
+};
 
 export interface UserAccount {
   id: string;
