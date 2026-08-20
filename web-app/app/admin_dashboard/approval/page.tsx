@@ -11,6 +11,7 @@ import { Card, CardHeader } from "@/components/dashboard/ui/Card";
 import StatusBadge from "@/components/dashboard/ui/StatusBadge";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/lib/useAuthStore";
+import { useToast } from "@/lib/useToast";
 import { Check, Loader2, X } from "lucide-react";
 
 interface AccountRow {
@@ -26,6 +27,7 @@ interface AccountRow {
 
 export default function AccountsPage() {
   const router = useRouter();
+  const toast = useToast();
   const {
     currentUser,
     isLoading,
@@ -133,10 +135,10 @@ export default function AccountsPage() {
         ),
       );
 
-      alert(`Account has been successfully ${status}!`);
+      toast.success(`Account has been successfully ${status}!`);
     } catch (error: unknown) {
       console.error("Failed to update account status:", error);
-      alert(
+      toast.error(
         `Failed to update status: ${(error as Error).message || "Database permission denied."}`,
       );
     } finally {
