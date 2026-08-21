@@ -1,5 +1,5 @@
 export const CONTRACT_ADDRESS = (process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ||
-  "") as `0x${string}`;
+  "0x0000000000000000000000000000000000000000") as `0x${string}`;
 
 export const LEGACY_CONTRACT_ADDRESS = (process.env
   .NEXT_PUBLIC_LEGACY_CONTRACT_ADDRESS ||
@@ -16,6 +16,41 @@ export const SK_LEDGE_ABI = [
       { name: "_purpose", type: "string" },
       { name: "_recordType", type: "string" },
     ],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+  {
+    type: "function",
+    name: "setAllocationCeiling",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "_barangay", type: "string" },
+      { name: "_ceiling", type: "uint256" },
+    ],
+    outputs: [],
+  },
+  {
+    type: "function",
+    name: "setRecordApproval",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "_id", type: "uint256" },
+      { name: "_approved", type: "bool" },
+    ],
+    outputs: [],
+  },
+  {
+    type: "function",
+    name: "getAllocated",
+    stateMutability: "view",
+    inputs: [{ name: "_barangay", type: "string" }],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+  {
+    type: "function",
+    name: "allocationCeilings",
+    stateMutability: "view",
+    inputs: [{ name: "", type: "string" }],
+    outputs: [{ name: "", type: "uint256" }],
   },
   {
     type: "function",
@@ -23,6 +58,27 @@ export const SK_LEDGE_ABI = [
     stateMutability: "view",
     inputs: [{ name: "", type: "address" }],
     outputs: [{ name: "", type: "bool" }],
+  },
+  {
+    type: "function",
+    name: "isOfficialAuthorized",
+    stateMutability: "view",
+    inputs: [{ name: "", type: "address" }],
+    outputs: [{ name: "", type: "bool" }],
+  },
+  {
+    type: "function",
+    name: "nextRecordId",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+  {
+    type: "function",
+    name: "owner",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "address" }],
   },
   {
     type: "function",
@@ -45,22 +101,5 @@ export const SK_LEDGE_ABI = [
         ],
       },
     ],
-  },
-  {
-    type: "function",
-    name: "setRecordApproval",
-    stateMutability: "nonpayable",
-    inputs: [
-      { name: "_id", type: "uint256" },
-      { name: "_approved", type: "bool" },
-    ],
-    outputs: [],
-  },
-  {
-    type: "function",
-    name: "owner",
-    stateMutability: "view",
-    inputs: [],
-    outputs: [{ name: "", type: "address" }],
   },
 ] as const;
