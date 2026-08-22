@@ -5,7 +5,8 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/lib/useAuthStore";
-import { useToast } from "@/lib/useToast";import {
+import { useToast } from "@/lib/useToast";
+import {
   LayoutDashboard,
   FolderKanban,
   UploadCloud,
@@ -48,7 +49,18 @@ const ROLE_LINKS: Record<
       href: "/sk_dashboard/projects",
       icon: FolderKanban,
     },
-    { id: "id_3", label: "ABYIP", href: "/sk_dashboard/abyip", icon: ChartPie },
+    {
+      id: "id_3",
+      label: "ABYIP",
+      href: "/sk_dashboard/ceiling",
+      icon: ChartPie,
+    },
+    {
+      id: "id_29",
+      label: "Approvals",
+      href: "/sk_dashboard/approvals",
+      icon: CheckSquare,
+    },
     {
       id: "id_4",
       label: "Expenses",
@@ -238,7 +250,7 @@ export default function Sidebar({
   };
 
   return (
-    <aside className="sticky top-4 z-50 flex h-[calc(100vh-2rem)] w-[260px] shrink-0 flex-col rounded-3xl border border-border bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_32px_-16px_rgba(15,23,42,0.12)]">
+    <aside className="sticky top-4 z-50 flex h-[calc(100vh-2rem)] w-65 shrink-0 flex-col rounded-3xl border border-border bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_32px_-16px_rgba(15,23,42,0.12)]">
       {/* BRAND */}
       <div className="flex items-center gap-3 px-2 pb-6 pt-1">
         <Image

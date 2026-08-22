@@ -79,7 +79,7 @@ export default function AnalyticsSection({
       const date = d.created_at ? new Date(d.created_at) : null;
       if (!date || isNaN(date.getTime())) continue;
       const quarter = `Q${Math.floor(date.getMonth() / 3) + 1} ${date.getFullYear()}`;
-      totals.set(quarter, (totals.get(quarter) || 0) + toNumber(d.amount));
+      totals.set(quarter, (totals.get(quarter) || 0) + toNumber(d.amount) / 100);
     }
     const sorted = [...totals.entries()].sort((a, b) => {
       const [qa, ya] = a[0].split(" ");

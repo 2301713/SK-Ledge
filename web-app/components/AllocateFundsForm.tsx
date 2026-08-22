@@ -89,7 +89,7 @@ export default function AllocateFundsForm() {
         address: CONTRACT_ADDRESS,
         abi: SK_LEDGE_ABI,
         functionName: "addRecord",
-        args: [barangay || "General", BigInt(amountPhp), programName, "Allocation"],
+        args: [barangay || "General", BigInt(Math.round(Number(amountPhp) * 100)), programName, "Allocation"],
       });
     } catch (err) {
       console.error("Submission error:", err);
@@ -113,7 +113,7 @@ export default function AllocateFundsForm() {
         contract_address: CONTRACT_ADDRESS,
         official_address: address || "",
         barangay: barangay || "General",
-        amount: Number(amountPhp),
+        amount: Math.round(Number(amountPhp) * 100),
         purpose: programName,
       }).catch((err) => {
         console.error("Sync failed:", err);

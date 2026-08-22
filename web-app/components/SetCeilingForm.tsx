@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { CONTRACT_ADDRESS, SK_LEDGE_ABI } from "@/lib/contractConfig";
-import { parseEther } from "viem";
 
 export default function SetCeilingForm() {
   const [barangay, setBarangay] = useState("");
@@ -25,7 +24,7 @@ export default function SetCeilingForm() {
       address: CONTRACT_ADDRESS,
       abi: SK_LEDGE_ABI,
       functionName: "setAllocationCeiling",
-      args: [barangay, parseEther(ceiling)],
+      args: [barangay, BigInt(Math.round(Number(ceiling) * 100))],
       gas: BigInt(500000),
     });
   };
@@ -63,7 +62,7 @@ export default function SetCeilingForm() {
 
         <div>
           <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
-            Ceiling Amount (ETH / Tokens)
+            Ceiling Amount (PHP)
           </label>
           <div className="relative">
             <input
@@ -76,7 +75,7 @@ export default function SetCeilingForm() {
               className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-800 placeholder-slate-400 transition focus:border-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-700/20 pr-16"
             />
             <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
-              ETH
+              PHP
             </span>
           </div>
         </div>

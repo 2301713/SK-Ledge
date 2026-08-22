@@ -3,7 +3,6 @@
 
 import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { CONTRACT_ADDRESS, SK_LEDGE_ABI } from "@/lib/contractConfig";
-import { formatEther } from "viem";
 
 interface RecordItem {
   id: bigint;
@@ -87,7 +86,7 @@ export default function ApproveRecordModal({ recordId, onClose }: ApproveRecordM
               </div>
               <div className="flex justify-between border-b border-slate-200/60 pb-2">
                 <span className="text-slate-500">Requested Amount:</span>
-                <span className="font-bold text-blue-700">{formatEther(record.amount)} ETH</span>
+                <span className="font-bold text-blue-700">₱{(Number(record.amount) / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               </div>
               <div className="flex justify-between border-b border-slate-200/60 pb-2">
                 <span className="text-slate-500">Submitted By:</span>

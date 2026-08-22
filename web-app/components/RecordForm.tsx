@@ -46,7 +46,7 @@ export function RecordForm() {
         address: CONTRACT_ADDRESS,
         abi: SK_LEDGE_ABI,
         functionName: "addRecord",
-        args: [barangay, BigInt(amount), purpose, recordType],
+        args: [barangay, BigInt(Math.round(Number(amount) * 100)), purpose, recordType],
       });
     } catch (err) {
       console.error("Submission failed:", err);
@@ -64,7 +64,7 @@ export function RecordForm() {
         contract_address: CONTRACT_ADDRESS,
         official_address: address || "",
         barangay,
-        amount: Number(amount),
+        amount: Math.round(Number(amount) * 100),
         purpose,
       }).catch((err) => {
         console.error("Sync failed:", err);

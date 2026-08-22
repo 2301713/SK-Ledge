@@ -240,7 +240,7 @@ export default function BMOBiddingPage() {
       functionName: "addRecord",
       args: [
         selectedProject.location || selectedProject.barangay || "Barangay",
-        BigInt(Math.floor(Number(bid.amount_php))),
+        BigInt(Math.round(Number(bid.amount_php) * 100)),
         `Award: ${selectedProject.name} to ${vendorName}`,
         "Award",
       ],
@@ -284,7 +284,7 @@ export default function BMOBiddingPage() {
         contract_address: CONTRACT_ADDRESS,
         official_address: address ?? "",
         barangay: selectedProject.location || selectedProject.barangay || "",
-        amount: Math.floor(Number(winningBid.amount_php)),
+        amount: Math.round(Number(winningBid.amount_php) * 100),
         purpose: `Award: ${selectedProject.name} to ${vendorName}`,
         project_id: selectedProject.id,
       }).catch((err) => console.error("Failed to sync award record:", err));

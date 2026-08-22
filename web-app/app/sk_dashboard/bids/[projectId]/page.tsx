@@ -180,7 +180,7 @@ export default function BidsPage({ params }: { params: Promise<{ projectId: stri
       functionName: 'addRecord',
       args: [
         project?.location || 'Barangay',
-        BigInt(Math.floor(Number(bid.amount_php))),
+        BigInt(Math.round(Number(bid.amount_php) * 100)),
         `Award: ${project?.name} to ${bid.vendors.company_name}`,
         'Award',
       ],
@@ -222,7 +222,7 @@ export default function BidsPage({ params }: { params: Promise<{ projectId: stri
         contract_address: CONTRACT_ADDRESS,
         official_address: address ?? '',
         barangay: project.location || 'Barangay',
-        amount: Math.floor(Number(winningBid.amount_php)),
+        amount: Math.round(Number(winningBid.amount_php) * 100),
         purpose: `Award: ${project?.name} to ${winningBid.vendors.company_name}`,
         project_id: String(project.id),
       }).catch((err) => console.error('Failed to sync award record:', err));

@@ -156,7 +156,7 @@ export default function OnChainVerifier() {
                 {isLoading ? (
                   <Loader2 className="w-6 h-6 animate-spin text-secondary-foreground" />
                 ) : (
-                  `₱${Number(totalAmount).toLocaleString()}`
+                  `₱${(Number(totalAmount) / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                 )}
               </p>
             </div>
@@ -243,7 +243,7 @@ export default function OnChainVerifier() {
                               )}
                             </td>
                             <td className="px-4 py-3 text-sm font-bold text-primary-foreground text-right font-mono">
-                              ₱{Number(record.amount).toLocaleString()}
+                              ₱{(Number(record.amount) / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </td>
                             <td className="px-4 py-3 text-xs font-mono text-secondary-foreground">
                               {record.official.slice(0, 6)}...{record.official.slice(-4)}
