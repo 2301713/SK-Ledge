@@ -18,7 +18,17 @@ type BidItem = {
   department: string;
   status: string;
   submitted_on: string;
-  amount: string;
+  amount_php: number;
+};
+
+const formatDate = (value: string) => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 };
 
 export default function MyBidsPage() {
@@ -67,7 +77,9 @@ export default function MyBidsPage() {
   }, []);
 
   const filteredBids = bids.filter(
-    (bid) => activeTab === "All" || bid.status === activeTab,
+    (bid) =>
+      activeTab === "All" ||
+      (bid.status ?? "").toLowerCase() === activeTab.toLowerCase(),
   );
 
   const renderItem = ({ item }: { item: BidItem }) => {
@@ -96,7 +108,7 @@ export default function MyBidsPage() {
               Submitted On
             </Text>
             <Text className="font-inter-semibold mt-0.5 text-sm text-primary-foreground">
-              {item.submitted_on}
+              {formatDate(item.submitted_on)}
             </Text>
           </View>
           <View className="items-end">
@@ -104,7 +116,7 @@ export default function MyBidsPage() {
               Your Bid Amount
             </Text>
             <Text className="font-inter-extrabold mt-0.5 text-xl text-primary">
-              {item.amount}
+              ₱{Number(item.amount_php ?? 0).toLocaleString("en-US")}
             </Text>
           </View>
         </View>

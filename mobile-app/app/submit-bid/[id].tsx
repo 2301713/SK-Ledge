@@ -75,11 +75,11 @@ export default function SubmitBidPage() {
 
       const { data: oppData } = await supabase
         .from("opportunities")
-        .select("title, department")
+        .select("title, department, project_id")
         .eq("id", id)
         .single();
 
-      if (!oppData) {
+      if (!oppData || !oppData.project_id) {
         throw new Error("Opportunity not found. It may have been removed.");
       }
 
@@ -88,18 +88,16 @@ export default function SubmitBidPage() {
 
       const { error: insertError } = await supabase.from("bids").insert([
         {
-          opportunity_id: id,
+          project_id: oppData.project_id,
           user_id: userId,
+          vendor_id: userId,
           contract_title: oppData.title,
           department: oppData.department,
-          amount: `₱${amount}`,
+          amount_php: Number(amount),
+          timeline,
+          notes: notes || null,
           proposal_url: proposalUrl,
-          status: "Pending",
-          submitted_on: new Date().toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-          }),
+          status: "pending",
         },
       ]);
 

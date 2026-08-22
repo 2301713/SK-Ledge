@@ -18,7 +18,8 @@ export async function POST(request: Request) {
       official_address, 
       barangay, 
       amount, 
-      purpose 
+      purpose,
+      project_id
     } = body;
 
     if (!type || !user_id || !blockchain_tx_hash || !amount) {
@@ -28,21 +29,29 @@ export async function POST(request: Request) {
       );
     }
 
-    const table = type === 'allocation' ? 'allocations' : 'expenses';
+    const baseRecord: Record<string, unknown> = {
+      user_id,
+      blockchain_tx_hash,
+      contract_address,
+      official_address,
+      barangay,
+      amount,
+      purpose
+    };
+
+    let table: string;
+    if (type === 'allocation') {
+      table = 'allocations';
+    } else if (type === 'award') {
+      table = 'awards';
+      baseRecord.project_id = project_id ?? null;
+    } else {
+      table = 'expenses';
+    }
 
     const { data, error } = await supabaseAdmin
       .from(table)
-      .insert([
-        {
-          user_id,
-          blockchain_tx_hash,
-          contract_address,
-          official_address,
-          barangay,
-          amount,
-          purpose
-        }
-      ])
+      .insert([baseRecord])
       .select()
       .single();
 

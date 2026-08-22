@@ -23,6 +23,7 @@ import SideBar from '@/components/dashboard/SideBar';
 import { supabase } from '@/lib/supabase';
 import { UserAccount } from '@/lib/useAuthStore';
 import { SK_LEDGE_ABI, CONTRACT_ADDRESS } from '@/lib/contractConfig';
+import { syncRecord } from '@/lib/syncRecord';
 import TopBar from '@/components/dashboard/ui/TopBar';
 import PageHeader from '@/components/dashboard/ui/PageHeader';
 import { Card } from '@/components/dashboard/ui/Card';
@@ -214,11 +215,24 @@ export default function BidsPage({ params }: { params: Promise<{ projectId: stri
         .eq('project_id', project.id)
         .neq('id', winningBid.id);
 
+      await syncRecord({
+        type: 'award',
+        user_id: currentUser?.id ?? '',
+        blockchain_tx_hash: txHash,
+        contract_address: CONTRACT_ADDRESS,
+        official_address: address ?? '',
+        barangay: project.location || 'Barangay',
+        amount: Math.floor(Number(winningBid.amount_php)),
+        purpose: `Award: ${project?.name} to ${winningBid.vendors.company_name}`,
+        project_id: String(project.id),
+      }).catch((err) => console.error('Failed to sync award record:', err));
+
       setSelectedBidId(null);
       await loadBids();
     };
 
     finalizeAwardInDb();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bids, isTxConfirmed, loadBids, project, selectedBidId, txHash]);
 
   const lowestBid = bids.length

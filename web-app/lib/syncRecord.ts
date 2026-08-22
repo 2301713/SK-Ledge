@@ -1,7 +1,7 @@
 import apiClient from "./apiClient";
 
 export interface SyncRecordPayload {
-  type: "expense" | "allocation";
+  type: "expense" | "allocation" | "award";
   user_id: string;
   blockchain_tx_hash: string;
   contract_address: string;
@@ -9,6 +9,7 @@ export interface SyncRecordPayload {
   barangay: string;
   amount: number;
   purpose: string;
+  project_id?: string;
 }
 
 export function syncRecord(payload: SyncRecordPayload) {

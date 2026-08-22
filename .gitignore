@@ -1,3 +1,4 @@
 # Local progress report — do not commit or push
 *.md
 !README.md
+docs

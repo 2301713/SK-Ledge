@@ -9,11 +9,12 @@ export interface BiddingProject {
   deadline: string;
   daysLeft: number;
   description: string;
-  preBid: string;
-  opening: string;
-  award: string;
+  preBid?: string;
+  opening?: string;
+  award?: string;
   winner?: string;
   winningBid?: number;
+  awardTxHash?: string;
 }
 
 export interface FilterGroupProps {

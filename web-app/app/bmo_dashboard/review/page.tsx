@@ -9,24 +9,45 @@ import PageHeader from "@/components/dashboard/ui/PageHeader";
 import StatCard from "@/components/dashboard/ui/StatCard";
 import { Card } from "@/components/dashboard/ui/Card";
 import StatusBadge from "@/components/dashboard/ui/StatusBadge";
-import { INITIAL_PROJECTS } from "@/lib/dummyData";
 import { supabase } from "@/lib/supabase";
 import { UserAccount } from "@/lib/useAuthStore";
 import {
   ClipboardCheck,
   CheckCircle2,
   XCircle,
+  Loader2,
   MapPin,
   FileText,
   Landmark,
   FolderKanban,
 } from "lucide-react";
 
+interface ProjectRow {
+  id: string;
+  name: string;
+  budget: number;
+  status: string;
+  description: string | null;
+  location: string | null;
+  barangay: string | null;
+}
+
 export default function BMOReviewPage() {
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [projects, setProjects] = useState<ProjectRow[]>([]);
+  const [actingProjectId, setActingProjectId] = useState<string | null>(null);
   const router = useRouter();
+
+  const fetchProjects = async () => {
+    const { data } = await supabase
+      .from("projects")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (data) setProjects(data as ProjectRow[]);
+  };
 
   // 1. Authenticate and protect the page
   useEffect(() => {
@@ -70,6 +91,8 @@ export default function BMOReviewPage() {
             email: profileData.email,
             approval_status: profileData.approval_status,
           });
+
+          await fetchProjects();
         }
       } catch (err) {
         console.error("Unexpected error loading profile:", err);
@@ -82,13 +105,33 @@ export default function BMOReviewPage() {
   }, [router]);
 
   // 2. Filter projects (Pending status + Search Query)
-  const pendingProjects = INITIAL_PROJECTS.filter(
-    (p) => p.status === "Pending",
+  const pendingProjects = projects.filter((p) =>
+    ["Pending", "Proposed"].includes(p.status),
   );
 
   const filteredProjects = pendingProjects.filter((p) =>
     (p.name || "").toLowerCase().includes(searchQuery.toLowerCase()),
   );
+
+  const handleApprove = async (projectId: string) => {
+    setActingProjectId(projectId);
+    await supabase
+      .from("projects")
+      .update({ status: "Approved" })
+      .eq("id", projectId);
+    await fetchProjects();
+    setActingProjectId(null);
+  };
+
+  const handleReturn = async (projectId: string) => {
+    setActingProjectId(projectId);
+    await supabase
+      .from("projects")
+      .update({ status: "Rejected" })
+      .eq("id", projectId);
+    await fetchProjects();
+    setActingProjectId(null);
+  };
 
   // Helper for currency formatting
   const formatCurrency = (amount: number) => {
@@ -146,7 +189,7 @@ export default function BMOReviewPage() {
           />
           <StatCard
             label="Active Projects"
-            value={INITIAL_PROJECTS.length}
+            value={projects.length}
             icon={FolderKanban}
             trend="In the overall pipeline"
           />
@@ -180,7 +223,7 @@ export default function BMOReviewPage() {
                     <StatusBadge status="pending" showDot />
                     <span className="flex items-center gap-1 text-xs font-bold text-secondary-foreground">
                       <MapPin className="h-3 w-3" />
-                      {project.barangay || "Barangay info missing"}
+                      {project.barangay || project.location || "Barangay info missing"}
                     </span>
                   </div>
                   <h3 className="text-lg font-bold leading-tight text-primary-foreground">
@@ -204,12 +247,28 @@ export default function BMOReviewPage() {
 
                 {/* Right */}
                 <div className="flex shrink-0 gap-2">
-                  <button className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-xs font-bold uppercase tracking-widest text-white shadow-sm shadow-primary/20 transition hover:bg-primary/90 lg:flex-none">
-                    <CheckCircle2 className="h-4 w-4" />
-                    Align & Approve
+                  <button
+                    onClick={() => handleApprove(project.id)}
+                    disabled={actingProjectId === project.id}
+                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-xs font-bold uppercase tracking-widest text-white shadow-sm shadow-primary/20 transition hover:bg-primary/90 disabled:opacity-50 lg:flex-none"
+                  >
+                    {actingProjectId === project.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <CheckCircle2 className="h-4 w-4" />
+                    )}
+                    Align &amp; Approve
                   </button>
-                  <button className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-border bg-white px-5 py-2.5 text-xs font-bold uppercase tracking-widest text-secondary-foreground transition hover:border-danger/30 hover:bg-danger/5 hover:text-danger lg:flex-none">
-                    <XCircle className="h-4 w-4" />
+                  <button
+                    onClick={() => handleReturn(project.id)}
+                    disabled={actingProjectId === project.id}
+                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-border bg-white px-5 py-2.5 text-xs font-bold uppercase tracking-widest text-secondary-foreground transition hover:border-danger/30 hover:bg-danger/5 hover:text-danger disabled:opacity-50 lg:flex-none"
+                  >
+                    {actingProjectId === project.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <XCircle className="h-4 w-4" />
+                    )}
                     Return to SK
                   </button>
                 </div>
