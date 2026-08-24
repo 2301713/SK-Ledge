@@ -35,15 +35,6 @@ export default function SKDashboard() {
 
   useEffect(() => {
     const fetchUserProfile = async () => {
-      if (
-        currentUser &&
-        (currentUser.role_type === "SK_Chairperson" ||
-          currentUser.role_type === "SK_Treasurer")
-      ) {
-        setIsLoading(false);
-        return;
-      }
-
       try {
         const {
           data: { user },
@@ -108,7 +99,7 @@ export default function SKDashboard() {
       authAttemptedRef.current = true;
       fetchUserProfile();
     }
-  }, [setCurrentUser, setIsLoading, router, currentUser]);
+  }, [setCurrentUser, setIsLoading, router]);
 
   useEffect(() => {
     const fetchProjects = async () => {

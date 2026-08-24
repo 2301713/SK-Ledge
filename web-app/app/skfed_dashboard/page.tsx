@@ -37,12 +37,6 @@ export default function SKFederationDashboard() {
   // 1. AUTHENTICATION & ROLE PROTECTION
   useEffect(() => {
     const fetchUserProfile = async () => {
-      // If user data is already loaded from login, skip auth check
-      if (currentUser && currentUser.role_type === "SK_Federation") {
-        setIsLoading(false);
-        return;
-      }
-
       try {
         const {
           data: { user },
@@ -101,7 +95,7 @@ export default function SKFederationDashboard() {
       authAttemptedRef.current = true;
       fetchUserProfile();
     }
-  }, [setCurrentUser, setIsLoading, router, currentUser]);
+  }, [setCurrentUser, setIsLoading, router]);
 
   // UTILITY
   const formatCurrency = (amount: number) => {
