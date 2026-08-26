@@ -3,6 +3,10 @@
 import { useState } from "react";
 import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { CONTRACT_ADDRESS, SK_LEDGE_ABI } from "@/lib/contractConfig";
+import { Settings, Loader2, CheckCircle2, AlertTriangle } from "lucide-react";
+
+const inputClass =
+  "w-full rounded-xl border border-border bg-white py-3 pl-10 pr-3 text-sm font-bold text-primary-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20";
 
 export default function SetCeilingForm() {
   const [barangay, setBarangay] = useState("");
@@ -10,7 +14,6 @@ export default function SetCeilingForm() {
 
   const { data: hash, writeContract, isPending, error } = useWriteContract();
 
-  // Hihintayin nito ang tunay na confirmation ng transaction mula sa blockchain
   const { isLoading: isConfirming, isSuccess: isConfirmed } =
     useWaitForTransactionReceipt({
       hash,
@@ -30,96 +33,82 @@ export default function SetCeilingForm() {
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/70 shadow-sm overflow-hidden">
-      <div className="p-6 border-b border-slate-100">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-blue-700 text-white rounded-xl shadow-sm">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-            </svg>
-          </div>
-          <div>
-            <h2 className="text-base font-bold text-slate-900">Ceiling Configuration</h2>
-            <p className="text-xs text-slate-500">Update funding limits per barangay</p>
-          </div>
-        </div>
-      </div>
-
-      <form onSubmit={handleSubmit} className="p-6 space-y-5">
-        <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+    <form onSubmit={handleSubmit} className="space-y-5">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+        <div className="space-y-2">
+          <label className="block text-[10px] font-bold uppercase tracking-wider text-secondary-foreground">
             Barangay Name
           </label>
-          <input
-            type="text"
-            value={barangay}
-            onChange={(e) => setBarangay(e.target.value)}
-            placeholder="e.g. San Luis"
-            required
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-800 placeholder-slate-400 transition focus:border-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-700/20"
-          />
+          <div className="relative">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+              <Settings className="h-5 w-5 text-secondary-foreground" />
+            </div>
+            <input
+              type="text"
+              value={barangay}
+              onChange={(e) => setBarangay(e.target.value)}
+              placeholder="e.g. San Luis"
+              required
+              className={inputClass}
+            />
+          </div>
         </div>
 
-        <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+        <div className="space-y-2">
+          <label className="block text-[10px] font-bold uppercase tracking-wider text-secondary-foreground">
             Ceiling Amount (PHP)
           </label>
           <div className="relative">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+              <span className="text-sm font-bold text-secondary-foreground">
+                ₱
+              </span>
+            </div>
             <input
               type="number"
               step="any"
               value={ceiling}
               onChange={(e) => setCeiling(e.target.value)}
-              placeholder="e.g. 10"
+              placeholder="e.g. 100000"
               required
-              className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-800 placeholder-slate-400 transition focus:border-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-700/20 pr-16"
+              className={inputClass}
             />
-            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
-              PHP
-            </span>
           </div>
         </div>
+      </div>
 
-        <button
-          type="submit"
-          disabled={isPending || isConfirming}
-          className="w-full bg-blue-700 hover:bg-blue-800 active:bg-blue-900 text-white font-semibold py-3 px-4 rounded-xl shadow-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-sm"
-        >
-          {isPending || isConfirming ? (
-            <>
-              <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              {isConfirming ? "Confirming on Blockchain..." : "Broadcasting Transaction..."}
-            </>
-          ) : (
-            "Update Ceiling"
-          )}
-        </button>
-
-        {isConfirmed && (
-          <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-2 text-xs text-emerald-800 font-medium">
-            <svg className="w-4 h-4 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-            Allocation ceiling successfully confirmed on blockchain!
-          </div>
+      <button
+        type="submit"
+        disabled={isPending || isConfirming}
+        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-bold tracking-wide text-white shadow-[0_6px_16px_-6px_rgba(1,56,168,0.5)] transition-all hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20 active:scale-95 disabled:cursor-not-allowed disabled:bg-secondary-foreground/30 md:w-auto"
+      >
+        {isPending || isConfirming ? (
+          <>
+            <Loader2 size={16} className="animate-spin" />
+            {isConfirming ? "Confirming on Blockchain..." : "Broadcasting..."}
+          </>
+        ) : (
+          "Update Ceiling"
         )}
+      </button>
 
-        {error && (
-          <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl flex items-start gap-2 text-xs text-rose-800 font-medium">
-            <svg className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span className="break-words">
-              {error.message.includes("User rejected")
-                ? "Transaction was rejected in MetaMask."
-                : "Transaction failed. Please ensure your wallet address is authorized as Contract Owner or Federation Official."}
-            </span>
-          </div>
-        )}
-      </form>
-    </div>
+      {isConfirmed && (
+        <div className="flex items-center gap-2 rounded-xl border border-success/30 bg-success/10 p-3.5 text-xs font-medium text-success">
+          <CheckCircle2 className="h-4 w-4 shrink-0" />
+          Allocation ceiling successfully confirmed on blockchain!
+        </div>
+      )}
+
+      {error && (
+        <div className="flex items-start gap-2 rounded-xl border border-danger/30 bg-danger/10 p-3.5 text-xs font-medium text-danger">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <span className="break-words">
+            {error.message.includes("User rejected")
+              ? "Transaction was rejected in MetaMask."
+              : "Transaction failed. Please ensure your wallet address is authorized as Contract Owner or Federation Official."}
+          </span>
+        </div>
+      )}
+    </form>
   );
 }
