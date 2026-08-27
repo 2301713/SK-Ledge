@@ -23,6 +23,7 @@ import {
   LogOut,
   Activity,
   ChartPie,
+  Sliders,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -52,8 +53,14 @@ const ROLE_LINKS: Record<
     {
       id: "id_3",
       label: "ABYIP",
-      href: "/sk_dashboard/ceiling",
+      href: "/sk_dashboard/abyip",
       icon: ChartPie,
+    },
+    {
+      id: "id_30",
+      label: "Ceilings",
+      href: "/sk_dashboard/ceiling",
+      icon: Sliders,
     },
     {
       id: "id_29",
@@ -104,6 +111,12 @@ const ROLE_LINKS: Record<
       label: "ABYIP",
       href: "/sk_dashboard/abyip",
       icon: ChartPie,
+    },
+    {
+      id: "id_31",
+      label: "Ceilings",
+      href: "/sk_dashboard/ceiling",
+      icon: Sliders,
     },
     {
       id: "id_11",

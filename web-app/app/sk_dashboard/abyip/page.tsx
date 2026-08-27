@@ -11,6 +11,8 @@ import { Card, CardHeader } from "@/components/dashboard/ui/Card";
 import { supabase } from "@/lib/supabase";
 import { UserAccount } from "@/lib/useAuthStore";
 import { Filter, Download, Landmark, PiggyBank, Receipt, Gauge } from "lucide-react";
+import { useReadContract } from "wagmi";
+import { CONTRACT_ADDRESS, SK_LEDGE_ABI } from "@/lib/contractConfig";
 
 const STATUS_PILL: Record<string, string> = {
   "On Track": "bg-success/10 text-success",
@@ -25,7 +27,33 @@ export default function ABYIPPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedYear, setSelectedYear] = useState<string>("2024");
 
-  // Mock ABYIP budget ceiling data
+  // On-chain reads using Wagmi
+  const barangay = currentUser?.barangay;
+
+  const { data: ceilingRaw, isLoading: ceilingLoading } = useReadContract({
+    address: CONTRACT_ADDRESS,
+    abi: SK_LEDGE_ABI,
+    functionName: "allocationCeilings",
+    args: barangay ? [barangay] : undefined,
+  });
+
+  const { data: allocatedRaw, isLoading: allocLoading } = useReadContract({
+    address: CONTRACT_ADDRESS,
+    abi: SK_LEDGE_ABI,
+    functionName: "getAllocated",
+    args: barangay ? [barangay] : undefined,
+  });
+
+  // Convert raw centavo BigInts to pesos
+  const onChainCeiling = ceilingRaw ? Number(ceilingRaw) / 100 : 0;
+  const onChainAllocated = allocatedRaw ? Number(allocatedRaw) / 100 : 0;
+  const onChainRemaining = onChainCeiling - onChainAllocated;
+  const onChainUtilization =
+    onChainCeiling > 0
+      ? Math.round((onChainAllocated / onChainCeiling) * 100)
+      : 0;
+
+  // Mock ABYIP budget ceiling data for breakdown table & charts
   const [budgetCeilings] = useState([
     {
       id: "1",
@@ -81,9 +109,6 @@ export default function ABYIPPage() {
     (sum, item) => sum + item.allocation,
     0,
   );
-  const totalSpent = budgetCeilings.reduce((sum, item) => sum + item.spent, 0);
-  const overallPercentage = Math.round((totalSpent / totalAllocation) * 100);
-  const availableFunds = totalAllocation - totalSpent;
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -154,7 +179,7 @@ export default function ABYIPPage() {
 
   const formatM = (amount: number) => `₱${(amount / 1000000).toFixed(2)}M`;
 
-  if (isLoading) return <LogoLoader />;
+  if (isLoading || ceilingLoading || allocLoading) return <LogoLoader />;
 
   return (
     <div className="flex min-h-screen gap-4 bg-background p-4 selection:bg-tertiary selection:text-primary">
@@ -196,24 +221,24 @@ export default function ABYIPPage() {
           }
         />
 
-        {/* OVERVIEW STATS */}
+        {/* OVERVIEW STATS (REPLACED WITH ON-CHAIN DATA) */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
           <StatCard
             label="Total Allocation"
-            value={formatM(totalAllocation)}
+            value={formatM(onChainCeiling)}
             icon={Landmark}
             variant="brand"
             trend="Across all categories"
           />
           <StatCard
             label="Total Spent"
-            value={formatM(totalSpent)}
+            value={formatM(onChainAllocated)}
             icon={Receipt}
-            trend={`${overallPercentage}% utilization`}
+            trend={`${onChainUtilization}% utilization`}
           />
           <StatCard
             label="Available Funds"
-            value={formatM(availableFunds)}
+            value={formatM(onChainRemaining)}
             icon={PiggyBank}
             trend="Remaining budget"
           />
@@ -228,13 +253,13 @@ export default function ABYIPPage() {
             </div>
             <div>
               <span className="text-4xl font-bold tracking-tight">
-                {overallPercentage}%
+                {onChainUtilization}%
               </span>
               <div className="mt-3 flex items-center gap-3">
                 <div className="h-2 flex-1 overflow-hidden rounded-full bg-secondary">
                   <div
-                    className={`h-full ${getProgressColor(overallPercentage)} transition-all`}
-                    style={{ width: `${Math.min(overallPercentage, 100)}%` }}
+                    className={`h-full ${getProgressColor(onChainUtilization)} transition-all`}
+                    style={{ width: `${Math.min(onChainUtilization, 100)}%` }}
                   />
                 </div>
               </div>
