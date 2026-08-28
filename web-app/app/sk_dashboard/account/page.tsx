@@ -298,7 +298,9 @@ export default function AccountPage() {
               <label className="ml-1 text-[10px] font-bold uppercase tracking-wider text-secondary-foreground">
                 System Username
               </label>
-              <div className={staticField}>{userProfile?.username || "N/A"}</div>
+              <div className={staticField}>
+                {userProfile?.username || "N/A"}
+              </div>
               <p className="ml-1 text-[10px] text-secondary-foreground/70">
                 Username is fixed to your login credentials.
               </p>
@@ -319,7 +321,9 @@ export default function AccountPage() {
               <label className="ml-1 text-[10px] font-bold uppercase tracking-wider text-secondary-foreground">
                 Barangay / Jurisdiction
               </label>
-              <div className={staticField}>{userProfile?.barangay || "N/A"}</div>
+              <div className={staticField}>
+                {userProfile?.barangay || "N/A"}
+              </div>
             </div>
           </div>
 
