@@ -1,6 +1,11 @@
+import "dotenv/config";
 import { configVariable, defineConfig } from "hardhat/config";
+import hardhatToolboxMochaEthers from "@nomicfoundation/hardhat-toolbox-mocha-ethers";
+
+const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY ?? "";
 
 export default defineConfig({
+  plugins: [hardhatToolboxMochaEthers],
   solidity: {
     profiles: {
       default: {
@@ -33,7 +38,16 @@ export default defineConfig({
       accounts: [configVariable("SEPOLIA_PRIVATE_KEY")],
     },
   },
-  etherscan: {
-    apiKey: configVariable("ETHERSCAN_API_KEY"),
+  verify: {
+    etherscan: {
+      apiKey: ETHERSCAN_API_KEY,
+      enabled: true,
+    },
+    blockscout: {
+      enabled: false,
+    },
+    sourcify: {
+      enabled: false,
+    },
   },
 } as any);

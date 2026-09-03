@@ -1,0 +1,49 @@
+{
+  "_format": "hh3-sol-build-info-1",
+  "id": "solc-0_8_28-22fa8815b03329ede05e4857efb4d82b64a25e78",
+  "solcVersion": "0.8.28",
+  "solcLongVersion": "0.8.28+commit.7893614a",
+  "compilerType": "solc",
+  "toolVersions": {
+    "hardhat": "3.15.0"
+  },
+  "userSourceNameMap": {
+    "contracts/SkLedge.sol": "project/contracts/SkLedge.sol"
+  },
+  "input": {
+    "language": "Solidity",
+    "settings": {
+      "evmVersion": "cancun",
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "outputSelection": {
+        "*": {
+          "": [
+            "ast"
+          ],
+          "*": [
+            "abi",
+            "evm.bytecode.linkReferences",
+            "evm.bytecode.object",
+            "evm.bytecode.opcodes",
+            "evm.bytecode.sourceMap",
+            "evm.deployedBytecode.immutableReferences",
+            "evm.deployedBytecode.linkReferences",
+            "evm.deployedBytecode.object",
+            "evm.deployedBytecode.opcodes",
+            "evm.deployedBytecode.sourceMap",
+            "evm.methodIdentifiers"
+          ]
+        }
+      },
+      "remappings": []
+    },
+    "sources": {
+      "project/contracts/SkLedge.sol": {
+        "content": "// SPDX-License-Identifier: MIT\r\npragma solidity ^0.8.28;\r\n\r\n// Contract\r\ncontract SkLedge {\r\n    address public owner;\r\n    uint256 public nextRecordId;\r\n\r\n    struct FinancialRecord {\r\n        uint256 id;\r\n        address official;\r\n        string barangay;\r\n        uint256 amount;\r\n        uint256 timestamp;\r\n        string purpose;\r\n        string recordType; // \"Allocation\", \"Expense\", or \"Award\"\r\n        bool approved;\r\n        address approvedBy;\r\n    }\r\n\r\n    FinancialRecord[] public records;\r\n\r\n    mapping(address => bool) public isAuthorizedOfficial;\r\n\r\n    // Allocation ceiling per barangay\r\n    mapping(string => uint256) public allocationCeilings;\r\n\r\n    // Running total of allocations per barangay\r\n    mapping(string => uint256) private allocatedTotals;\r\n\r\n    // Events\r\n    event RecordAdded(\r\n        uint256 indexed id,\r\n        address indexed official,\r\n        string barangay,\r\n        uint256 amount,\r\n        uint256 timestamp,\r\n        string recordType\r\n    );\r\n\r\n    event OfficialAuthorizationChanged(\r\n        address indexed official,\r\n        bool isAuthorized\r\n    );\r\n\r\n    event AllocationCeilingChanged(\r\n        string barangay,\r\n        uint256 ceiling\r\n    );\r\n\r\n    event ApprovalChanged(\r\n        uint256 indexed id,\r\n        bool approved,\r\n        address indexed approvedBy\r\n    );\r\n\r\n    // Modifiers\r\n    modifier onlyOwner() {\r\n        require(\r\n            msg.sender == owner,\r\n            \"SkLedge: Only the contract owner can perform this action.\"\r\n        );\r\n        _;\r\n    }\r\n\r\n    modifier onlyAuthorizedOfficial() {\r\n        require(\r\n            isAuthorizedOfficial[msg.sender],\r\n            \"SkLedge: Your wallet is not an authorized SK Official.\"\r\n        );\r\n        _;\r\n    }\r\n\r\n    constructor() {\r\n        owner = msg.sender;\r\n        isAuthorizedOfficial[msg.sender] = true;\r\n        nextRecordId = 1;\r\n    }\r\n\r\n    /**\r\n     * @notice Authorizes or revokes SK Official wallets.\r\n     * @param _official Wallet address of the SK Official.\r\n     * @param _status True = authorize, False = revoke.\r\n     */\r\n    function setOfficialAuthorization(\r\n        address _official,\r\n        bool _status\r\n    ) external onlyOwner {\r\n        require(\r\n            _official != address(0),\r\n            \"SkLedge: Invalid wallet address\"\r\n        );\r\n\r\n        isAuthorizedOfficial[_official] = _status;\r\n\r\n        emit OfficialAuthorizationChanged(\r\n            _official,\r\n            _status\r\n        );\r\n    }\r\n\r\n    /**\r\n     * @notice Sets the maximum allocation ceiling for a barangay.\r\n     * @param _barangay Barangay name.\r\n     * @param _ceiling Maximum allowed allocation amount.\r\n     */\r\n    function setAllocationCeiling(\r\n        string calldata _barangay,\r\n        uint256 _ceiling\r\n    ) external onlyOwner {\r\n        require(\r\n            bytes(_barangay).length > 0,\r\n            \"SkLedge: Invalid barangay\"\r\n        );\r\n\r\n        require(\r\n            _ceiling > 0,\r\n            \"SkLedge: Ceiling must be greater than zero\"\r\n        );\r\n\r\n        allocationCeilings[_barangay] = _ceiling;\r\n\r\n        emit AllocationCeilingChanged(\r\n            _barangay,\r\n            _ceiling\r\n        );\r\n    }\r\n\r\n    /**\r\n     * @notice Returns the total allocated amount for a barangay.\r\n     * @param _barangay Barangay name.\r\n     */\r\n    function getAllocated(\r\n        string calldata _barangay\r\n    ) external view returns (uint256) {\r\n        return allocatedTotals[_barangay];\r\n    }\r\n\r\n    /**\r\n     * @notice Adds a new financial record to the blockchain.\r\n     * @param _barangay Barangay name.\r\n     * @param _amount Amount of the transaction.\r\n     * @param _purpose Purpose of the transaction.\r\n     * @param _recordType Transaction type (\"Allocation\", \"Expense\", or \"Award\").\r\n     */\r\n    function addRecord(\r\n        string calldata _barangay,\r\n        uint256 _amount,\r\n        string calldata _purpose,\r\n        string calldata _recordType\r\n    ) external onlyAuthorizedOfficial {\r\n        require(\r\n            _amount > 0,\r\n            \"SkLedge: Amount must be greater than zero\"\r\n        );\r\n\r\n        bytes32 typeHash = keccak256(\r\n            abi.encodePacked(_recordType)\r\n        );\r\n\r\n        require(\r\n            typeHash == keccak256(abi.encodePacked(\"Allocation\")) ||\r\n                typeHash == keccak256(abi.encodePacked(\"Expense\")) ||\r\n                typeHash == keccak256(abi.encodePacked(\"Award\")),\r\n            \"SkLedge: Type must be 'Allocation', 'Expense', or 'Award'\"\r\n        );\r\n\r\n        // Enforce the allocation ceiling for Allocation records when one is set.\r\n        if (\r\n            typeHash == keccak256(\r\n                abi.encodePacked(\"Allocation\")\r\n            )\r\n        ) {\r\n            uint256 ceiling = allocationCeilings[_barangay];\r\n\r\n            if (ceiling > 0) {\r\n                require(\r\n                    allocatedTotals[_barangay] + _amount <= ceiling,\r\n                    \"SkLedge: Allocation exceeds ceiling\"\r\n                );\r\n            }\r\n\r\n            allocatedTotals[_barangay] += _amount;\r\n        }\r\n\r\n        records.push(\r\n            FinancialRecord({\r\n                id: nextRecordId,\r\n                official: msg.sender,\r\n                barangay: _barangay,\r\n                amount: _amount,\r\n                timestamp: block.timestamp,\r\n                purpose: _purpose,\r\n                recordType: _recordType,\r\n                approved: false,\r\n                approvedBy: address(0)\r\n            })\r\n        );\r\n\r\n        emit RecordAdded(\r\n            nextRecordId,\r\n            msg.sender,\r\n            _barangay,\r\n            _amount,\r\n            block.timestamp,\r\n            _recordType\r\n        );\r\n\r\n        nextRecordId++;\r\n    }\r\n\r\n    /**\r\n     * @notice Approves or rejects a financial record.\r\n     * @param _id Record ID.\r\n     * @param _approved True to approve, false to remove approval.\r\n     */\r\n    function setRecordApproval(\r\n        uint256 _id,\r\n        bool _approved\r\n    ) external onlyOwner {\r\n        require(\r\n            _id > 0 && _id < nextRecordId,\r\n            \"SkLedge: Record does not exist\"\r\n        );\r\n\r\n        FinancialRecord storage record = records[_id - 1];\r\n\r\n        record.approved = _approved;\r\n\r\n        if (_approved) {\r\n            record.approvedBy = msg.sender;\r\n        } else {\r\n            record.approvedBy = address(0);\r\n        }\r\n\r\n        emit ApprovalChanged(\r\n            _id,\r\n            _approved,\r\n            record.approvedBy\r\n        );\r\n    }\r\n\r\n    /**\r\n     * @notice Helper getter to return all records.\r\n     */\r\n    function getAllRecords()\r\n        external\r\n        view\r\n        returns (FinancialRecord[] memory)\r\n    {\r\n        return records;\r\n    }\r\n}"
+      }
+    }
+  }
+}

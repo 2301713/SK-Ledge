@@ -2,3 +2,6 @@
 *.md
 !README.md
 docs
+
+# Diagrams — local documentation, do not commit or push
+diagrams/
