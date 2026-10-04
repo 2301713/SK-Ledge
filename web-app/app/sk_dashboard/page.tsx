@@ -10,7 +10,6 @@ import { Card, CardHeader } from "@/components/dashboard/ui/Card";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/useAuthStore";
-import AllocateFundsForm from "@/components/AllocateFundsForm";
 import {
   Plus,
   ChevronRight,
@@ -245,18 +244,6 @@ export default function SKDashboard() {
             trendIcon={CheckCircle2}
           />
         </div>
-
-        {/* ALLOCATE FUNDS */}
-        <Card>
-          <CardHeader
-            eyebrow="Blockchain"
-            title="Budget Allocation"
-            subtitle="Record official SK funds directly on the Sepolia ledger"
-          />
-          <div className="max-w-xl">
-            <AllocateFundsForm />
-          </div>
-        </Card>
 
         {/* ACTIVE PROPOSALS */}
         <Card>

@@ -10,9 +10,17 @@ import StatCard from "@/components/dashboard/ui/StatCard";
 import { Card, CardHeader } from "@/components/dashboard/ui/Card";
 import { supabase } from "@/lib/supabase";
 import { UserAccount } from "@/lib/useAuthStore";
-import { Filter, Download, Landmark, PiggyBank, Receipt, Gauge } from "lucide-react";
+import {
+  Filter,
+  Download,
+  Landmark,
+  PiggyBank,
+  Receipt,
+  Gauge,
+} from "lucide-react";
 import { useReadContract } from "wagmi";
 import { CONTRACT_ADDRESS, SK_LEDGE_ABI } from "@/lib/contractConfig";
+import AllocateFundsForm from "@/components/AllocateFundsForm";
 
 const STATUS_PILL: Record<string, string> = {
   "On Track": "bg-success/10 text-success",
@@ -30,14 +38,14 @@ export default function ABYIPPage() {
   // On-chain reads using Wagmi
   const barangay = currentUser?.barangay;
 
-  const { data: ceilingRaw, isLoading: ceilingLoading } = useReadContract({
+  const { data: ceilingRaw } = useReadContract({
     address: CONTRACT_ADDRESS,
     abi: SK_LEDGE_ABI,
     functionName: "allocationCeilings",
     args: barangay ? [barangay] : undefined,
   });
 
-  const { data: allocatedRaw, isLoading: allocLoading } = useReadContract({
+  const { data: allocatedRaw } = useReadContract({
     address: CONTRACT_ADDRESS,
     abi: SK_LEDGE_ABI,
     functionName: "getAllocated",
@@ -179,7 +187,13 @@ export default function ABYIPPage() {
 
   const formatM = (amount: number) => `₱${(amount / 1000000).toFixed(2)}M`;
 
-  if (isLoading || ceilingLoading || allocLoading) return <LogoLoader />;
+  const formatPeso = (amount: number) =>
+    `₱${amount.toLocaleString("en-PH", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+
+  if (isLoading) return <LogoLoader />;
 
   return (
     <div className="flex min-h-screen gap-4 bg-background p-4 selection:bg-tertiary selection:text-primary">
@@ -269,6 +283,75 @@ export default function ABYIPPage() {
             </p>
           </div>
         </div>
+
+        {/* BUDGET ALLOCATION */}
+        <Card>
+          <CardHeader
+            eyebrow="Blockchain"
+            title="Budget Allocation"
+            subtitle="Record official SK funds directly on the Sepolia ledger"
+          />
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
+            <AllocateFundsForm />
+            <aside className="flex flex-col gap-5 rounded-3xl border border-border bg-secondary/40 p-6">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-secondary-foreground">
+                  Live Budget
+                </p>
+                <p className="mt-1 text-lg font-bold tracking-tight text-primary-foreground">
+                  {currentUser?.barangay ?? "No Barangay"}
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between gap-3 border-b border-border pb-3">
+                  <span className="text-xs font-semibold text-secondary-foreground">
+                    Ceiling
+                  </span>
+                  <span className="text-sm font-bold text-primary-foreground">
+                    {formatPeso(onChainCeiling)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-3 border-b border-border pb-3">
+                  <span className="text-xs font-semibold text-secondary-foreground">
+                    Allocated
+                  </span>
+                  <span className="text-sm font-bold text-primary">
+                    {formatPeso(onChainAllocated)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-3 border-b border-border pb-3">
+                  <span className="text-xs font-semibold text-secondary-foreground">
+                    Remaining
+                  </span>
+                  <span className="text-sm font-bold text-primary-foreground">
+                    {formatPeso(onChainRemaining)}
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <div className="mb-2 flex items-center justify-between gap-3">
+                  <span className="text-xs font-semibold text-secondary-foreground">
+                    Utilization
+                  </span>
+                  <span className="text-xs font-bold text-primary-foreground">
+                    {onChainUtilization}%
+                  </span>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-border">
+                  <div
+                    className={`h-full rounded-full ${getProgressColor(onChainUtilization)} transition-all duration-700`}
+                    style={{ width: `${Math.min(onChainUtilization, 100)}%` }}
+                  />
+                </div>
+                <p className="mt-2 text-[10px] font-medium text-secondary-foreground">
+                  Budget usage across categories
+                </p>
+              </div>
+            </aside>
+          </div>
+        </Card>
 
         {/* BUDGET BREAKDOWN */}
         <Card>

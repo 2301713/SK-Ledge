@@ -116,6 +116,8 @@ export default function DisbursementsPage() {
             email: profileData.email,
             approval_status: profileData.approval_status,
           });
+
+          setIsLoading(false);
         } else {
           console.warn("No profile data found for user");
           setIsLoading(false);

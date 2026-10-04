@@ -28,6 +28,9 @@ contract SkLedge {
     // Running total of allocations per barangay
     mapping(string => uint256) private allocatedTotals;
 
+    // True when a barangay is locked after record approval
+    mapping(string => bool) public isBarangayLocked;
+
     // Events
     event RecordAdded(
         uint256 indexed id,
@@ -53,6 +56,8 @@ contract SkLedge {
         bool approved,
         address indexed approvedBy
     );
+
+    event BarangayLocked(string barangay, bool locked);
 
     // Modifiers
     modifier onlyOwner() {
@@ -165,6 +170,15 @@ contract SkLedge {
             "SkLedge: Type must be 'Allocation', 'Expense', or 'Award'"
         );
 
+        if (
+            typeHash != keccak256(abi.encodePacked("Allocation"))
+        ) {
+            require(
+                !isBarangayLocked[_barangay],
+                "SkLedge: Barangay is locked after approval"
+            );
+        }
+
         // Enforce the allocation ceiling for Allocation records when one is set.
         if (
             typeHash == keccak256(
@@ -229,8 +243,29 @@ contract SkLedge {
 
         if (_approved) {
             record.approvedBy = msg.sender;
+            isBarangayLocked[record.barangay] = true;
+            emit BarangayLocked(record.barangay, true);
         } else {
             record.approvedBy = address(0);
+
+            // Unlock the barangay only if no OTHER record for it is still approved.
+            bool anyOtherApproved = false;
+            for (uint256 i = 0; i < records.length; i++) {
+                if (i != _id - 1 && records[i].approved) {
+                    if (
+                        keccak256(abi.encodePacked(records[i].barangay)) ==
+                        keccak256(abi.encodePacked(record.barangay))
+                    ) {
+                        anyOtherApproved = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!anyOtherApproved) {
+                isBarangayLocked[record.barangay] = false;
+                emit BarangayLocked(record.barangay, false);
+            }
         }
 
         emit ApprovalChanged(
@@ -249,5 +284,40 @@ contract SkLedge {
         returns (FinancialRecord[] memory)
     {
         return records;
+    }
+
+    /**
+     * @notice Returns all financial records belonging to a specific barangay.
+     * @param _barangay Barangay name.
+     */
+    function getRecordsByBarangay(
+        string calldata _barangay
+    ) external view returns (FinancialRecord[] memory) {
+        uint256 count = 0;
+        for (uint256 i = 0; i < records.length; i++) {
+            if (
+                keccak256(abi.encodePacked(records[i].barangay)) ==
+                keccak256(abi.encodePacked(_barangay))
+            ) {
+                count++;
+            }
+        }
+
+        FinancialRecord[] memory barangayRecords = new FinancialRecord[](
+            count
+        );
+
+        uint256 index = 0;
+        for (uint256 i = 0; i < records.length; i++) {
+            if (
+                keccak256(abi.encodePacked(records[i].barangay)) ==
+                keccak256(abi.encodePacked(_barangay))
+            ) {
+                barangayRecords[index] = records[i];
+                index++;
+            }
+        }
+
+        return barangayRecords;
     }
 }

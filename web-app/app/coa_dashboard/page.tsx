@@ -50,7 +50,7 @@ export default function COADashboard() {
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .select(
-            "id, username, full_name, role_type, barangay,email, approval_status",
+            "id, username, full_name, role_type, barangay, email, approval_status",
           )
           .eq("id", user.id)
           .single();
@@ -80,6 +80,8 @@ export default function COADashboard() {
             email: profileData.email,
             approval_status: profileData.approval_status,
           });
+
+          setIsLoading(false);
         } else {
           // No profile data found
           console.warn("No profile data found for user");

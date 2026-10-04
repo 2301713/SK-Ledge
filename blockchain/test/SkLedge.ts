@@ -204,6 +204,78 @@ describe("SkLedge Contract Test Suite", function () {
     });
   });
 
+  describe("Record Locking After Approval", function () {
+    it("Should REVERT when adding an Expense for a locked barangay", async function () {
+      const { skLedge, owner } = await deploySkLedgeFixture();
+
+      await skLedge.connect(owner).addRecord("Barangay A", 5000, "First Allocation", "Allocation");
+      await skLedge.connect(owner).setRecordApproval(1, true);
+
+      expect(await skLedge.isBarangayLocked("Barangay A")).to.equal(true);
+
+      await expect(
+        skLedge.connect(owner).addRecord("Barangay A", 1000, "Expense after approval", "Expense")
+      ).to.be.revertedWith("SkLedge: Barangay is locked after approval");
+    });
+
+    it("Should REVERT when adding an Award for a locked barangay", async function () {
+      const { skLedge, owner } = await deploySkLedgeFixture();
+
+      await skLedge.connect(owner).addRecord("Barangay B", 5000, "First Allocation", "Allocation");
+      await skLedge.connect(owner).setRecordApproval(1, true);
+
+      await expect(
+        skLedge.connect(owner).addRecord("Barangay B", 2000, "Award after approval", "Award")
+      ).to.be.revertedWith("SkLedge: Barangay is locked after approval");
+    });
+
+    it("Should ALLOW adding an Allocation for a locked barangay", async function () {
+      const { skLedge, owner } = await deploySkLedgeFixture();
+
+      await skLedge.connect(owner).addRecord("Barangay A", 5000, "First Allocation", "Allocation");
+      await skLedge.connect(owner).setRecordApproval(1, true);
+
+      await skLedge.connect(owner).addRecord("Barangay A", 2000, "Second Allocation", "Allocation");
+
+      const records = await skLedge.getAllRecords();
+      expect(records.length).to.equal(2);
+      expect(records[1].recordType).to.equal("Allocation");
+    });
+
+    it("Should ALLOW adding an Expense after unapproving the record", async function () {
+      const { skLedge, owner } = await deploySkLedgeFixture();
+
+      await skLedge.connect(owner).addRecord("Barangay A", 5000, "First Allocation", "Allocation");
+      await skLedge.connect(owner).setRecordApproval(1, true);
+      await skLedge.connect(owner).setRecordApproval(1, false);
+
+      expect(await skLedge.isBarangayLocked("Barangay A")).to.equal(false);
+
+      await skLedge.connect(owner).addRecord("Barangay A", 1000, "Expense after unlock", "Expense");
+
+      const records = await skLedge.getAllRecords();
+      expect(records.length).to.equal(2);
+      expect(records[1].recordType).to.equal("Expense");
+    });
+
+    it("Should keep the barangay locked if another approved record exists", async function () {
+      const { skLedge, owner } = await deploySkLedgeFixture();
+
+      await skLedge.connect(owner).addRecord("Barangay A", 5000, "First Allocation", "Allocation");
+      await skLedge.connect(owner).addRecord("Barangay A", 3000, "Second Allocation", "Allocation");
+      await skLedge.connect(owner).setRecordApproval(1, true);
+      await skLedge.connect(owner).setRecordApproval(2, true);
+
+      await skLedge.connect(owner).setRecordApproval(1, false);
+
+      expect(await skLedge.isBarangayLocked("Barangay A")).to.equal(true);
+
+      await expect(
+        skLedge.connect(owner).addRecord("Barangay A", 1000, "Expense while still locked", "Expense")
+      ).to.be.revertedWith("SkLedge: Barangay is locked after approval");
+    });
+  });
+
   describe("Bulk Operations and Queries", function () {
     it("Should correctly record and return 50 records in order with IDs 1..50", async function () {
       const { skLedge, owner } = await deploySkLedgeFixture();
@@ -227,6 +299,32 @@ describe("SkLedge Contract Test Suite", function () {
         expect(records[i].barangay).to.equal(`Barangay ${i + 1}`);
         expect(records[i].amount).to.equal((i + 1) * 100);
       }
+    });
+  });
+
+  describe("getRecordsByBarangay", function () {
+    it("Should return only the records for the requested barangay", async function () {
+      const { skLedge, owner } = await deploySkLedgeFixture();
+
+      await skLedge.connect(owner).addRecord("Barangay A", 2000, "First A", "Allocation");
+      await skLedge.connect(owner).addRecord("Barangay A", 1500, "Second A", "Expense");
+      await skLedge.connect(owner).addRecord("Barangay B", 1000, "First B", "Award");
+
+      const barangayARecords = await skLedge.getRecordsByBarangay("Barangay A");
+      expect(barangayARecords.length).to.equal(2);
+
+      const barangayBRecords = await skLedge.getRecordsByBarangay("Barangay B");
+      expect(barangayBRecords.length).to.equal(1);
+
+      const barangayCRecords = await skLedge.getRecordsByBarangay("Barangay C");
+      expect(barangayCRecords.length).to.equal(0);
+
+      expect(barangayARecords[0].barangay).to.equal("Barangay A");
+      expect(barangayARecords[1].barangay).to.equal("Barangay A");
+      expect(barangayARecords[0].id).to.equal(1);
+      expect(barangayARecords[1].id).to.equal(2);
+      expect(barangayBRecords[0].barangay).to.equal("Barangay B");
+      expect(barangayBRecords[0].id).to.equal(3);
     });
   });
 });

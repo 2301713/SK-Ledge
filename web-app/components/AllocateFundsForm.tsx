@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Fragment, useState, useEffect } from "react";
 import {
   useWriteContract,
   useWaitForTransactionReceipt,
@@ -22,11 +22,24 @@ import {
   Sparkles,
   ExternalLink,
   MapPin,
+  Check,
 } from "lucide-react";
 import { CONTRACT_ADDRESS, SK_LEDGE_ABI } from "@/lib/contractConfig";
 import { useAuthStore } from "@/lib/useAuthStore";
 import { useToast } from "@/lib/useToast";
 import { syncRecord } from "@/lib/syncRecord";
+
+const STEPS = [
+  { n: 1, label: "Project" },
+  { n: 2, label: "Budget" },
+  { n: 3, label: "Sign & Disburse" },
+];
+
+const STEP_TITLES: Record<number, string> = {
+  1: "Project Identification",
+  2: "Fund Amount & Allocation",
+  3: "Blockchain Ledger Sign-off",
+};
 
 export default function AllocateFundsForm() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -132,81 +145,42 @@ export default function AllocateFundsForm() {
   };
 
   return (
-    <div className="w-full bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden">
+    <div className="w-full overflow-hidden rounded-3xl border border-border bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(15,23,42,0.10)]">
       {/* STEP PROGRESS HEADER */}
-      <div className="bg-slate-900 p-6 text-white">
-        <div className="flex items-center justify-between max-w-md mx-auto mb-6">
-          {/* Step 1 Indicator */}
-          <div className="flex items-center gap-2">
-            <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs transition-all ${
-                currentStep >= 1
-                  ? "bg-blue-600 text-white ring-4 ring-blue-500/30"
-                  : "bg-slate-800 text-slate-500"
-              }`}
-            >
-              1
-            </div>
-            <span className="text-xs font-bold text-slate-300 hidden sm:inline">
-              Project
-            </span>
-          </div>
-
-          <div
-            className={`flex-1 h-1 mx-3 rounded transition-all ${
-              currentStep >= 2 ? "bg-blue-600" : "bg-slate-800"
-            }`}
-          />
-
-          {/* Step 2 Indicator */}
-          <div className="flex items-center gap-2">
-            <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs transition-all ${
-                currentStep >= 2
-                  ? "bg-blue-600 text-white ring-4 ring-blue-500/30"
-                  : "bg-slate-800 text-slate-500"
-              }`}
-            >
-              2
-            </div>
-            <span className="text-xs font-bold text-slate-300 hidden sm:inline">
-              Budget
-            </span>
-          </div>
-
-          <div
-            className={`flex-1 h-1 mx-3 rounded transition-all ${
-              currentStep >= 3 ? "bg-blue-600" : "bg-slate-800"
-            }`}
-          />
-
-          {/* Step 3 Indicator */}
-          <div className="flex items-center gap-2">
-            <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs transition-all ${
-                currentStep === 3
-                  ? "bg-blue-600 text-white ring-4 ring-blue-500/30"
-                  : "bg-slate-800 text-slate-500"
-              }`}
-            >
-              3
-            </div>
-            <span className="text-xs font-bold text-slate-300 hidden sm:inline">
-              Sign & Disburse
-            </span>
-          </div>
+      <div className="border-b border-border bg-secondary/40 px-6 py-5 md:px-8">
+        <div className="flex items-center gap-3">
+          {STEPS.map((step, i) => (
+            <Fragment key={step.n}>
+              {i > 0 && (
+                <div
+                  className={`h-1 flex-1 rounded ${
+                    currentStep >= step.n ? "bg-primary" : "bg-border"
+                  }`}
+                />
+              )}
+              <div className="flex items-center gap-2.5">
+                <div
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-black transition-all ${
+                    currentStep === step.n
+                      ? "bg-primary text-white ring-4 ring-primary/20"
+                      : currentStep > step.n
+                        ? "bg-success text-white"
+                        : "border border-border bg-white text-secondary-foreground"
+                  }`}
+                >
+                  {currentStep > step.n ? <Check className="h-4 w-4" /> : step.n}
+                </div>
+                <span className="hidden text-xs font-bold text-primary-foreground sm:inline">
+                  {step.label}
+                </span>
+              </div>
+            </Fragment>
+          ))}
         </div>
 
-        <div className="text-center">
-          <p className="text-xs font-bold text-blue-400 uppercase tracking-widest mb-1">
-            Step {currentStep} of 3
-          </p>
-          <h3 className="text-lg font-black tracking-tight">
-            {currentStep === 1 && "Project Identification"}
-            {currentStep === 2 && "Fund Amount & Allocation"}
-            {currentStep === 3 && "Blockchain Ledger Sign-off"}
-          </h3>
-        </div>
+        <p className="mt-4 text-[10px] font-bold uppercase tracking-[0.2em] text-secondary-foreground">
+          Step {currentStep} of 3 · {STEP_TITLES[currentStep]}
+        </p>
       </div>
 
       {/* FORM CONTENT */}
@@ -214,10 +188,10 @@ export default function AllocateFundsForm() {
         <form onSubmit={handleSubmit}>
           {/* STEP 1: PROJECT DETAILS */}
           {currentStep === 1 && (
-            <div className="space-y-5 max-w-xl mx-auto animate-fadeIn">
+            <div className="space-y-5 max-w-xl mx-auto animate-fadein">
               <div>
-                <label className="text-xs font-black uppercase tracking-wider text-slate-700 mb-2 flex items-center gap-2">
-                  <FolderPlus className="w-4 h-4 text-blue-600" />
+                <label className="text-xs font-black uppercase tracking-wider text-secondary-foreground mb-2 flex items-center gap-2">
+                  <FolderPlus className="w-4 h-4 text-primary" />
                   Program / Project Title
                 </label>
                 <input
@@ -226,13 +200,13 @@ export default function AllocateFundsForm() {
                   placeholder="e.g., Youth Leadership Summit 2026"
                   value={programName}
                   onChange={(e) => setProgramName(e.target.value)}
-                  className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 text-sm font-semibold focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 transition-all"
+                  className="w-full px-4 py-3.5 bg-white border border-border rounded-2xl text-primary-foreground text-sm font-semibold placeholder:text-secondary-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-black uppercase tracking-wider text-slate-700 mb-2 flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-blue-600" />
+                <label className="text-xs font-black uppercase tracking-wider text-secondary-foreground mb-2 flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-primary" />
                   Barangay
                 </label>
                 <input
@@ -241,19 +215,19 @@ export default function AllocateFundsForm() {
                   placeholder="e.g., Barangay San Jose"
                   value={barangay}
                   onChange={(e) => setBarangay(e.target.value)}
-                  className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 text-sm font-semibold focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 transition-all"
+                  className="w-full px-4 py-3.5 bg-white border border-border rounded-2xl text-primary-foreground text-sm font-semibold placeholder:text-secondary-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-black uppercase tracking-wider text-slate-700 mb-2 flex items-center gap-2">
-                  <Layers className="w-4 h-4 text-blue-600" />
+                <label className="text-xs font-black uppercase tracking-wider text-secondary-foreground mb-2 flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-primary" />
                   Category
                 </label>
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 text-sm font-semibold focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 transition-all cursor-pointer"
+                  className="w-full px-4 py-3.5 bg-white border border-border rounded-2xl text-primary-foreground text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all cursor-pointer"
                 >
                   <option value="Health & Sports">Health & Sports</option>
                   <option value="Education & Training">Education & Training</option>
@@ -267,7 +241,7 @@ export default function AllocateFundsForm() {
               <button
                 type="button"
                 onClick={handleNext}
-                className="w-full mt-4 py-4 px-6 bg-blue-600 hover:bg-blue-700 text-white font-black text-sm rounded-2xl uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-600/25"
+                className="w-full mt-4 py-4 px-6 bg-primary hover:bg-primary/90 text-white font-black text-sm rounded-2xl uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/25"
               >
                 Next: Enter Amount <ArrowRight className="w-4 h-4" />
               </button>
@@ -276,14 +250,14 @@ export default function AllocateFundsForm() {
 
           {/* STEP 2: BUDGET AMOUNT */}
           {currentStep === 2 && (
-            <div className="space-y-5 max-w-xl mx-auto animate-fadeIn">
+            <div className="space-y-5 max-w-xl mx-auto animate-fadein">
               <div>
-                <label className="text-xs font-black uppercase tracking-wider text-slate-700 mb-2 flex items-center gap-2">
-                  <Coins className="w-4 h-4 text-blue-600" />
+                <label className="text-xs font-black uppercase tracking-wider text-secondary-foreground mb-2 flex items-center gap-2">
+                  <Coins className="w-4 h-4 text-primary" />
                   Allocated Amount (in PHP)
                 </label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400 text-lg">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-secondary-foreground/50 text-lg">
                     ₱
                   </span>
                   <input
@@ -293,12 +267,12 @@ export default function AllocateFundsForm() {
                     placeholder="25000"
                     value={amountPhp}
                     onChange={(e) => setAmountPhp(e.target.value)}
-                    className="w-full pl-9 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 text-2xl font-black focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 transition-all"
+                    className="w-full pl-9 pr-4 py-4 bg-white border border-border rounded-2xl text-primary-foreground text-2xl font-black placeholder:text-secondary-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                   />
                 </div>
-                <p className="text-xs text-slate-400 mt-2">
+                <p className="text-xs text-secondary-foreground mt-2">
                   Formatted preview:{" "}
-                  <strong className="text-slate-700 font-bold">
+                  <strong className="text-primary-foreground font-bold">
                     {formatCurrency(amountPhp)}
                   </strong>
                 </p>
@@ -308,14 +282,14 @@ export default function AllocateFundsForm() {
                 <button
                   type="button"
                   onClick={handleBack}
-                  className="w-1/3 py-4 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm rounded-2xl transition-all flex items-center justify-center gap-1"
+                  className="w-1/3 py-4 px-4 bg-secondary hover:bg-secondary-foreground/10 text-primary-foreground font-bold text-sm rounded-2xl transition-all flex items-center justify-center gap-1"
                 >
                   <ArrowLeft className="w-4 h-4" /> Back
                 </button>
                 <button
                   type="button"
                   onClick={handleNext}
-                  className="w-2/3 py-4 px-6 bg-blue-600 hover:bg-blue-700 text-white font-black text-sm rounded-2xl uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-600/25"
+                  className="w-2/3 py-4 px-6 bg-primary hover:bg-primary/90 text-white font-black text-sm rounded-2xl uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/25"
                 >
                   Review Allocation <ArrowRight className="w-4 h-4" />
                 </button>
@@ -325,40 +299,40 @@ export default function AllocateFundsForm() {
 
           {/* STEP 3: FINAL REVIEW & BLOCKCHAIN SIGN */}
           {currentStep === 3 && (
-            <div className="space-y-6 max-w-xl mx-auto animate-fadeIn">
+            <div className="space-y-6 max-w-xl mx-auto animate-fadein">
               {/* Summary Voucher Card */}
-              <div className="bg-slate-50 rounded-2xl p-6 border border-slate-200 space-y-4">
-                <div className="flex justify-between items-center pb-3 border-b border-slate-200">
-                  <span className="text-xs font-black uppercase text-slate-500 flex items-center gap-1.5">
-                    <FileCheck2 className="w-4 h-4 text-blue-600" /> Allocation Summary
+              <div className="bg-secondary/40 rounded-2xl p-6 border border-border space-y-4">
+                <div className="flex justify-between items-center pb-3 border-b border-border">
+                  <span className="text-xs font-black uppercase text-secondary-foreground flex items-center gap-1.5">
+                    <FileCheck2 className="w-4 h-4 text-primary" /> Allocation Summary
                   </span>
-                  <span className="text-[10px] font-black px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800">
+                  <span className="text-[10px] font-black px-2.5 py-1 rounded-full bg-success/10 text-success">
                     READY FOR SIGNATURE
                   </span>
                 </div>
 
                 <div className="space-y-3 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-slate-500">Program:</span>
-                    <span className="font-bold text-slate-900">{programName}</span>
+                    <span className="text-secondary-foreground">Program:</span>
+                    <span className="font-bold text-primary-foreground">{programName}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-500">Barangay:</span>
-                    <span className="font-bold text-slate-700">{barangay}</span>
+                    <span className="text-secondary-foreground">Barangay:</span>
+                    <span className="font-bold text-primary-foreground">{barangay}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-500">Category:</span>
-                    <span className="font-bold text-slate-700">{category}</span>
+                    <span className="text-secondary-foreground">Category:</span>
+                    <span className="font-bold text-primary-foreground">{category}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-slate-500">Amount:</span>
-                    <span className="font-black text-blue-600 text-lg">
+                    <span className="text-secondary-foreground">Amount:</span>
+                    <span className="font-black text-primary text-lg">
                       {formatCurrency(amountPhp)}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center pt-2 border-t border-slate-200 text-xs">
-                    <span className="text-slate-500">Signing Wallet:</span>
-                    <span className="font-mono text-slate-600 bg-white px-2 py-1 rounded border border-slate-200">
+                  <div className="flex justify-between items-center pt-2 border-t border-border text-xs">
+                    <span className="text-secondary-foreground">Signing Wallet:</span>
+                    <span className="font-mono text-primary-foreground bg-white px-2 py-1 rounded border border-border">
                       {isConnected
                         ? `${address?.slice(0, 6)}...${address?.slice(-4)}`
                         : "Not Connected"}
@@ -373,7 +347,7 @@ export default function AllocateFundsForm() {
                   type="button"
                   onClick={handleBack}
                   disabled={isWritePending || isConfirming}
-                  className="w-1/3 py-4 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm rounded-2xl transition-all flex items-center justify-center gap-1"
+                  className="w-1/3 py-4 px-4 bg-secondary hover:bg-secondary-foreground/10 text-primary-foreground font-bold text-sm rounded-2xl transition-all flex items-center justify-center gap-1"
                 >
                   <ArrowLeft className="w-4 h-4" /> Edit
                 </button>
@@ -383,10 +357,10 @@ export default function AllocateFundsForm() {
                   disabled={isWritePending || isConfirming || !isConnected}
                   className={`w-2/3 py-4 px-6 rounded-2xl font-black text-sm tracking-wider uppercase transition-all shadow-lg flex items-center justify-center gap-2 ${
                     isWrongNetwork
-                      ? "bg-amber-500 hover:bg-amber-600 text-white"
+                      ? "bg-pending hover:bg-pending/90 text-white"
                       : isWritePending || isConfirming
-                        ? "bg-slate-400 text-white cursor-not-allowed"
-                        : "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-600/25"
+                        ? "bg-secondary-foreground/30 text-white cursor-not-allowed"
+                        : "bg-primary hover:bg-primary/90 text-white shadow-primary/25"
                   }`}
                 >
                   {isWritePending && (
@@ -416,16 +390,16 @@ export default function AllocateFundsForm() {
 
           {/* SUCCESS MESSAGE */}
           {isSuccess && hash && (
-            <div className="mt-6 p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center justify-between text-xs font-bold text-emerald-800">
+            <div className="mt-6 p-4 bg-success/10 border border-success/30 rounded-2xl flex items-center justify-between text-xs font-bold text-success">
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                <CheckCircle2 className="w-5 h-5 text-success shrink-0" />
                 Budget allocation successfully recorded on Sepolia!
               </div>
               <a
                 href={`https://sepolia.etherscan.io/tx/${hash}`}
                 target="_blank"
                 rel="noreferrer"
-                className="underline flex items-center gap-1 text-emerald-700"
+                className="underline flex items-center gap-1 text-success"
               >
                 View Etherscan <ExternalLink className="w-3.5 h-3.5" />
               </a>

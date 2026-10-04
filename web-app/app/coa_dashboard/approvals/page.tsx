@@ -88,6 +88,7 @@ export default function ApprovalsPage() {
 
   const [filter, setFilter] = useState<"all" | "pending" | "approved">("all");
   const [actionLoading, setActionLoading] = useState<number | null>(null); // record ID being processed
+  const [userBarangay, setUserBarangay] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -135,6 +136,13 @@ export default function ApprovalsPage() {
 
           setCurrentUser(profile as UserAccount);
           setUserProfile(profile);
+          const rawBarangay = profileData.barangay;
+          setUserBarangay(
+            rawBarangay &&
+              !["N/A", "No Barangay Assigned", "None"].includes(rawBarangay)
+              ? rawBarangay
+              : null,
+          );
         }
       } catch (err) {
         console.error("Unexpected error loading profile:", err);
@@ -149,9 +157,10 @@ export default function ApprovalsPage() {
   const records = (allRecords as OnChainRecord[] | undefined) ?? [];
 
   // Filter by barangay (COA user's barangay from profile)
-  const barangayRecords = currentUser?.barangay
-    ? records.filter((r) => r.barangay === currentUser.barangay)
-    : records;
+  const barangayRecords =
+    userBarangay !== null
+      ? records.filter((r) => r.barangay === userBarangay)
+      : records;
 
   // Filter by status
   const filteredRecords = barangayRecords.filter((r) => {
@@ -251,7 +260,7 @@ export default function ApprovalsPage() {
             label="Total Records"
             value={barangayRecords.length}
             icon={Check}
-            trend={`In ${currentUser?.barangay ?? "barangay"} queue`}
+            trend={`In ${userBarangay ?? "all barangays"} queue`}
           />
         </div>
 
@@ -326,7 +335,7 @@ export default function ApprovalsPage() {
                     </p>
                     <p className="text-xs text-secondary-foreground">
                       {barangayRecords.length === 0
-                        ? `No records found for ${currentUser?.barangay ?? "your barangay"} yet.`
+                        ? `No records found for ${userBarangay ?? "your barangay"} yet.`
                         : "No records match the selected filter."}
                     </p>
                   </div>
