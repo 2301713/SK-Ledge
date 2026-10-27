@@ -25,6 +25,16 @@ interface AccountRow {
   avatar_url?: string | null;
 }
 
+type AccountTypeFilter = "all" | "web" | "vendor";
+
+const normalizeStatus = (value?: string | null) => {
+  const normalized = value?.toString().trim().toLowerCase();
+  if (!normalized || normalized === "null" || normalized === "undefined") {
+    return "pending";
+  }
+  return normalized;
+};
+
 export default function AccountsPage() {
   const router = useRouter();
   const toast = useToast();
@@ -38,6 +48,7 @@ export default function AccountsPage() {
 
   const [accounts, setAccounts] = useState<AccountRow[]>([]);
   const [search, setSearch] = useState("");
+  const [accountType, setAccountType] = useState<AccountTypeFilter>("all");
   const [busyId, setBusyId] = useState<string | null>(null);
   const authAttemptedRef = useRef(false);
 
@@ -107,14 +118,6 @@ export default function AccountsPage() {
     }
   }, [router, setCurrentUser, setIsLoading, setUserProfile]);
 
-  const normalizeStatus = (value?: string | null) => {
-    const normalized = value?.toString().trim().toLowerCase();
-    if (!normalized || normalized === "null" || normalized === "undefined") {
-      return "pending";
-    }
-    return normalized;
-  };
-
   const handleStatusChange = async (
     id: string,
     status: "approved" | "rejected",
@@ -146,14 +149,36 @@ export default function AccountsPage() {
     }
   };
 
-  const pendingAccounts = accounts.filter(
-    (account) => normalizeStatus(account.approval_status) === "pending",
+  const pendingAccounts = useMemo(
+    () =>
+      accounts.filter(
+        (account) => normalizeStatus(account.approval_status) === "pending",
+      ),
+    [accounts],
+  );
+
+  const accountTypeCounts = useMemo(
+    () => ({
+      all: pendingAccounts.length,
+      web: pendingAccounts.filter((account) => account.role_type !== "Vendor")
+        .length,
+      vendor: pendingAccounts.filter(
+        (account) => account.role_type === "Vendor",
+      ).length,
+    }),
+    [pendingAccounts],
   );
 
   const filteredAccounts = useMemo(() => {
-    const query = search.toLowerCase();
-    if (!query) return pendingAccounts;
-    return pendingAccounts.filter((account) =>
+    const typeFiltered = pendingAccounts.filter((account) => {
+      if (accountType === "all") return true;
+      const isVendor = account.role_type === "Vendor";
+      return accountType === "vendor" ? isVendor : !isVendor;
+    });
+
+    const query = search.trim().toLowerCase();
+    if (!query) return typeFiltered;
+    return typeFiltered.filter((account) =>
       [
         account.full_name,
         account.username,
@@ -165,7 +190,7 @@ export default function AccountsPage() {
         .toLowerCase()
         .includes(query),
     );
-  }, [pendingAccounts, search]);
+  }, [accountType, pendingAccounts, search]);
 
   if (isLoading) return <LogoLoader />;
 
@@ -189,16 +214,47 @@ export default function AccountsPage() {
 
         <PageHeader
           eyebrow="Account Management"
-          title="User Accounts"
-          subtitle={`${pendingAccounts.length} account(s) pending your review.`}
+          title="User & Vendor Accounts"
+          subtitle={`${pendingAccounts.length} account(s) pending your review, including vendor applications.`}
         />
 
         <Card>
           <CardHeader
             eyebrow="Queue"
             title="Pending account reviews"
-            subtitle="Approve or reject new access requests from SK-Ledge users."
+            subtitle="Approve or reject new access requests from SK-Ledge web users and vendors."
           />
+
+          <div className="mb-5 flex flex-wrap items-center gap-1 self-start rounded-2xl bg-secondary/70 p-1 text-xs font-semibold">
+            {(
+              [
+                { value: "all", label: "All" },
+                { value: "web", label: "Web users" },
+                { value: "vendor", label: "Vendors" },
+              ] as const
+            ).map(({ value, label }) => (
+              <button
+                key={value}
+                onClick={() => setAccountType(value)}
+                className={`rounded-xl px-3.5 py-2 transition-all ${
+                  accountType === value
+                    ? "bg-white font-bold text-primary shadow-sm"
+                    : "text-secondary-foreground hover:text-primary-foreground"
+                }`}
+              >
+                {label}
+                <span
+                  className={`ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] ${
+                    accountType === value
+                      ? "bg-primary/10 text-primary"
+                      : "bg-white text-secondary-foreground"
+                  }`}
+                >
+                  {accountTypeCounts[value]}
+                </span>
+              </button>
+            ))}
+          </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -228,7 +284,7 @@ export default function AccountsPage() {
                       colSpan={5}
                       className="px-3 py-10 text-center text-sm text-secondary-foreground"
                     >
-                      No pending account reviews at the moment.
+                      No pending account reviews match the current filters.
                     </td>
                   </tr>
                 ) : (

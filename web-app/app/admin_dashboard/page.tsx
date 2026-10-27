@@ -63,6 +63,7 @@ const ROLE_ABBREV: Record<string, string> = {
   SK_Chairperson: "SKC",
   SK_Treasurer: "SKT",
   SK_Federation: "SKF",
+  Vendor: "VEN",
 };
 
 const roleAbbrev = (role: string) => ROLE_ABBREV[role] ?? role.slice(0, 3);

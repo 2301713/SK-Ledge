@@ -1,13 +1,15 @@
 import { supabase } from "@/lib/supabase";
+import { useFocusEffect } from "expo-router";
 import {
   Briefcase,
   ChevronRight,
   CircleDollarSign,
   Trophy,
 } from "lucide-react-native";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   ActivityIndicator,
+  RefreshControl,
   ScrollView,
   StatusBar,
   Text,
@@ -38,6 +40,7 @@ const formatPeso = (value: number | null | undefined) =>
 export default function HomePage() {
   const [companyName, setCompanyName] = useState("Vendor");
   const [isLoading, setIsLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [totalBids, setTotalBids] = useState(0);
   const [pendingBids, setPendingBids] = useState(0);
   const [wonBids, setWonBids] = useState(0);
@@ -86,10 +89,18 @@ export default function HomePage() {
       console.error("Failed to load dashboard:", err);
     } finally {
       setIsLoading(false);
+      setRefreshing(false);
     }
   }, []);
 
-  useEffect(() => {
+  useFocusEffect(
+    useCallback(() => {
+      loadDashboard();
+    }, [loadDashboard]),
+  );
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
     loadDashboard();
   }, [loadDashboard]);
 
@@ -125,6 +136,9 @@ export default function HomePage() {
       <ScrollView
         contentContainerStyle={{ paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
       >
         {/* Floating Dashboard Stats Card */}
         <View

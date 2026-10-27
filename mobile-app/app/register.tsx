@@ -37,8 +37,10 @@ export default function RegisterPage() {
         password: password,
         options: {
           data: {
-            company_name: companyName,
             role: "vendor",
+            role_type: "Vendor",
+            company_name: companyName,
+            full_name: companyName,
             approval_status: "pending",
           },
         },

@@ -56,12 +56,12 @@ export default function SubmitBidPage() {
 
     try {
       const response = await fetch(selectedFile.uri);
-      const blob = await response.blob();
+      const arrayBuffer = await response.arrayBuffer();
       const fileName = `${Date.now()}_${selectedFile.name}`;
 
       const { error: uploadError } = await supabase.storage
         .from("proposals")
-        .upload(fileName, blob, {
+        .upload(fileName, arrayBuffer, {
           contentType: "application/pdf",
         });
 

@@ -42,10 +42,10 @@ export default function IndexPage() {
 
       if (authData.user) {
         const { data: profileData, error: profileError } = await supabase
-          .from("vendors")
-          .select("id, company_name, role, approval_status")
+          .from("profiles")
+          .select("id, role_type, approval_status")
           .eq("id", authData.user.id)
-          .single();
+          .maybeSingle();
 
         if (profileError) {
           // Sign out to avoid a broken session state
@@ -53,6 +53,26 @@ export default function IndexPage() {
           throw new Error(
             "Failed to retrieve account details. Please try again.",
           );
+        }
+
+        if (!profileData) {
+          await supabase.auth.signOut();
+          Alert.alert(
+            "Account Not Linked",
+            "Your vendor profile is not linked to this account. Please contact the SK Federation for assistance.",
+            [{ text: "OK" }],
+          );
+          return;
+        }
+
+        if (profileData.role_type !== "Vendor") {
+          await supabase.auth.signOut();
+          Alert.alert(
+            "Invalid Account Type",
+            "This account is not a mobile vendor account. Please use the web portal instead.",
+            [{ text: "OK" }],
+          );
+          return;
         }
 
         if (profileData.approval_status === "pending") {
