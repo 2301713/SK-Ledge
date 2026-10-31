@@ -19,9 +19,14 @@ interface RecordItem {
 interface ApproveRecordModalProps {
   recordId: number | bigint;
   onClose: () => void;
+  canApprove: boolean;
 }
 
-export default function ApproveRecordModal({ recordId, onClose }: ApproveRecordModalProps) {
+export default function ApproveRecordModal({
+  recordId,
+  onClose,
+  canApprove,
+}: ApproveRecordModalProps) {
   const { data: records, isLoading } = useReadContract({
     address: CONTRACT_ADDRESS,
     abi: SK_LEDGE_ABI,
@@ -38,6 +43,7 @@ export default function ApproveRecordModal({ recordId, onClose }: ApproveRecordM
   const record = allRecords.find((r) => Number(r.id) === Number(recordId));
 
   const handleAction = (approved: boolean) => {
+    if (!canApprove) return;
     writeContract({
       address: CONTRACT_ADDRESS,
       abi: SK_LEDGE_ABI,
@@ -110,21 +116,27 @@ export default function ApproveRecordModal({ recordId, onClose }: ApproveRecordM
               <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl text-xs text-rose-800 font-semibold text-center break-words">
                 {error.message.includes("User rejected")
                   ? "Transaction canceled in wallet."
-                  : "Only Authorized Contract Owners can approve/reject records."}
+                  : "Only the contract owner or an authorized approver can approve/reject records."}
+              </div>
+            )}
+
+            {!canApprove && (
+              <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-2xl text-xs text-amber-800 font-semibold text-center">
+                Owner or approver only.
               </div>
             )}
 
             <div className="flex items-center gap-3 pt-2">
               <button
                 onClick={() => handleAction(false)}
-                disabled={isProcessing}
+                disabled={!canApprove || isProcessing}
                 className="flex-1 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-bold py-3 px-4 rounded-2xl transition-all disabled:opacity-50 text-xs sm:text-sm shadow-md"
               >
                 Reject Entry
               </button>
               <button
                 onClick={() => handleAction(true)}
-                disabled={isProcessing}
+                disabled={!canApprove || isProcessing}
                 className="flex-1 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold py-3 px-4 rounded-2xl transition-all disabled:opacity-50 text-xs sm:text-sm shadow-md"
               >
                 {isProcessing ? "Processing..." : "Approve Entry"}

@@ -10,9 +10,16 @@ import { Card, CardHeader } from "@/components/dashboard/ui/Card";
 import StatusBadge from "@/components/dashboard/ui/StatusBadge";
 import { supabase } from "@/lib/supabase";
 import { UserAccount } from "@/lib/useAuthStore";
-import { useReadContract } from "wagmi";
+import {
+  useAccount,
+  useChainId,
+  useReadContract,
+  useSwitchChain,
+} from "wagmi";
+import { sepolia } from "wagmi/chains";
 import { CONTRACT_ADDRESS, SK_LEDGE_ABI } from "@/lib/contractConfig";
 import ApproveRecordModal from "@/components/ApproveRecordModal";
+import { ConnectButton } from "@/components/ConnectButton";
 import { Search } from "lucide-react";
 
 interface RecordItem {
@@ -34,6 +41,10 @@ export default function RecordApprovalsPage() {
   const [filter, setFilter] = useState<"ALL" | "PENDING" | "APPROVED">("ALL");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRecordId, setSelectedRecordId] = useState<number | null>(null);
+  const { isConnected, address } = useAccount();
+  const chainId = useChainId();
+  const { switchChain } = useSwitchChain();
+  const isWrongNetwork = chainId !== sepolia.id;
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -98,6 +109,32 @@ export default function RecordApprovalsPage() {
     abi: SK_LEDGE_ABI,
     functionName: "getAllRecords",
   });
+
+  const { data: contractOwner } = useReadContract({
+    address: CONTRACT_ADDRESS,
+    abi: SK_LEDGE_ABI,
+    functionName: "owner",
+    query: { enabled: isConnected && !isWrongNetwork },
+  });
+
+  const { data: isApprover } = useReadContract({
+    address: CONTRACT_ADDRESS,
+    abi: SK_LEDGE_ABI,
+    functionName: "isApprover",
+    args: address ? [address] : undefined,
+    query: { enabled: isConnected && !isWrongNetwork },
+  });
+
+  const isOwner =
+    address && contractOwner
+      ? address.toLowerCase() === contractOwner.toLowerCase()
+      : false;
+  const canApprove = isOwner || isApprover === true;
+
+  const handleReview = (recordId: number) => {
+    if (!isConnected || isWrongNetwork || !canApprove) return;
+    setSelectedRecordId(recordId);
+  };
 
   const formattedRecords = ((records as RecordItem[]) || []).map((r) => ({
     id: Number(r.id),
@@ -259,12 +296,27 @@ export default function RecordApprovalsPage() {
                         <StatusBadge status={row.status} />
                       </td>
                       <td className="px-5 py-4 text-center">
-                        <button
-                          onClick={() => setSelectedRecordId(row.id)}
-                          className="rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-primary/90"
-                        >
-                          Review
-                        </button>
+                        {!isConnected ? (
+                          <ConnectButton />
+                        ) : isWrongNetwork ? (
+                          <button
+                            onClick={() => switchChain({ chainId: sepolia.id })}
+                            className="rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-primary/90"
+                          >
+                            Switch to Sepolia
+                          </button>
+                        ) : !canApprove ? (
+                          <span className="text-[11px] italic text-secondary-foreground">
+                            Owner or approver only
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => handleReview(row.id)}
+                            className="rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-primary/90"
+                          >
+                            Review
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -279,6 +331,7 @@ export default function RecordApprovalsPage() {
         <ApproveRecordModal
           recordId={selectedRecordId}
           onClose={() => setSelectedRecordId(null)}
+          canApprove={canApprove && isConnected && !isWrongNetwork}
         />
       )}
     </div>

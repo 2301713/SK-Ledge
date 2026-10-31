@@ -40,6 +40,16 @@ export const SK_LEDGE_ABI = [
   },
   {
     type: "function",
+    name: "setApproverAuthorization",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "_approver", type: "address" },
+      { name: "_status", type: "bool" },
+    ],
+    outputs: [],
+  },
+  {
+    type: "function",
     name: "getAllocated",
     stateMutability: "view",
     inputs: [{ name: "_barangay", type: "string" }],
@@ -55,6 +65,13 @@ export const SK_LEDGE_ABI = [
   {
     type: "function",
     name: "isAuthorizedOfficial",
+    stateMutability: "view",
+    inputs: [{ name: "", type: "address" }],
+    outputs: [{ name: "", type: "bool" }],
+  },
+  {
+    type: "function",
+    name: "isApprover",
     stateMutability: "view",
     inputs: [{ name: "", type: "address" }],
     outputs: [{ name: "", type: "bool" }],

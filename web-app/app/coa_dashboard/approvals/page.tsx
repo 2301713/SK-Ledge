@@ -86,6 +86,14 @@ export default function ApprovalsPage() {
     functionName: "owner",
   });
 
+  const { data: isApprover } = useReadContract({
+    address: CONTRACT_ADDRESS as `0x${string}`,
+    abi: SK_LEDGE_ABI,
+    functionName: "isApprover",
+    args: address ? [address] : undefined,
+    query: { enabled: Boolean(address) && chainId === sepolia.id },
+  });
+
   const [filter, setFilter] = useState<"all" | "pending" | "approved">("all");
   const [actionLoading, setActionLoading] = useState<number | null>(null); // record ID being processed
   const [userBarangay, setUserBarangay] = useState<string | null>(null);
@@ -177,6 +185,7 @@ export default function ApprovalsPage() {
     address && contractOwner
       ? address.toLowerCase() === (contractOwner as string).toLowerCase()
       : false;
+  const canApprove = isOwner || isApprover === true;
 
   const isWrongNetwork = chainId !== sepolia.id;
 
@@ -186,6 +195,7 @@ export default function ApprovalsPage() {
       switchChain({ chainId: sepolia.id });
       return;
     }
+    if (!canApprove) return;
     setActionLoading(recordId);
     writeContract({
       address: CONTRACT_ADDRESS as `0x${string}`,
@@ -391,7 +401,7 @@ export default function ApprovalsPage() {
                             <StatusBadge status={record.approved ? "Approved" : "Pending"} />
                           </td>
                           <td className="px-4 py-4 text-right">
-                            {isOwner ? (
+                            {canApprove ? (
                               <div className="flex items-center justify-end gap-2">
                                 {record.approved ? (
                                   <button
@@ -433,7 +443,7 @@ export default function ApprovalsPage() {
                               </div>
                             ) : (
                               <span className="text-[10px] italic text-secondary-foreground">
-                                Owner only
+                                Owner or approver only
                               </span>
                             )}
                           </td>

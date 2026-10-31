@@ -53,6 +53,32 @@ describe("SkLedge Contract Test Suite", function () {
         skLedge.connect(owner).setOfficialAuthorization(ethers.ZeroAddress, true)
       ).to.be.revertedWith("SkLedge: Invalid wallet address");
     });
+
+    it("Should allow the owner to authorize and revoke an approver", async function () {
+      const { skLedge, owner, official1 } = await deploySkLedgeFixture();
+
+      await skLedge.connect(owner).setApproverAuthorization(official1.address, true);
+      expect(await skLedge.isApprover(official1.address)).to.equal(true);
+
+      await skLedge.connect(owner).setApproverAuthorization(official1.address, false);
+      expect(await skLedge.isApprover(official1.address)).to.equal(false);
+    });
+
+    it("Should prevent a non-owner from authorizing an approver", async function () {
+      const { skLedge, nonOfficial, official1 } = await deploySkLedgeFixture();
+
+      await expect(
+        skLedge.connect(nonOfficial).setApproverAuthorization(official1.address, true)
+      ).to.be.revertedWith("SkLedge: Only the contract owner can perform this action.");
+    });
+
+    it("Should reject authorizing the zero address as an approver", async function () {
+      const { skLedge, owner, ethers } = await deploySkLedgeFixture();
+
+      await expect(
+        skLedge.connect(owner).setApproverAuthorization(ethers.ZeroAddress, true)
+      ).to.be.revertedWith("SkLedge: Invalid wallet address");
+    });
   });
 
   describe("Adding Records and Validations", function () {
@@ -201,6 +227,57 @@ describe("SkLedge Contract Test Suite", function () {
       await expect(
         skLedge.setRecordApproval(999, true)
       ).to.be.revertedWith("SkLedge: Record does not exist");
+    });
+
+    it("Should allow an authorized approver to approve and record their address", async function () {
+      const { skLedge, owner, official1 } = await deploySkLedgeFixture();
+      await skLedge.connect(owner).setApproverAuthorization(official1.address, true);
+      await skLedge.connect(owner).addRecord("Barangay San Jose", 5000, "Test Expense", "Expense");
+
+      await skLedge.connect(official1).setRecordApproval(1, true);
+
+      const [record] = await skLedge.getAllRecords();
+      expect(record.approved).to.equal(true);
+      expect(record.approvedBy).to.equal(official1.address);
+      expect(await skLedge.isBarangayLocked("Barangay San Jose")).to.equal(true);
+    });
+
+    it("Should allow an authorized approver to unapprove a record", async function () {
+      const { skLedge, owner, official1 } = await deploySkLedgeFixture();
+      await skLedge.connect(owner).setApproverAuthorization(official1.address, true);
+      await skLedge.connect(owner).addRecord("Barangay San Jose", 5000, "Test Expense", "Expense");
+      await skLedge.connect(official1).setRecordApproval(1, true);
+
+      await skLedge.connect(official1).setRecordApproval(1, false);
+
+      const [record] = await skLedge.getAllRecords();
+      expect(record.approved).to.equal(false);
+      expect(record.approvedBy).to.equal("0x0000000000000000000000000000000000000000");
+      expect(await skLedge.isBarangayLocked("Barangay San Jose")).to.equal(false);
+    });
+
+    it("Should reject approval by an unauthorized wallet", async function () {
+      const { skLedge, owner, nonOfficial } = await deploySkLedgeFixture();
+      await skLedge.connect(owner).addRecord("Barangay San Jose", 5000, "Test Expense", "Expense");
+
+      await expect(
+        skLedge.connect(nonOfficial).setRecordApproval(1, true)
+      ).to.be.revertedWith(
+        "SkLedge: Only the contract owner or an authorized approver can perform this action."
+      );
+    });
+
+    it("Should reject approval by a revoked approver", async function () {
+      const { skLedge, owner, official1 } = await deploySkLedgeFixture();
+      await skLedge.connect(owner).setApproverAuthorization(official1.address, true);
+      await skLedge.connect(owner).setApproverAuthorization(official1.address, false);
+      await skLedge.connect(owner).addRecord("Barangay San Jose", 5000, "Test Expense", "Expense");
+
+      await expect(
+        skLedge.connect(official1).setRecordApproval(1, true)
+      ).to.be.revertedWith(
+        "SkLedge: Only the contract owner or an authorized approver can perform this action."
+      );
     });
   });
 

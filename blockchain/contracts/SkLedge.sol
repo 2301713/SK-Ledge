@@ -21,6 +21,7 @@ contract SkLedge {
     FinancialRecord[] public records;
 
     mapping(address => bool) public isAuthorizedOfficial;
+    mapping(address => bool) public isApprover;
 
     // Allocation ceiling per barangay
     mapping(string => uint256) public allocationCeilings;
@@ -46,6 +47,11 @@ contract SkLedge {
         bool isAuthorized
     );
 
+    event ApproverAuthorizationChanged(
+        address indexed approver,
+        bool isApproved
+    );
+
     event AllocationCeilingChanged(
         string barangay,
         uint256 ceiling
@@ -64,6 +70,14 @@ contract SkLedge {
         require(
             msg.sender == owner,
             "SkLedge: Only the contract owner can perform this action."
+        );
+        _;
+    }
+
+    modifier onlyOwnerOrApprover() {
+        require(
+            msg.sender == owner || isApprover[msg.sender],
+            "SkLedge: Only the contract owner or an authorized approver can perform this action."
         );
         _;
     }
@@ -100,6 +114,28 @@ contract SkLedge {
 
         emit OfficialAuthorizationChanged(
             _official,
+            _status
+        );
+    }
+
+    /**
+     * @notice Authorizes or revokes approval permissions for a wallet.
+     * @param _approver Wallet address of the approver.
+     * @param _status True = authorize, False = revoke.
+     */
+    function setApproverAuthorization(
+        address _approver,
+        bool _status
+    ) external onlyOwner {
+        require(
+            _approver != address(0),
+            "SkLedge: Invalid wallet address"
+        );
+
+        isApprover[_approver] = _status;
+
+        emit ApproverAuthorizationChanged(
+            _approver,
             _status
         );
     }
@@ -231,7 +267,7 @@ contract SkLedge {
     function setRecordApproval(
         uint256 _id,
         bool _approved
-    ) external onlyOwner {
+    ) external onlyOwnerOrApprover {
         require(
             _id > 0 && _id < nextRecordId,
             "SkLedge: Record does not exist"
