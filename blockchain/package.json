@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "export-abi": "hardhat run scripts/export-abi.ts"
+    "export-abi": "hardhat compile && hardhat run scripts/export-abi.ts"
   },
   "keywords": [],
   "author": "",
