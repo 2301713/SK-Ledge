@@ -64,13 +64,20 @@ export async function POST(req: NextRequest) {
     // 2. Fetch authenticated user profile using actual 'role_type' column
     const { data: profile, error: profileError } = await supabaseAdmin
       .from("profiles")
-      .select("role_type")
+      .select("role_type, approval_status")
       .eq("id", user.id)
       .single();
 
     if (profileError || !profile?.role_type) {
       return NextResponse.json(
         { error: "Forbidden. User profile or role_type not found." },
+        { status: 403 }
+      );
+    }
+
+    if (profile.approval_status !== "approved") {
+      return NextResponse.json(
+        { error: "Forbidden. User profile is not approved." },
         { status: 403 }
       );
     }
