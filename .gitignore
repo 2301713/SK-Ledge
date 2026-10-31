@@ -9,3 +9,8 @@ diagrams/
 SK-Ledge-Use-Case-Diagram.png
 
 supabase/
+!supabase/
+supabase/*
+!supabase/migrations/
+supabase/migrations/*
+!supabase/migrations/20261031000000_sync_record_transaction_hash_indexes.sql

@@ -83,7 +83,23 @@ export async function POST(req: NextRequest) {
     }
 
     // 3. Parse & validate request payload
-    const body = await req.json();
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json(
+        { error: "Request body must contain valid JSON." },
+        { status: 400 }
+      );
+    }
+
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      return NextResponse.json(
+        { error: "Request body must be a JSON object." },
+        { status: 400 }
+      );
+    }
+
     const {
       type,
       blockchain_tx_hash,
@@ -93,10 +109,13 @@ export async function POST(req: NextRequest) {
       barangay,
       purpose,
       project_id,
-    } = body;
+    } = body as Record<string, unknown>;
 
     // Type validation
-    if (!type || !["allocation", "expense", "award"].includes(type)) {
+    if (
+      typeof type !== "string" ||
+      !["allocation", "expense", "award"].includes(type)
+    ) {
       return NextResponse.json(
         { error: "Invalid record type. Must be 'allocation', 'expense', or 'award'." },
         { status: 400 }
@@ -114,17 +133,21 @@ export async function POST(req: NextRequest) {
 
     // Hash validation
     const txHashRegex = /^0x[a-fA-F0-9]{64}$/;
-    if (!blockchain_tx_hash || !txHashRegex.test(blockchain_tx_hash)) {
+    if (
+      typeof blockchain_tx_hash !== "string" ||
+      !txHashRegex.test(blockchain_tx_hash)
+    ) {
       return NextResponse.json(
         { error: "Invalid blockchain_tx_hash. Must be a 0x-prefixed 64-character hex string." },
         { status: 400 }
       );
     }
+    const transactionHash = blockchain_tx_hash.toLowerCase();
 
     // Amount validation
     if (
       typeof amount !== "number" ||
-      !Number.isInteger(amount) ||
+      !Number.isSafeInteger(amount) ||
       amount <= 0
     ) {
       return NextResponse.json(
@@ -134,14 +157,20 @@ export async function POST(req: NextRequest) {
     }
 
     // Address validations
-    if (!contract_address || !isAddress(contract_address)) {
+    if (
+      typeof contract_address !== "string" ||
+      !isAddress(contract_address)
+    ) {
       return NextResponse.json(
         { error: "Invalid contract_address format." },
         { status: 400 }
       );
     }
 
-    if (!official_address || !isAddress(official_address)) {
+    if (
+      typeof official_address !== "string" ||
+      !isAddress(official_address)
+    ) {
       return NextResponse.json(
         { error: "Invalid official_address format." },
         { status: 400 }
@@ -149,21 +178,24 @@ export async function POST(req: NextRequest) {
     }
 
     // Text validations
-    if (!barangay || typeof barangay !== "string" || barangay.trim() === "") {
+    if (typeof barangay !== "string" || barangay.trim() === "") {
       return NextResponse.json(
         { error: "Barangay field is required and cannot be empty." },
         { status: 400 }
       );
     }
 
-    if (!purpose || typeof purpose !== "string" || purpose.trim() === "") {
+    if (typeof purpose !== "string" || purpose.trim() === "") {
       return NextResponse.json(
         { error: "Purpose field is required and cannot be empty." },
         { status: 400 }
       );
     }
 
-    if (type === "award" && !project_id) {
+    if (
+      type === "award" &&
+      (typeof project_id !== "string" || project_id.trim() === "")
+    ) {
       return NextResponse.json(
         { error: "project_id is required for award records." },
         { status: 400 }
@@ -185,11 +217,18 @@ export async function POST(req: NextRequest) {
     const tableName =
       type === "allocation" ? "allocations" : type === "expense" ? "expenses" : "awards";
 
-    const { data: existingRecord } = await supabaseAdmin
+    const { data: existingRecord, error: duplicateCheckError } = await supabaseAdmin
       .from(tableName)
       .select("id, blockchain_tx_hash")
-      .eq("blockchain_tx_hash", blockchain_tx_hash)
+      .ilike("blockchain_tx_hash", transactionHash)
       .maybeSingle();
+
+    if (duplicateCheckError) {
+      return NextResponse.json(
+        { error: "Failed to check for duplicate transactions." },
+        { status: 500 }
+      );
+    }
 
     if (existingRecord) {
       return NextResponse.json(
@@ -211,7 +250,7 @@ export async function POST(req: NextRequest) {
     let receipt;
     try {
       receipt = await publicClient.getTransactionReceipt({
-        hash: blockchain_tx_hash as Hex,
+        hash: transactionHash as Hex,
       });
     } catch {
       return NextResponse.json(
@@ -286,7 +325,7 @@ export async function POST(req: NextRequest) {
     // 6. Secure Database Insertion using session user_id
     const insertPayload: Record<string, unknown> = {
       user_id: user.id,
-      blockchain_tx_hash,
+      blockchain_tx_hash: transactionHash,
       contract_address,
       official_address,
       barangay,
@@ -306,6 +345,32 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (insertError) {
+      if (insertError.code === "23505") {
+        const { data: duplicateAfterConflict, error: conflictCheckError } =
+          await supabaseAdmin
+            .from(tableName)
+            .select("id, blockchain_tx_hash")
+            .ilike("blockchain_tx_hash", transactionHash)
+            .maybeSingle();
+
+        if (conflictCheckError) {
+          return NextResponse.json(
+            { error: "Failed to verify duplicate transaction." },
+            { status: 500 }
+          );
+        }
+
+        if (duplicateAfterConflict) {
+          return NextResponse.json(
+            {
+              error: "Duplicate transaction. Record with this hash already exists.",
+              record: duplicateAfterConflict,
+            },
+            { status: 409 }
+          );
+        }
+      }
+
       return NextResponse.json(
         { error: "Failed to insert record into database." },
         { status: 500 }
