@@ -217,7 +217,6 @@ export default function BidsPage({ params }: { params: Promise<{ projectId: stri
 
       await syncRecord({
         type: 'award',
-        user_id: currentUser?.id ?? '',
         blockchain_tx_hash: txHash,
         contract_address: CONTRACT_ADDRESS,
         official_address: address ?? '',

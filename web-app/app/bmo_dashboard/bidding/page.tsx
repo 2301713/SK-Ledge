@@ -279,7 +279,6 @@ export default function BMOBiddingPage() {
 
       await syncRecord({
         type: "award",
-        user_id: currentUser?.id ?? "",
         blockchain_tx_hash: txHash,
         contract_address: CONTRACT_ADDRESS,
         official_address: address ?? "",

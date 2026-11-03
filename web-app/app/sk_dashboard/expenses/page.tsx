@@ -282,7 +282,6 @@ export default function ExpensesPage() {
 
       syncRecord({
         type: "expense",
-        user_id: currentUser?.id || "",
         blockchain_tx_hash: hash,
         contract_address: CONTRACT_ADDRESS,
         official_address: address || "",
