@@ -14,6 +14,7 @@ import { useReadContracts } from "wagmi";
 import type { ContractFunctionParameters } from "viem";
 import { CONTRACT_ADDRESS, SK_LEDGE_ABI } from "@/lib/contractConfig";
 import SetCeilingForm from "@/components/SetCeilingForm";
+import { canonicalizeBarangay } from "@/lib/batangasBarangays";
 import {
   Building2,
   ShieldCheck,
@@ -100,14 +101,12 @@ export default function CeilingPage() {
       if (!error && data) {
         const unique = [
           ...new Set(
-            data
-              .map((r: { barangay: string | null }) => r.barangay)
-              .filter(
-                (b): b is string =>
-                  typeof b === "string" &&
-                  b.trim().length > 0 &&
-                  b.trim().toUpperCase() !== "N/A",
-              ),
+            data.flatMap((row: { barangay: string | null }) => {
+              const canonical = row.barangay
+                ? canonicalizeBarangay(row.barangay)
+                : null;
+              return canonical ? [canonical] : [];
+            }),
           ),
         ].sort();
         setBarangayList(unique);

@@ -3,6 +3,8 @@ pragma solidity ^0.8.28;
 
 // Contract
 contract SkLedge {
+    uint256 private constant MAX_CANONICAL_BARANGAYS_PER_BATCH = 20;
+
     address public owner;
     uint256 public nextRecordId;
 
@@ -23,14 +25,17 @@ contract SkLedge {
     mapping(address => bool) public isAuthorizedOfficial;
     mapping(address => bool) public isApprover;
 
+    string[] private canonicalBarangayNames;
+    mapping(bytes32 => uint256) private canonicalBarangayIds;
+
     // Allocation ceiling per barangay
-    mapping(string => uint256) public allocationCeilings;
+    mapping(uint256 => uint256) private allocationCeilingsById;
 
     // Running total of allocations per barangay
-    mapping(string => uint256) private allocatedTotals;
+    mapping(uint256 => uint256) private allocatedTotalsById;
 
     // True when a barangay is locked after record approval
-    mapping(string => bool) public isBarangayLocked;
+    mapping(uint256 => bool) private barangayLockedById;
 
     // Events
     event RecordAdded(
@@ -64,6 +69,7 @@ contract SkLedge {
     );
 
     event BarangayLocked(string barangay, bool locked);
+    event CanonicalBarangayRegistered(string barangay);
 
     // Modifiers
     modifier onlyOwner() {
@@ -141,6 +147,74 @@ contract SkLedge {
     }
 
     /**
+     * @notice Registers canonical barangay identities and unambiguous aliases.
+     * @dev Each alias maps to the canonical name at the same array index.
+     */
+    function registerCanonicalBarangays(
+        string[] calldata _names,
+        string[] calldata _aliases
+    ) external onlyOwner {
+        require(
+            _names.length > 0 &&
+                _names.length <= MAX_CANONICAL_BARANGAYS_PER_BATCH &&
+                _names.length == _aliases.length,
+            "SkLedge: Invalid barangay registration batch"
+        );
+
+        for (uint256 i = 0; i < _names.length; i++) {
+            require(
+                bytes(_names[i]).length > 0,
+                "SkLedge: Invalid barangay"
+            );
+
+            bytes32 canonicalKey = _barangayKey(_names[i]);
+            uint256 barangayId = canonicalBarangayIds[canonicalKey];
+            if (barangayId == 0) {
+                canonicalBarangayNames.push(_names[i]);
+                barangayId = canonicalBarangayNames.length;
+                canonicalBarangayIds[canonicalKey] = barangayId;
+                emit CanonicalBarangayRegistered(_names[i]);
+            } else {
+                require(
+                    keccak256(bytes(canonicalBarangayNames[barangayId - 1])) ==
+                        keccak256(bytes(_names[i])),
+                    "SkLedge: Barangay name conflicts with an alias"
+                );
+            }
+
+            if (bytes(_aliases[i]).length > 0) {
+                bytes32 aliasKey = _barangayKey(_aliases[i]);
+                uint256 existingId = canonicalBarangayIds[aliasKey];
+                require(
+                    existingId == 0 || existingId == barangayId,
+                    "SkLedge: Barangay alias is ambiguous"
+                );
+                canonicalBarangayIds[aliasKey] = barangayId;
+            }
+        }
+    }
+
+    /**
+     * @notice Returns the canonical name for a registered barangay or alias.
+     */
+    function canonicalizeBarangay(
+        string calldata _barangay
+    ) external view returns (string memory) {
+        uint256 barangayId = _getBarangayId(_barangay);
+        return canonicalBarangayNames[barangayId - 1];
+    }
+
+    function isCanonicalBarangay(
+        string calldata _barangay
+    ) external view returns (bool) {
+        return canonicalBarangayIds[_barangayKey(_barangay)] != 0;
+    }
+
+    function canonicalBarangayCount() external view returns (uint256) {
+        return canonicalBarangayNames.length;
+    }
+
+    /**
      * @notice Sets the maximum allocation ceiling for a barangay.
      * @param _barangay Barangay name.
      * @param _ceiling Maximum allowed allocation amount.
@@ -149,22 +223,31 @@ contract SkLedge {
         string calldata _barangay,
         uint256 _ceiling
     ) external onlyOwner {
-        require(
-            bytes(_barangay).length > 0,
-            "SkLedge: Invalid barangay"
-        );
+        uint256 barangayId = _getBarangayId(_barangay);
 
         require(
             _ceiling > 0,
             "SkLedge: Ceiling must be greater than zero"
         );
 
-        allocationCeilings[_barangay] = _ceiling;
+        allocationCeilingsById[barangayId] = _ceiling;
 
         emit AllocationCeilingChanged(
-            _barangay,
+            canonicalBarangayNames[barangayId - 1],
             _ceiling
         );
+    }
+
+    function allocationCeilings(
+        string calldata _barangay
+    ) external view returns (uint256) {
+        return allocationCeilingsById[_getBarangayId(_barangay)];
+    }
+
+    function isBarangayLocked(
+        string calldata _barangay
+    ) external view returns (bool) {
+        return barangayLockedById[_getBarangayId(_barangay)];
     }
 
     /**
@@ -174,7 +257,7 @@ contract SkLedge {
     function getAllocated(
         string calldata _barangay
     ) external view returns (uint256) {
-        return allocatedTotals[_barangay];
+        return allocatedTotalsById[_getBarangayId(_barangay)];
     }
 
     /**
@@ -190,6 +273,11 @@ contract SkLedge {
         string calldata _purpose,
         string calldata _recordType
     ) external onlyAuthorizedOfficial {
+        uint256 barangayId = _getBarangayId(_barangay);
+        string memory canonicalBarangay = canonicalBarangayNames[
+            barangayId - 1
+        ];
+
         require(
             _amount > 0,
             "SkLedge: Amount must be greater than zero"
@@ -210,7 +298,7 @@ contract SkLedge {
             typeHash != keccak256(abi.encodePacked("Allocation"))
         ) {
             require(
-                !isBarangayLocked[_barangay],
+                !barangayLockedById[barangayId],
                 "SkLedge: Barangay is locked after approval"
             );
         }
@@ -221,23 +309,23 @@ contract SkLedge {
                 abi.encodePacked("Allocation")
             )
         ) {
-            uint256 ceiling = allocationCeilings[_barangay];
+            uint256 ceiling = allocationCeilingsById[barangayId];
 
             if (ceiling > 0) {
                 require(
-                    allocatedTotals[_barangay] + _amount <= ceiling,
+                    allocatedTotalsById[barangayId] + _amount <= ceiling,
                     "SkLedge: Allocation exceeds ceiling"
                 );
             }
 
-            allocatedTotals[_barangay] += _amount;
+            allocatedTotalsById[barangayId] += _amount;
         }
 
         records.push(
             FinancialRecord({
                 id: nextRecordId,
                 official: msg.sender,
-                barangay: _barangay,
+                barangay: canonicalBarangay,
                 amount: _amount,
                 timestamp: block.timestamp,
                 purpose: _purpose,
@@ -250,7 +338,7 @@ contract SkLedge {
         emit RecordAdded(
             nextRecordId,
             msg.sender,
-            _barangay,
+            canonicalBarangay,
             _amount,
             block.timestamp,
             _recordType
@@ -274,12 +362,13 @@ contract SkLedge {
         );
 
         FinancialRecord storage record = records[_id - 1];
+        uint256 barangayId = _getBarangayId(record.barangay);
 
         record.approved = _approved;
 
         if (_approved) {
             record.approvedBy = msg.sender;
-            isBarangayLocked[record.barangay] = true;
+            barangayLockedById[barangayId] = true;
             emit BarangayLocked(record.barangay, true);
         } else {
             record.approvedBy = address(0);
@@ -289,8 +378,7 @@ contract SkLedge {
             for (uint256 i = 0; i < records.length; i++) {
                 if (i != _id - 1 && records[i].approved) {
                     if (
-                        keccak256(abi.encodePacked(records[i].barangay)) ==
-                        keccak256(abi.encodePacked(record.barangay))
+                        _getBarangayId(records[i].barangay) == barangayId
                     ) {
                         anyOtherApproved = true;
                         break;
@@ -299,7 +387,7 @@ contract SkLedge {
             }
 
             if (!anyOtherApproved) {
-                isBarangayLocked[record.barangay] = false;
+                barangayLockedById[barangayId] = false;
                 emit BarangayLocked(record.barangay, false);
             }
         }
@@ -329,12 +417,10 @@ contract SkLedge {
     function getRecordsByBarangay(
         string calldata _barangay
     ) external view returns (FinancialRecord[] memory) {
+        uint256 barangayId = _getBarangayId(_barangay);
         uint256 count = 0;
         for (uint256 i = 0; i < records.length; i++) {
-            if (
-                keccak256(abi.encodePacked(records[i].barangay)) ==
-                keccak256(abi.encodePacked(_barangay))
-            ) {
+            if (_getBarangayId(records[i].barangay) == barangayId) {
                 count++;
             }
         }
@@ -345,15 +431,77 @@ contract SkLedge {
 
         uint256 index = 0;
         for (uint256 i = 0; i < records.length; i++) {
-            if (
-                keccak256(abi.encodePacked(records[i].barangay)) ==
-                keccak256(abi.encodePacked(_barangay))
-            ) {
+            if (_getBarangayId(records[i].barangay) == barangayId) {
                 barangayRecords[index] = records[i];
                 index++;
             }
         }
 
         return barangayRecords;
+    }
+
+    function _getBarangayId(
+        string memory _barangay
+    ) private view returns (uint256) {
+        uint256 barangayId = canonicalBarangayIds[_barangayKey(_barangay)];
+        require(barangayId > 0, "SkLedge: Unknown barangay");
+        return barangayId;
+    }
+
+    function _barangayKey(
+        string memory _barangay
+    ) private pure returns (bytes32) {
+        bytes memory input = bytes(_barangay);
+        uint256 start = 0;
+        uint256 end = input.length;
+
+        while (start < end && _isWhitespace(input[start])) {
+            start++;
+        }
+        while (end > start && _isWhitespace(input[end - 1])) {
+            end--;
+        }
+
+        if (end - start >= 9 && _hasBarangayPrefix(input, start)) {
+            start += 9;
+            while (start < end && _isWhitespace(input[start])) {
+                start++;
+            }
+        }
+
+        bytes memory normalized = new bytes(end - start);
+        for (uint256 i = start; i < end; i++) {
+            uint8 character = uint8(input[i]);
+            if (character >= 65 && character <= 90) {
+                character += 32;
+            }
+            normalized[i - start] = bytes1(character);
+        }
+        return keccak256(normalized);
+    }
+
+    function _hasBarangayPrefix(
+        bytes memory _value,
+        uint256 _start
+    ) private pure returns (bool) {
+        bytes memory prefix = bytes("barangay ");
+        for (uint256 i = 0; i < prefix.length; i++) {
+            uint8 character = uint8(_value[_start + i]);
+            if (character >= 65 && character <= 90) {
+                character += 32;
+            }
+            if (character != uint8(prefix[i])) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    function _isWhitespace(bytes1 _character) private pure returns (bool) {
+        return
+            _character == 0x20 ||
+            _character == 0x09 ||
+            _character == 0x0a ||
+            _character == 0x0d;
     }
 }

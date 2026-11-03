@@ -17,6 +17,7 @@ import {
 } from "wagmi";
 import { CONTRACT_ADDRESS, SK_LEDGE_ABI } from "@/lib/contractConfig";
 import { syncRecord } from "@/lib/syncRecord";
+import { canonicalizeBarangay } from "@/lib/batangasBarangays";
 import {
   Upload,
   Building,
@@ -219,9 +220,17 @@ export default function ExpensesPage() {
       return;
     }
 
+    const barangay = canonicalizeBarangay(currentUser?.barangay ?? "");
+    if (!barangay) {
+      toast.error(
+        "Your profile must have a valid canonical barangay before logging expenses.",
+      );
+      return;
+    }
+
     try {
       submitRef.current = {
-        barangay: currentUser?.barangay || "General",
+        barangay,
         amount: Math.round(parseFloat(form.amount) * 100),
         purpose: `${form.description} — Vendor: ${form.vendor}`,
       };

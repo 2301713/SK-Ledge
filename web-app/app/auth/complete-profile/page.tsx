@@ -15,7 +15,12 @@ import {
   ArrowRight,
   ChevronDown,
 } from "lucide-react";
-import { BATANGAS_BARANGAYS } from "@/lib/batangasBarangays";
+import {
+  BATANGAS_BARANGAYS_BY_MUNICIPALITY,
+  BATANGAS_MUNICIPALITIES,
+  type BarangayMunicipality,
+  canonicalizeBarangay,
+} from "@/lib/batangasBarangays";
 
 export default function CompleteProfilePage() {
   const router = useRouter();
@@ -25,6 +30,9 @@ export default function CompleteProfilePage() {
   const [userEmail, setUserEmail] = useState("");
   const [isSessionReady, setIsSessionReady] = useState(false);
   const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
+  const [selectedMunicipality, setSelectedMunicipality] = useState<
+    BarangayMunicipality | ""
+  >("");
   const [formData, setFormData] = useState({
     username: "",
     role_type: "SK_Chairperson",
@@ -105,12 +113,19 @@ export default function CompleteProfilePage() {
         throw new Error("Barangay is required for SK Officials");
       }
 
+      const canonicalBarangay = isSKRole
+        ? canonicalizeBarangay(formData.barangay)
+        : null;
+      if (isSKRole && !canonicalBarangay) {
+        throw new Error("Select a valid barangay and municipality.");
+      }
+
       // Update user metadata
       const { error: updateError } = await supabase.auth.updateUser({
         data: {
           username: formData.username,
           role_type: formData.role_type,
-          barangay: isSKRole ? formData.barangay : "N/A",
+          barangay: canonicalBarangay ?? "N/A",
           approval_status: "pending",
         },
       });
@@ -125,7 +140,7 @@ export default function CompleteProfilePage() {
           username: formData.username,
           full_name: user.user_metadata?.full_name || formData.username,
           role_type: formData.role_type,
-          barangay: isSKRole ? formData.barangay : "N/A",
+          barangay: canonicalBarangay ?? "N/A",
           approval_status: "pending",
           avatar_url: user.user_metadata?.avatar_url || null,
         },
@@ -139,7 +154,7 @@ export default function CompleteProfilePage() {
             .update({
               username: formData.username,
               role_type: formData.role_type,
-              barangay: isSKRole ? formData.barangay : "N/A",
+              barangay: canonicalBarangay ?? "N/A",
               approval_status: "pending",
               avatar_url: user.user_metadata?.avatar_url || null,
             })
@@ -283,7 +298,7 @@ export default function CompleteProfilePage() {
             {isSKRole && (
               <div className="space-y-2">
                 <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
-                  Barangay / Municipality
+                  Municipality
                 </label>
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-300 group-focus-within:text-primary transition-colors">
@@ -291,21 +306,23 @@ export default function CompleteProfilePage() {
                   </div>
                   <select
                     required
-                    value={formData.barangay}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        barangay: e.target.value,
-                      })
-                    }
+                    value={selectedMunicipality}
+                    onChange={(e) => {
+                      const municipality =
+                        BATANGAS_MUNICIPALITIES.find(
+                          (option) => option === e.target.value,
+                        ) ?? "";
+                      setSelectedMunicipality(municipality);
+                      setFormData({ ...formData, barangay: "" });
+                    }}
                     className="w-full appearance-none bg-slate-50 border-2 border-transparent rounded-2xl pl-12 pr-12 py-4 text-sm font-medium text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none cursor-pointer"
                   >
                     <option value="" disabled>
-                      Select your barangay or municipality
+                      Select your municipality or city
                     </option>
-                    {BATANGAS_BARANGAYS.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
+                    {BATANGAS_MUNICIPALITIES.map((municipality) => (
+                      <option key={municipality} value={municipality}>
+                        {municipality}
                       </option>
                     ))}
                   </select>
@@ -313,6 +330,33 @@ export default function CompleteProfilePage() {
                     <ChevronDown className="h-5 w-5" />
                   </div>
                 </div>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                  Barangay
+                </label>
+                <select
+                  required
+                  disabled={!selectedMunicipality}
+                  value={formData.barangay}
+                  onChange={(e) =>
+                    setFormData({ ...formData, barangay: e.target.value })
+                  }
+                  className="w-full appearance-none bg-slate-50 border-2 border-transparent rounded-2xl px-4 py-4 text-sm font-medium text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <option value="" disabled>
+                    Select your barangay
+                  </option>
+                  {selectedMunicipality &&
+                    BATANGAS_BARANGAYS_BY_MUNICIPALITY[
+                      selectedMunicipality
+                    ].map((barangay) => {
+                      const canonical = `${barangay}, ${selectedMunicipality}`;
+                      return (
+                        <option key={canonical} value={canonical}>
+                          {barangay}
+                        </option>
+                      );
+                    })}
+                </select>
               </div>
             )}
 

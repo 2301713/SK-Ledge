@@ -13,6 +13,7 @@ import {
 } from "viem";
 import { sepolia } from "viem/chains";
 import { SK_LEDGE_ABI, CONTRACT_ADDRESS } from "@/lib/contractConfig";
+import { canonicalizeBarangay } from "@/lib/batangasBarangays";
 
 export const runtime = "nodejs";
 
@@ -183,13 +184,16 @@ export async function POST(req: NextRequest) {
       return errorResponse("Invalid official_address format.", 400);
     }
 
-    if (
-      typeof barangay !== "string" ||
-      barangay.trim().length === 0 ||
-      barangay.length > 120
-    ) {
+    if (typeof barangay !== "string" || barangay.length > 120) {
       return errorResponse(
-        "Invalid barangay. It must contain 1 to 120 characters.",
+        "Invalid barangay. Select a registered canonical barangay.",
+        400,
+      );
+    }
+    const canonicalBarangay = canonicalizeBarangay(barangay);
+    if (!canonicalBarangay) {
+      return errorResponse(
+        "Invalid or ambiguous barangay. Select its municipality and use the registered canonical identity.",
         400,
       );
     }
@@ -359,8 +363,12 @@ export async function POST(req: NextRequest) {
 
     const [callBarangay, callAmount, callPurpose, callRecordType] =
       decodedCall.args;
+    const canonicalCallBarangay =
+      typeof callBarangay === "string"
+        ? canonicalizeBarangay(callBarangay)
+        : null;
     if (
-      callBarangay !== barangay ||
+      canonicalCallBarangay !== canonicalBarangay ||
       callAmount !== BigInt(amount) ||
       callPurpose !== purpose ||
       callRecordType !== EVENT_RECORD_TYPES[type]
@@ -398,7 +406,7 @@ export async function POST(req: NextRequest) {
       if (
         args.official.toLowerCase() === official_address.toLowerCase() &&
         args.official.toLowerCase() === transaction.from.toLowerCase() &&
-        args.barangay === barangay &&
+        args.barangay === canonicalBarangay &&
         args.amount === BigInt(amount) &&
         args.recordType === EVENT_RECORD_TYPES[type]
       ) {
@@ -418,7 +426,7 @@ export async function POST(req: NextRequest) {
       blockchain_tx_hash: transactionHash,
       contract_address: expectedContract,
       official_address,
-      barangay,
+      barangay: canonicalBarangay,
       amount,
       purpose,
       created_at: new Date().toISOString(),

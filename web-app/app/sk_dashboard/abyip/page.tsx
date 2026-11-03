@@ -21,6 +21,7 @@ import {
 import { useReadContract } from "wagmi";
 import { CONTRACT_ADDRESS, SK_LEDGE_ABI } from "@/lib/contractConfig";
 import AllocateFundsForm from "@/components/AllocateFundsForm";
+import { canonicalizeBarangay } from "@/lib/batangasBarangays";
 
 const STATUS_PILL: Record<string, string> = {
   "On Track": "bg-success/10 text-success",
@@ -36,13 +37,16 @@ export default function ABYIPPage() {
   const [selectedYear, setSelectedYear] = useState<string>("2024");
 
   // On-chain reads using Wagmi
-  const barangay = currentUser?.barangay;
+  const barangay = currentUser?.barangay
+    ? canonicalizeBarangay(currentUser.barangay)
+    : null;
 
   const { data: ceilingRaw } = useReadContract({
     address: CONTRACT_ADDRESS,
     abi: SK_LEDGE_ABI,
     functionName: "allocationCeilings",
     args: barangay ? [barangay] : undefined,
+    query: { enabled: !!barangay },
   });
 
   const { data: allocatedRaw } = useReadContract({
@@ -50,6 +54,7 @@ export default function ABYIPPage() {
     abi: SK_LEDGE_ABI,
     functionName: "getAllocated",
     args: barangay ? [barangay] : undefined,
+    query: { enabled: !!barangay },
   });
 
   // Convert raw centavo BigInts to pesos
@@ -161,7 +166,7 @@ export default function ABYIPPage() {
             username: profileData.username,
             full_name: profileData.full_name || profileData.username,
             role_type: profileData.role_type,
-            barangay: profileData.barangay || "SK",
+            barangay: profileData.barangay || "",
             email: profileData.email,
             approval_status: profileData.approval_status,
           };
@@ -292,7 +297,7 @@ export default function ABYIPPage() {
             subtitle="Record official SK funds directly on the Sepolia ledger"
           />
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
-            <AllocateFundsForm />
+            <AllocateFundsForm assignedBarangay={barangay} />
             <aside className="flex flex-col gap-5 rounded-3xl border border-border bg-secondary/40 p-6">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-secondary-foreground">

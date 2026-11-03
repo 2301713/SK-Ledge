@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/lib/useAuthStore";
 import { useToast } from "@/lib/useToast";
+import { canonicalizeBarangay } from "@/lib/batangasBarangays";
 import {
   LayoutDashboard,
   FolderKanban,
@@ -243,6 +244,9 @@ export default function Sidebar({
 }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const displayBarangay = barangay
+    ? canonicalizeBarangay(barangay) ?? barangay
+    : undefined;
   const toast = useToast();
   const { clearSession, currentUser } = useAuthStore();
 
@@ -356,9 +360,9 @@ export default function Sidebar({
               <p className="truncate text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
                 {roleType.replace("_", " ")}
               </p>
-              {barangay && barangay !== "N/A" && (
+              {displayBarangay && displayBarangay !== "N/A" && (
                 <p className="truncate text-[10px] text-secondary-foreground">
-                  {barangay}
+                  {displayBarangay}
                 </p>
               )}
             </div>
