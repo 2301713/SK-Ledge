@@ -7,99 +7,502 @@ export const LEGACY_CONTRACT_ADDRESS = (process.env
 
 export const SK_LEDGE_ABI = [
   {
-    type: "function",
-    name: "addRecord",
-    stateMutability: "nonpayable",
-    inputs: [
-      { name: "_barangay", type: "string" },
-      { name: "_amount", type: "uint256" },
-      { name: "_purpose", type: "string" },
-      { name: "_recordType", type: "string" },
-    ],
-    outputs: [{ name: "", type: "uint256" }],
+    "inputs": [],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
   },
   {
-    type: "function",
-    name: "setAllocationCeiling",
-    stateMutability: "nonpayable",
-    inputs: [
-      { name: "_barangay", type: "string" },
-      { name: "_ceiling", type: "uint256" },
-    ],
-    outputs: [],
-  },
-  {
-    type: "function",
-    name: "setRecordApproval",
-    stateMutability: "nonpayable",
-    inputs: [
-      { name: "_id", type: "uint256" },
-      { name: "_approved", type: "bool" },
-    ],
-    outputs: [],
-  },
-  {
-    type: "function",
-    name: "getAllocated",
-    stateMutability: "view",
-    inputs: [{ name: "_barangay", type: "string" }],
-    outputs: [{ name: "", type: "uint256" }],
-  },
-  {
-    type: "function",
-    name: "allocationCeilings",
-    stateMutability: "view",
-    inputs: [{ name: "", type: "string" }],
-    outputs: [{ name: "", type: "uint256" }],
-  },
-  {
-    type: "function",
-    name: "isAuthorizedOfficial",
-    stateMutability: "view",
-    inputs: [{ name: "", type: "address" }],
-    outputs: [{ name: "", type: "bool" }],
-  },
-  {
-    type: "function",
-    name: "isOfficialAuthorized",
-    stateMutability: "view",
-    inputs: [{ name: "", type: "address" }],
-    outputs: [{ name: "", type: "bool" }],
-  },
-  {
-    type: "function",
-    name: "nextRecordId",
-    stateMutability: "view",
-    inputs: [],
-    outputs: [{ name: "", type: "uint256" }],
-  },
-  {
-    type: "function",
-    name: "owner",
-    stateMutability: "view",
-    inputs: [],
-    outputs: [{ name: "", type: "address" }],
-  },
-  {
-    type: "function",
-    name: "getAllRecords",
-    stateMutability: "view",
-    inputs: [],
-    outputs: [
+    "anonymous": false,
+    "inputs": [
       {
-        type: "tuple[]",
-        components: [
-          { name: "id", type: "uint256" },
-          { name: "official", type: "address" },
-          { name: "barangay", type: "string" },
-          { name: "amount", type: "uint256" },
-          { name: "timestamp", type: "uint256" },
-          { name: "purpose", type: "string" },
-          { name: "recordType", type: "string" },
-          { name: "approved", type: "bool" },
-          { name: "approvedBy", type: "address" },
-        ],
+        "indexed": false,
+        "internalType": "string",
+        "name": "barangay",
+        "type": "string"
       },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "ceiling",
+        "type": "uint256"
+      }
     ],
+    "name": "AllocationCeilingChanged",
+    "type": "event"
   },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "approved",
+        "type": "bool"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "approvedBy",
+        "type": "address"
+      }
+    ],
+    "name": "ApprovalChanged",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "barangay",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "locked",
+        "type": "bool"
+      }
+    ],
+    "name": "BarangayLocked",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "official",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "isAuthorized",
+        "type": "bool"
+      }
+    ],
+    "name": "OfficialAuthorizationChanged",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "official",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "barangay",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "timestamp",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "recordType",
+        "type": "string"
+      }
+    ],
+    "name": "RecordAdded",
+    "type": "event"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "_barangay",
+        "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_amount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "_purpose",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "_recordType",
+        "type": "string"
+      }
+    ],
+    "name": "addRecord",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "name": "allocationCeilings",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getAllRecords",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "id",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "official",
+            "type": "address"
+          },
+          {
+            "internalType": "string",
+            "name": "barangay",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "timestamp",
+            "type": "uint256"
+          },
+          {
+            "internalType": "string",
+            "name": "purpose",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "recordType",
+            "type": "string"
+          },
+          {
+            "internalType": "bool",
+            "name": "approved",
+            "type": "bool"
+          },
+          {
+            "internalType": "address",
+            "name": "approvedBy",
+            "type": "address"
+          }
+        ],
+        "internalType": "struct SkLedge.FinancialRecord[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "_barangay",
+        "type": "string"
+      }
+    ],
+    "name": "getAllocated",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "_barangay",
+        "type": "string"
+      }
+    ],
+    "name": "getRecordsByBarangay",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "id",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "official",
+            "type": "address"
+          },
+          {
+            "internalType": "string",
+            "name": "barangay",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "timestamp",
+            "type": "uint256"
+          },
+          {
+            "internalType": "string",
+            "name": "purpose",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "recordType",
+            "type": "string"
+          },
+          {
+            "internalType": "bool",
+            "name": "approved",
+            "type": "bool"
+          },
+          {
+            "internalType": "address",
+            "name": "approvedBy",
+            "type": "address"
+          }
+        ],
+        "internalType": "struct SkLedge.FinancialRecord[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "isAuthorizedOfficial",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "name": "isBarangayLocked",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "nextRecordId",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "owner",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "records",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "official",
+        "type": "address"
+      },
+      {
+        "internalType": "string",
+        "name": "barangay",
+        "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "timestamp",
+        "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "purpose",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "recordType",
+        "type": "string"
+      },
+      {
+        "internalType": "bool",
+        "name": "approved",
+        "type": "bool"
+      },
+      {
+        "internalType": "address",
+        "name": "approvedBy",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "_barangay",
+        "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_ceiling",
+        "type": "uint256"
+      }
+    ],
+    "name": "setAllocationCeiling",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_official",
+        "type": "address"
+      },
+      {
+        "internalType": "bool",
+        "name": "_status",
+        "type": "bool"
+      }
+    ],
+    "name": "setOfficialAuthorization",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_id",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bool",
+        "name": "_approved",
+        "type": "bool"
+      }
+    ],
+    "name": "setRecordApproval",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
 ] as const;
