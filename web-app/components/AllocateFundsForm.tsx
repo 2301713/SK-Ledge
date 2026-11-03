@@ -27,6 +27,7 @@ import {
 import { CONTRACT_ADDRESS, SK_LEDGE_ABI } from "@/lib/contractConfig";
 import { useToast } from "@/lib/useToast";
 import { syncRecord } from "@/lib/syncRecord";
+import { canonicalizeBarangay } from "@/lib/batangasBarangays";
 
 const STEPS = [
   { n: 1, label: "Project" },
@@ -40,13 +41,19 @@ const STEP_TITLES: Record<number, string> = {
   3: "Blockchain Ledger Sign-off",
 };
 
-export default function AllocateFundsForm() {
+export default function AllocateFundsForm({
+  assignedBarangay,
+}: {
+  assignedBarangay: string | null;
+}) {
   const [currentStep, setCurrentStep] = useState(1);
   const [programName, setProgramName] = useState("");
-  const [barangay, setBarangay] = useState("");
   const [category, setCategory] = useState("Health & Sports");
   const [amountPhp, setAmountPhp] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
+  const barangay = assignedBarangay
+    ? canonicalizeBarangay(assignedBarangay)
+    : null;
 
   const { isConnected, address } = useAccount();
   const chainId = useChainId();
@@ -72,7 +79,9 @@ export default function AllocateFundsForm() {
       return;
     }
     if (currentStep === 1 && !barangay) {
-      alert("Please enter a Barangay name");
+      toast.error(
+        "Your profile must have a valid canonical barangay before allocating funds.",
+      );
       return;
     }
     if (currentStep === 2 && (!amountPhp || Number(amountPhp) <= 0)) {
@@ -95,12 +104,19 @@ export default function AllocateFundsForm() {
       return;
     }
 
+    if (!barangay) {
+      toast.error(
+        "Your profile must have a valid canonical barangay before allocating funds.",
+      );
+      return;
+    }
+
     try {
       writeContract({
         address: CONTRACT_ADDRESS,
         abi: SK_LEDGE_ABI,
         functionName: "addRecord",
-        args: [barangay || "General", BigInt(Math.round(Number(amountPhp) * 100)), programName, "Allocation"],
+        args: [barangay, BigInt(Math.round(Number(amountPhp) * 100)), programName, "Allocation"],
       });
     } catch (err) {
       console.error("Submission error:", err);
@@ -108,11 +124,10 @@ export default function AllocateFundsForm() {
   };
 
   useEffect(() => {
-    if (isConfirmed && hash) {
+    if (isConfirmed && hash && barangay) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsSuccess(true);
       setProgramName("");
-      setBarangay("");
       setAmountPhp("");
       setCurrentStep(1);
 
@@ -122,7 +137,7 @@ export default function AllocateFundsForm() {
         blockchain_tx_hash: hash,
         contract_address: CONTRACT_ADDRESS,
         official_address: address || "",
-        barangay: barangay || "General",
+        barangay,
         amount: Math.round(Number(amountPhp) * 100),
         purpose: programName,
       }).catch((err) => {
@@ -208,11 +223,10 @@ export default function AllocateFundsForm() {
                 </label>
                 <input
                   type="text"
-                  required
-                  placeholder="e.g., Barangay San Jose"
-                  value={barangay}
-                  onChange={(e) => setBarangay(e.target.value)}
-                  className="w-full px-4 py-3.5 bg-white border border-border rounded-2xl text-primary-foreground text-sm font-semibold placeholder:text-secondary-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                  value={barangay ?? ""}
+                  readOnly
+                  placeholder="Set a valid barangay in your profile"
+                  className="w-full px-4 py-3.5 bg-secondary/50 border border-border rounded-2xl text-primary-foreground text-sm font-semibold placeholder:text-secondary-foreground/60"
                 />
               </div>
 

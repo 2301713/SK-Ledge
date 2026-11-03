@@ -18,6 +18,8 @@ import { supabase } from "@/lib/supabase";
 import { UserAccount } from "@/lib/useAuthStore";
 import { SK_LEDGE_ABI, CONTRACT_ADDRESS } from "@/lib/contractConfig";
 import { syncRecord } from "@/lib/syncRecord";
+import { canonicalizeBarangay } from "@/lib/batangasBarangays";
+import { useToast } from "@/lib/useToast";
 
 import {
   AlertCircle,
@@ -87,6 +89,7 @@ const formatDate = (value: string | null | undefined) => {
 export default function BMOBiddingPage() {
   const router = useRouter();
   const { address } = useAccount();
+  const toast = useToast();
 
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -225,6 +228,15 @@ export default function BMOBiddingPage() {
 
   const initiateAward = (bid: BidRow) => {
     if (!selectedProject) return;
+    const barangay = canonicalizeBarangay(
+      selectedProject.barangay || selectedProject.location || "",
+    );
+    if (!barangay) {
+      toast.error(
+        "This project has an unknown or ambiguous barangay. Correct its canonical barangay before awarding.",
+      );
+      return;
+    }
     if (!isAuthorized) {
       alert(
         "Your connected wallet is not authorized as an SK Official on-chain.",
@@ -239,7 +251,7 @@ export default function BMOBiddingPage() {
       abi: SK_LEDGE_ABI,
       functionName: "addRecord",
       args: [
-        selectedProject.location || selectedProject.barangay || "Barangay",
+        barangay,
         BigInt(Math.round(Number(bid.amount_php) * 100)),
         `Award: ${selectedProject.name} to ${vendorName}`,
         "Award",
@@ -250,6 +262,13 @@ export default function BMOBiddingPage() {
   // 4. Finalize the award once the on-chain transaction confirms
   useEffect(() => {
     if (!isTxConfirmed || !txHash || !selectedBidId || !selectedProject) return;
+    const barangay = canonicalizeBarangay(
+      selectedProject.barangay || selectedProject.location || "",
+    );
+    if (!barangay) {
+      toast.error("Award confirmed, but its canonical barangay could not be resolved.");
+      return;
+    }
 
     const finalizeAwardInDb = async () => {
       const winningBid = bids.find((b) => b.id === selectedBidId);
@@ -267,6 +286,8 @@ export default function BMOBiddingPage() {
           winning_bidder_name: vendorName,
           award_tx_hash: txHash,
           status: "Awarded",
+          barangay,
+          location: barangay,
         })
         .eq("id", selectedProject.id);
 
@@ -282,7 +303,7 @@ export default function BMOBiddingPage() {
         blockchain_tx_hash: txHash,
         contract_address: CONTRACT_ADDRESS,
         official_address: address ?? "",
-        barangay: selectedProject.location || selectedProject.barangay || "",
+        barangay,
         amount: Math.round(Number(winningBid.amount_php) * 100),
         purpose: `Award: ${selectedProject.name} to ${vendorName}`,
         project_id: selectedProject.id,
@@ -304,6 +325,7 @@ export default function BMOBiddingPage() {
     txHash,
     address,
     currentUser,
+    toast,
   ]);
 
   const formatCurrency = (amount: number) => {

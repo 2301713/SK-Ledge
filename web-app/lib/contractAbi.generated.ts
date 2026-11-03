@@ -91,6 +91,19 @@ export const SK_LEDGE_ABI = [
     "anonymous": false,
     "inputs": [
       {
+        "indexed": false,
+        "internalType": "string",
+        "name": "barangay",
+        "type": "string"
+      }
+    ],
+    "name": "CanonicalBarangayRegistered",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
         "indexed": true,
         "internalType": "address",
         "name": "official",
@@ -181,7 +194,7 @@ export const SK_LEDGE_ABI = [
     "inputs": [
       {
         "internalType": "string",
-        "name": "",
+        "name": "_barangay",
         "type": "string"
       }
     ],
@@ -191,6 +204,38 @@ export const SK_LEDGE_ABI = [
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "canonicalBarangayCount",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "_barangay",
+        "type": "string"
+      }
+    ],
+    "name": "canonicalizeBarangay",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
       }
     ],
     "stateMutability": "view",
@@ -383,11 +428,30 @@ export const SK_LEDGE_ABI = [
     "inputs": [
       {
         "internalType": "string",
-        "name": "",
+        "name": "_barangay",
         "type": "string"
       }
     ],
     "name": "isBarangayLocked",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "_barangay",
+        "type": "string"
+      }
+    ],
+    "name": "isCanonicalBarangay",
     "outputs": [
       {
         "internalType": "bool",
@@ -481,6 +545,24 @@ export const SK_LEDGE_ABI = [
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string[]",
+        "name": "_names",
+        "type": "string[]"
+      },
+      {
+        "internalType": "string[]",
+        "name": "_aliases",
+        "type": "string[]"
+      }
+    ],
+    "name": "registerCanonicalBarangays",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {

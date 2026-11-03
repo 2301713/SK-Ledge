@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { CONTRACT_ADDRESS, SK_LEDGE_ABI } from "@/lib/contractConfig";
 import { Settings, Loader2, CheckCircle2, AlertTriangle } from "lucide-react";
+import { BATANGAS_BARANGAY_IDENTITIES } from "@/lib/batangasBarangays";
 
 const inputClass =
   "w-full rounded-xl border border-border bg-white py-3 pl-10 pr-3 text-sm font-bold text-primary-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20";
@@ -23,11 +24,16 @@ export default function SetCeilingForm() {
     e.preventDefault();
     if (!barangay || !ceiling) return;
 
+    const canonicalBarangay = BATANGAS_BARANGAY_IDENTITIES.find(
+      (identity) => identity.canonical === barangay,
+    )?.canonical;
+    if (!canonicalBarangay) return;
+
     writeContract({
       address: CONTRACT_ADDRESS,
       abi: SK_LEDGE_ABI,
       functionName: "setAllocationCeiling",
-      args: [barangay, BigInt(Math.round(Number(ceiling) * 100))],
+      args: [canonicalBarangay, BigInt(Math.round(Number(ceiling) * 100))],
       gas: BigInt(500000),
     });
   };
@@ -43,14 +49,24 @@ export default function SetCeilingForm() {
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
               <Settings className="h-5 w-5 text-secondary-foreground" />
             </div>
-            <input
-              type="text"
+            <select
               value={barangay}
               onChange={(e) => setBarangay(e.target.value)}
-              placeholder="e.g. San Luis"
               required
               className={inputClass}
-            />
+            >
+              <option value="" disabled>
+                Select a barangay
+              </option>
+              {BATANGAS_BARANGAY_IDENTITIES.map((identity) => (
+                <option
+                  key={identity.canonical}
+                  value={identity.canonical}
+                >
+                  {identity.barangay}, {identity.municipality}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 

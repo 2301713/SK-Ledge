@@ -25,6 +25,7 @@ import { sepolia } from "wagmi/chains";
 import { CONTRACT_ADDRESS, SK_LEDGE_ABI } from "@/lib/contractConfig";
 import { ConnectButton } from "@/components/ConnectButton";
 import { useToast } from "@/lib/useToast";
+import { canonicalizeBarangay } from "@/lib/batangasBarangays";
 
 type OnChainRecord = {
   id: bigint;
@@ -148,7 +149,7 @@ export default function ApprovalsPage() {
           setUserBarangay(
             rawBarangay &&
               !["N/A", "No Barangay Assigned", "None"].includes(rawBarangay)
-              ? rawBarangay
+              ? canonicalizeBarangay(rawBarangay) ?? rawBarangay
               : null,
           );
         }
@@ -163,11 +164,19 @@ export default function ApprovalsPage() {
   }, [router, setCurrentUser, setIsLoading, setUserProfile]);
 
   const records = (allRecords as OnChainRecord[] | undefined) ?? [];
+  const canonicalUserBarangay = userBarangay
+    ? canonicalizeBarangay(userBarangay)
+    : null;
 
   // Filter by barangay (COA user's barangay from profile)
   const barangayRecords =
     userBarangay !== null
-      ? records.filter((r) => r.barangay === userBarangay)
+      ? canonicalUserBarangay
+        ? records.filter(
+            (record) =>
+              canonicalizeBarangay(record.barangay) === canonicalUserBarangay,
+          )
+        : []
       : records;
 
   // Filter by status

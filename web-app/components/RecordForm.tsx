@@ -9,6 +9,10 @@ import {
 import { CONTRACT_ADDRESS, SK_LEDGE_ABI } from "@/lib/contractConfig";
 import { useToast } from "@/lib/useToast";
 import { syncRecord } from "@/lib/syncRecord";
+import {
+  BATANGAS_BARANGAY_IDENTITIES,
+  canonicalizeBarangay,
+} from "@/lib/batangasBarangays";
 
 export function RecordForm() {
   const [barangay, setBarangay] = useState("");
@@ -33,7 +37,10 @@ export function RecordForm() {
     e.preventDefault();
     setFormError("");
 
-    if (!barangay.trim()) return setFormError("Barangay is required.");
+    const canonicalBarangay = canonicalizeBarangay(barangay);
+    if (!canonicalBarangay) {
+      return setFormError("Select a valid barangay and municipality.");
+    }
     if (!purpose.trim()) return setFormError("Purpose is required.");
     if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
       return setFormError("Please enter a valid positive amount.");
@@ -44,7 +51,7 @@ export function RecordForm() {
         address: CONTRACT_ADDRESS,
         abi: SK_LEDGE_ABI,
         functionName: "addRecord",
-        args: [barangay, BigInt(Math.round(Number(amount) * 100)), purpose, recordType],
+        args: [canonicalBarangay, BigInt(Math.round(Number(amount) * 100)), purpose, recordType],
       });
     } catch (err) {
       console.error("Submission failed:", err);
@@ -54,13 +61,14 @@ export function RecordForm() {
   const isProcessing = isAwaitingWallet || isConfirming;
 
   useEffect(() => {
-    if (isConfirmed && hash) {
+    const canonicalBarangay = canonicalizeBarangay(barangay);
+    if (isConfirmed && hash && canonicalBarangay) {
       syncRecord({
         type: recordType.toLowerCase() as "expense" | "allocation",
         blockchain_tx_hash: hash,
         contract_address: CONTRACT_ADDRESS,
         official_address: address || "",
-        barangay,
+        barangay: canonicalBarangay,
         amount: Math.round(Number(amount) * 100),
         purpose,
       }).catch((err) => {
@@ -91,14 +99,23 @@ export function RecordForm() {
         <label className="text-sm font-medium" htmlFor="barangay">
           Barangay
         </label>
-        <input
+        <select
           id="barangay"
           disabled={isProcessing}
           className="p-2 border rounded-md"
           value={barangay}
           onChange={(e) => setBarangay(e.target.value)}
-          placeholder="e.g., Barangay San Jose"
-        />
+          required
+        >
+          <option value="" disabled>
+            Select a barangay
+          </option>
+          {BATANGAS_BARANGAY_IDENTITIES.map((identity) => (
+            <option key={identity.canonical} value={identity.canonical}>
+              {identity.barangay}, {identity.municipality}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div className="flex flex-col space-y-1">

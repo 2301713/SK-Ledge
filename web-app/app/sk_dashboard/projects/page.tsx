@@ -26,6 +26,7 @@ import PageHeader from '@/components/dashboard/ui/PageHeader';
 import { Card, CardHeader } from '@/components/dashboard/ui/Card';
 import StatCard from '@/components/dashboard/ui/StatCard';
 import StatusBadge from '@/components/dashboard/ui/StatusBadge';
+import { canonicalizeBarangay } from '@/lib/batangasBarangays';
 
 interface Project {
   id: number;
@@ -34,6 +35,7 @@ interface Project {
   budget: number;
   status: string;
   location?: string;
+  barangay?: string;
   is_open_for_bidding: boolean;
   bid_deadline?: string | null;
   winning_bid_id?: number | null;
@@ -135,6 +137,14 @@ export default function ProjectsPage() {
 
   const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault();
+    const barangay = canonicalizeBarangay(currentUser?.barangay ?? '');
+    if (!barangay) {
+      alert(
+        'Your profile must have a valid canonical barangay before creating a project.',
+      );
+      return;
+    }
+
     const { error } = await supabase.from('projects').insert([
       {
         name: formData.name,
@@ -143,7 +153,8 @@ export default function ProjectsPage() {
         status: 'Proposed',
         proposedBy: currentUser?.full_name,
         dateProposed: new Date().toISOString(),
-        location: currentUser?.barangay ?? null,
+        barangay,
+        location: barangay,
         is_open_for_bidding: formData.is_open_for_bidding,
         bid_deadline:
           formData.is_open_for_bidding && formData.bid_deadline

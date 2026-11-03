@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
+import { canonicalizeBarangay } from "@/lib/batangasBarangays";
 import PortalNav from "../../components/public_portal/PortalNav";
 import PortalHero from "../../components/public_portal/PortalHero";
 import MetricsRow from "../../components/public_portal/MetricsRow";
@@ -54,7 +55,10 @@ export default function PublicDashboard() {
     return projects.filter((p) => {
       const q = searchQuery.toLowerCase();
       const name = (p.name || p.title || "").toLowerCase();
-      const barangay = (p.barangay || p.location || "").toLowerCase();
+      const location = p.barangay || p.location || "";
+      const barangay = (
+        canonicalizeBarangay(location) ?? location
+      ).toLowerCase();
       const category = (p.category || "").toLowerCase();
 
       return (

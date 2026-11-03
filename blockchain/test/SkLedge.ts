@@ -16,6 +16,22 @@ describe("SkLedge Contract Test Suite", function () {
 
     const SkLedgeFactory = await ethers.getContractFactory("SkLedge");
     const skLedge = await SkLedgeFactory.deploy();
+    const testBarangays = [
+      "Barangay 1",
+      "Barangay 2",
+      "Barangay 3",
+      "Barangay San Jose",
+      "Barangay A",
+      "Barangay B",
+      "Barangay C",
+      "Adia, Agoncillo",
+    ];
+    await skLedge
+      .connect(owner)
+      .registerCanonicalBarangays(testBarangays, [
+        ...testBarangays.slice(0, -1),
+        "Adia",
+      ]);
 
     return { skLedge, owner, official1, official2, nonOfficial, ethers };
   }
@@ -194,7 +210,67 @@ describe("SkLedge Contract Test Suite", function () {
 
       await expect(
         skLedge.setAllocationCeiling("", 1000)
-      ).to.be.revertedWith("SkLedge: Invalid barangay");
+      ).to.be.revertedWith("SkLedge: Unknown barangay");
+    });
+
+    it("Should use one identity for canonical and unambiguous aliases", async function () {
+      const { skLedge } = await deploySkLedgeFixture();
+
+      expect(await skLedge.canonicalizeBarangay(" \tBARANGAY adia \n")).to.equal(
+        "Adia, Agoncillo"
+      );
+      await skLedge.setAllocationCeiling("Adia, Agoncillo", 1000);
+      expect(await skLedge.allocationCeilings("Barangay Adia")).to.equal(1000);
+      await skLedge.addRecord(
+        "  Barangay Adia  ",
+        700,
+        "First Allocation",
+        "Allocation"
+      );
+
+      expect(await skLedge.getAllocated("Adia")).to.equal(700);
+      expect((await skLedge.getAllRecords())[0].barangay).to.equal(
+        "Adia, Agoncillo"
+      );
+      expect((await skLedge.getRecordsByBarangay("Adia")).length).to.equal(1);
+      await expect(
+        skLedge.addRecord("Adia", 400, "Over ceiling", "Allocation")
+      ).to.be.revertedWith("SkLedge: Allocation exceeds ceiling");
+
+      await skLedge.setRecordApproval(1, true);
+      expect(await skLedge.isBarangayLocked("Adia, Agoncillo")).to.equal(true);
+      await expect(
+        skLedge.addRecord("Adia", 100, "Locked expense", "Expense")
+      ).to.be.revertedWith("SkLedge: Barangay is locked after approval");
+    });
+
+    it("Should reject names that are not in the canonical registry", async function () {
+      const { skLedge, owner } = await deploySkLedgeFixture();
+
+      await expect(
+        skLedge.connect(owner).addRecord(
+          "Unknown Barangay, Batangas",
+          100,
+          "Unknown",
+          "Allocation"
+        )
+      ).to.be.revertedWith("SkLedge: Unknown barangay");
+      await expect(
+        skLedge.connect(owner).setAllocationCeiling("Unknown Barangay", 100)
+      ).to.be.revertedWith("SkLedge: Unknown barangay");
+    });
+
+    it("Should reject an alias that points to two canonical barangays", async function () {
+      const { skLedge, owner } = await deploySkLedgeFixture();
+
+      await expect(
+        skLedge
+          .connect(owner)
+          .registerCanonicalBarangays(
+            ["First, Town", "Second, Town"],
+            ["Shared", "Shared"]
+          )
+      ).to.be.revertedWith("SkLedge: Barangay alias is ambiguous");
     });
   });
 
@@ -356,6 +432,17 @@ describe("SkLedge Contract Test Suite", function () {
   describe("Bulk Operations and Queries", function () {
     it("Should correctly record and return 50 records in order with IDs 1..50", async function () {
       const { skLedge, owner } = await deploySkLedgeFixture();
+
+      const bulkBarangays = Array.from(
+        { length: 50 },
+        (_, index) => `Barangay ${index + 1}`,
+      );
+      for (let offset = 0; offset < bulkBarangays.length; offset += 20) {
+        const batch = bulkBarangays.slice(offset, offset + 20);
+        await skLedge
+          .connect(owner)
+          .registerCanonicalBarangays(batch, batch);
+      }
 
       for (let i = 1; i <= 50; i++) {
         await skLedge
