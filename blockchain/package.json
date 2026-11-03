@@ -4,8 +4,9 @@
   "description": "Folder for Blockchain Development",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "export-abi": "hardhat compile && hardhat run scripts/export-abi.ts"
+    "test": "hardhat test",
+    "export-abi": "hardhat compile && hardhat run scripts/export-abi.ts",
+    "setup-sepolia": "hardhat run scripts/setupRolesAndCeilings.ts --network sepolia"
   },
   "keywords": [],
   "author": "",
