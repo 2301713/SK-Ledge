@@ -7,6 +7,7 @@ declare global {
       revertedWith(reason: string | RegExp): Promise<void>;
       revertedWithCustomError(contract: unknown, errorName: string): Assertion;
       withArgs(...args: unknown[]): Promise<void>;
+      emit(contract: unknown, eventName: string): Assertion;
     }
   }
 }
@@ -14,7 +15,8 @@ declare global {
 describe("SkLedge Contract Test Suite", function () {
   async function deploySkLedgeFixture() {
     const { ethers } = await (network as any).create();
-    const [owner, official1, official2, nonOfficial] = await ethers.getSigners();
+    const [owner, official1, official2, nonOfficial, newOwner, otherAccount] =
+      await ethers.getSigners();
 
     const SkLedgeFactory = await ethers.getContractFactory("SkLedge");
     const skLedge = await SkLedgeFactory.deploy();
@@ -40,7 +42,16 @@ describe("SkLedge Contract Test Suite", function () {
         .setOfficialBarangayAuthorization(owner.address, barangay, true);
     }
 
-    return { skLedge, owner, official1, official2, nonOfficial, ethers };
+    return {
+      skLedge,
+      owner,
+      official1,
+      official2,
+      nonOfficial,
+      newOwner,
+      otherAccount,
+      ethers,
+    };
   }
 
   describe("Deployment and Authorization", function () {
@@ -211,6 +222,74 @@ describe("SkLedge Contract Test Suite", function () {
       await expect(
         skLedge.connect(owner).setApproverAuthorization(ethers.ZeroAddress, true)
       ).to.be.revertedWith("SkLedge: Invalid wallet address");
+    });
+  });
+
+  describe("Two-Step Ownership Transfer", function () {
+    it("Dapat ma-nominate ang bagong owner pero hindi pa maita-transfer agad", async function () {
+      const { skLedge, owner, newOwner } = await deploySkLedgeFixture();
+      await skLedge.connect(owner).transferOwnership(newOwner.address);
+      expect(await skLedge.pendingOwner()).to.equal(newOwner.address);
+      expect(await skLedge.owner()).to.equal(owner.address);
+    });
+
+    it("Hindi dapat makapag-nominate ng zero address", async function () {
+      const { skLedge, owner, ethers } = await deploySkLedgeFixture();
+      await expect(
+        skLedge.connect(owner).transferOwnership(ethers.ZeroAddress)
+      ).to.be.revertedWith("SkLedge: Cannot nominate zero address");
+    });
+
+    it("Hindi dapat ma-accept ng ibang address (unauthorized)", async function () {
+      const { skLedge, owner, newOwner, otherAccount } = await deploySkLedgeFixture();
+      await skLedge.connect(owner).transferOwnership(newOwner.address);
+      await expect(
+        skLedge.connect(otherAccount).acceptOwnership()
+      ).to.be.revertedWith("SkLedge: Caller is not the pending owner");
+    });
+
+    it("Dapat matanggap ng pending owner ang ownership at ma-reset ang pending state", async function () {
+      const { skLedge, owner, newOwner, ethers } = await deploySkLedgeFixture();
+      await skLedge.connect(owner).transferOwnership(newOwner.address);
+
+      await expect(skLedge.connect(newOwner).acceptOwnership())
+        .to.emit(skLedge, "OwnershipTransferred")
+        .withArgs(owner.address, newOwner.address);
+
+      expect(await skLedge.owner()).to.equal(newOwner.address);
+      expect(await skLedge.pendingOwner()).to.equal(ethers.ZeroAddress);
+    });
+
+    it("Dapat ma-replace ang pending nominee kung tatawag ulit ng transferOwnership", async function () {
+      const { skLedge, owner, newOwner, otherAccount } = await deploySkLedgeFixture();
+      await skLedge.connect(owner).transferOwnership(newOwner.address);
+      await skLedge.connect(owner).transferOwnership(otherAccount.address);
+
+      expect(await skLedge.pendingOwner()).to.equal(otherAccount.address);
+    });
+
+    it("Dapat ma-cancel ang nomination ng current owner", async function () {
+      const { skLedge, owner, newOwner, ethers } = await deploySkLedgeFixture();
+      await skLedge.connect(owner).transferOwnership(newOwner.address);
+
+      await expect(skLedge.connect(owner).cancelOwnershipTransfer())
+        .to.emit(skLedge, "OwnershipTransferCanceled")
+        .withArgs(owner.address, newOwner.address);
+
+      expect(await skLedge.pendingOwner()).to.equal(ethers.ZeroAddress);
+    });
+
+    it("Dapat mawalan ng admin access ang dating owner pagkatapos ng transfer", async function () {
+      const { skLedge, owner, newOwner, official1 } = await deploySkLedgeFixture();
+      await skLedge.connect(owner).transferOwnership(newOwner.address);
+      await skLedge.connect(newOwner).acceptOwnership();
+
+      await expect(
+        skLedge.connect(owner).setOfficialAuthorization(official1.address, true)
+      ).to.be.revertedWith("SkLedge: Only the contract owner can perform this action.");
+
+      await skLedge.connect(newOwner).setOfficialAuthorization(official1.address, true);
+      expect(await skLedge.isAuthorizedOfficial(official1.address)).to.equal(true);
     });
   });
 
@@ -492,7 +571,7 @@ describe("SkLedge Contract Test Suite", function () {
 
   describe("Record Approval", function () {
     it("Should allow the owner to approve and unapprove a record", async function () {
-      const { skLedge, owner } = await deploySkLedgeFixture();
+      const { skLedge, owner, ethers } = await deploySkLedgeFixture();
 
       await skLedge.addRecord("Barangay San Jose", 5000, "Test Expense", "Expense");
 
@@ -508,9 +587,7 @@ describe("SkLedge Contract Test Suite", function () {
       records = await skLedge.getAllRecords();
 
       expect(records[0].approved).to.be.false;
-      expect(records[0].approvedBy).to.equal(
-        "0x0000000000000000000000000000000000000000"
-      );
+      expect(records[0].approvedBy).to.equal(ethers.ZeroAddress);
     });
 
     it("Should REVERT when approving a nonexistent record", async function () {
@@ -535,7 +612,7 @@ describe("SkLedge Contract Test Suite", function () {
     });
 
     it("Should allow an authorized approver to unapprove a record", async function () {
-      const { skLedge, owner, official1 } = await deploySkLedgeFixture();
+      const { skLedge, owner, official1, ethers } = await deploySkLedgeFixture();
       await skLedge.connect(owner).setApproverAuthorization(official1.address, true);
       await skLedge.connect(owner).addRecord("Barangay San Jose", 5000, "Test Expense", "Expense");
       await skLedge.connect(official1).setRecordApproval(1, true);
@@ -544,7 +621,7 @@ describe("SkLedge Contract Test Suite", function () {
 
       const [record] = await skLedge.getAllRecords();
       expect(record.approved).to.equal(false);
-      expect(record.approvedBy).to.equal("0x0000000000000000000000000000000000000000");
+      expect(record.approvedBy).to.equal(ethers.ZeroAddress);
       expect(await skLedge.isBarangayLocked("Barangay San Jose")).to.equal(false);
     });
 
@@ -732,7 +809,7 @@ describe("SkLedge Contract Test Suite", function () {
 
       const bulkBarangays = Array.from(
         { length: 50 },
-        (_, index) => `Barangay ${index + 1}`,
+        (_, index) => `Barangay ${index + 1}`
       );
       for (let offset = 0; offset < bulkBarangays.length; offset += 20) {
         const batch = bulkBarangays.slice(offset, offset + 20);

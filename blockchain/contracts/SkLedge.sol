@@ -12,6 +12,7 @@ contract SkLedge {
     error PurposeTooLong(uint256 length, uint256 max);
 
     address public owner;
+    address public pendingOwner;
     uint256 public nextRecordId;
 
     struct FinancialRecord {
@@ -86,6 +87,20 @@ contract SkLedge {
     event BarangayLocked(string barangay, bool locked);
     event CanonicalBarangayRegistered(string barangay);
 
+    // Ownership Transfer Events
+    event OwnershipTransferStarted(
+        address indexed previousOwner,
+        address indexed newOwner
+    );
+    event OwnershipTransferred(
+        address indexed previousOwner,
+        address indexed newOwner
+    );
+    event OwnershipTransferCanceled(
+        address indexed currentOwner,
+        address indexed canceledNominee
+    );
+
     // Modifiers
     modifier onlyOwner() {
         require(
@@ -115,6 +130,51 @@ contract SkLedge {
         owner = msg.sender;
         isAuthorizedOfficial[msg.sender] = true;
         nextRecordId = 1;
+    }
+
+    /**
+     * @notice Step 1: Nominates a new owner. Callable only by the current owner.
+     */
+    function transferOwnership(address newOwner) external onlyOwner {
+        require(
+            newOwner != address(0),
+            "SkLedge: Cannot nominate zero address"
+        );
+        require(newOwner != owner, "SkLedge: Already the owner");
+
+        pendingOwner = newOwner;
+        emit OwnershipTransferStarted(owner, newOwner);
+    }
+
+    /**
+     * @notice Step 2: Accepts the ownership transfer. Callable only by the pendingOwner.
+     */
+    function acceptOwnership() external {
+        require(
+            msg.sender == pendingOwner,
+            "SkLedge: Caller is not the pending owner"
+        );
+
+        address oldOwner = owner;
+        owner = pendingOwner;
+        pendingOwner = address(0);
+
+        emit OwnershipTransferred(oldOwner, owner);
+    }
+
+    /**
+     * @notice Cancels a pending ownership transfer. Callable only by the current owner.
+     */
+    function cancelOwnershipTransfer() external onlyOwner {
+        require(
+            pendingOwner != address(0),
+            "SkLedge: No pending ownership transfer"
+        );
+
+        address canceledNominee = pendingOwner;
+        pendingOwner = address(0);
+
+        emit OwnershipTransferCanceled(owner, canceledNominee);
     }
 
     function _validateBarangayName(string calldata _name) internal pure {
