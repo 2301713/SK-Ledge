@@ -5,6 +5,9 @@ declare global {
   namespace Chai {
     interface Assertion {
       revertedWith(reason: string | RegExp): Promise<void>;
+      revertedWithCustomError(contract: any, errorName: string): Assertion;
+      withArgs(...args: any[]): Promise<void>;
+      reverted: Promise<void>;
     }
   }
 }
@@ -168,7 +171,7 @@ describe("SkLedge Contract Test Suite", function () {
 
       await expect(
         skLedge.setAllocationCeiling("", 1000)
-      ).to.be.revertedWith("SkLedge: Invalid barangay");
+      ).to.be.revertedWithCustomError(skLedge, "StringEmpty");
     });
   });
 
@@ -325,6 +328,55 @@ describe("SkLedge Contract Test Suite", function () {
       expect(barangayARecords[1].id).to.equal(2);
       expect(barangayBRecords[0].barangay).to.equal("Barangay B");
       expect(barangayBRecords[0].id).to.equal(3);
+    });
+  });
+
+  describe("Input Byte Length and UTF-8 Validation", function () {
+    it("should accept barangay name at exactly 64 bytes", async function () {
+      const { skLedge } = await deploySkLedgeFixture();
+      const valid64ByteName = "A".repeat(64);
+      await skLedge.setAllocationCeiling(valid64ByteName, 50000000);
+    });
+
+    it("should revert if barangay name exceeds 64 bytes (65 bytes)", async function () {
+      const { skLedge } = await deploySkLedgeFixture();
+      const invalid65ByteName = "A".repeat(65);
+      await expect(skLedge.setAllocationCeiling(invalid65ByteName, 50000000))
+        .to.be.revertedWithCustomError(skLedge, "BarangayNameTooLong")
+        .withArgs(65, 64);
+    });
+
+    it("should revert if barangay name is empty", async function () {
+      const { skLedge } = await deploySkLedgeFixture();
+      await expect(skLedge.setAllocationCeiling("", 50000000))
+        .to.be.revertedWithCustomError(skLedge, "StringEmpty");
+    });
+
+    it("should correctly calculate multibyte UTF-8 characters for barangay name", async function () {
+      const { skLedge } = await deploySkLedgeFixture();
+      // 'ñ' is 2 bytes in UTF-8 -> "Barangay-Niño-" (15 bytes) + 49 'A's = 64 bytes total
+      const validMultiByteName = "Barangay-Niño-" + "A".repeat(49);
+      await skLedge.setAllocationCeiling(validMultiByteName, 50000000);
+    });
+
+    it("should accept purpose at exactly 256 bytes", async function () {
+      const { skLedge, owner } = await deploySkLedgeFixture();
+      const valid256BytePurpose = "P".repeat(256);
+      await skLedge.connect(owner).addRecord("Barangay 1", 1000, valid256BytePurpose, "Allocation");
+    });
+
+    it("should revert if purpose exceeds 256 bytes (257 bytes)", async function () {
+      const { skLedge, owner } = await deploySkLedgeFixture();
+      const invalid257BytePurpose = "P".repeat(257);
+      await expect(skLedge.connect(owner).addRecord("Barangay 1", 1000, invalid257BytePurpose, "Allocation"))
+        .to.be.revertedWithCustomError(skLedge, "PurposeTooLong")
+        .withArgs(257, 256);
+    });
+
+    it("should revert if purpose is empty", async function () {
+      const { skLedge, owner } = await deploySkLedgeFixture();
+      await expect(skLedge.connect(owner).addRecord("Barangay 1", 1000, "", "Allocation"))
+        .to.be.revertedWithCustomError(skLedge, "StringEmpty");
     });
   });
 });

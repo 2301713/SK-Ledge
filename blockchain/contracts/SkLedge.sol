@@ -3,6 +3,14 @@ pragma solidity ^0.8.28;
 
 // Contract
 contract SkLedge {
+    // --- Constants & Custom Errors for Input Validation ---
+    uint256 public constant MAX_BARANGAY_NAME_BYTES = 64;
+    uint256 public constant MAX_PURPOSE_BYTES = 256;
+
+    error StringEmpty();
+    error BarangayNameTooLong(uint256 length, uint256 max);
+    error PurposeTooLong(uint256 length, uint256 max);
+
     address public owner;
     uint256 public nextRecordId;
 
@@ -82,6 +90,19 @@ contract SkLedge {
         nextRecordId = 1;
     }
 
+    // --- Internal Validation Helpers ---
+    function _validateBarangayName(string calldata _name) internal pure {
+        uint256 len = bytes(_name).length;
+        if (len == 0) revert StringEmpty();
+        if (len > MAX_BARANGAY_NAME_BYTES) revert BarangayNameTooLong(len, MAX_BARANGAY_NAME_BYTES);
+    }
+
+    function _validatePurpose(string calldata _purpose) internal pure {
+        uint256 len = bytes(_purpose).length;
+        if (len == 0) revert StringEmpty();
+        if (len > MAX_PURPOSE_BYTES) revert PurposeTooLong(len, MAX_PURPOSE_BYTES);
+    }
+
     /**
      * @notice Authorizes or revokes SK Official wallets.
      * @param _official Wallet address of the SK Official.
@@ -113,10 +134,7 @@ contract SkLedge {
         string calldata _barangay,
         uint256 _ceiling
     ) external onlyOwner {
-        require(
-            bytes(_barangay).length > 0,
-            "SkLedge: Invalid barangay"
-        );
+        _validateBarangayName(_barangay);
 
         require(
             _ceiling > 0,
@@ -154,6 +172,9 @@ contract SkLedge {
         string calldata _purpose,
         string calldata _recordType
     ) external onlyAuthorizedOfficial {
+        _validateBarangayName(_barangay);
+        _validatePurpose(_purpose);
+
         require(
             _amount > 0,
             "SkLedge: Amount must be greater than zero"
