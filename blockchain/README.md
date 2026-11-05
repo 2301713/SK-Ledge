@@ -16,6 +16,9 @@ must be the deployed contract owner. To configure one or more items, set:
 ```env
 TARGET_OFFICIAL_ADDRESS=
 OFFICIAL_AUTHORIZATION_STATUS=true
+TARGET_OFFICIAL_BARANGAY_ADDRESS=
+TARGET_OFFICIAL_BARANGAY_NAME=
+OFFICIAL_BARANGAY_AUTHORIZATION_STATUS=true
 TARGET_APPROVER_ADDRESS=
 APPROVER_AUTHORIZATION_STATUS=true
 BARANGAY_NAME=
@@ -25,7 +28,11 @@ ALLOCATION_CEILING_CENTAVOS=
 Leave out any item you do not want to change. Authorization statuses accept
 `true`/`false` (or `1`/`0`); allocation ceilings are positive whole centavo
 amounts. The script validates the Sepolia network, owner, and resulting state
-before reporting success.
+before reporting success. Set both `TARGET_OFFICIAL_BARANGAY_ADDRESS` and
+`TARGET_OFFICIAL_BARANGAY_NAME` to assign or revoke one official's access to a
+registered barangay; its status is independent of the global authorization
+setting. Barangay names are resolved through the canonical registry, so
+registered aliases refer to the same barangay.
 
 Run `npm run setup-sepolia` from this directory. The script will not deploy a
 contract; `NEXT_PUBLIC_CONTRACT_ADDRESS` must point to an existing SkLedge
@@ -65,10 +72,11 @@ before enabling new writes; the app blocks unresolved profiles. Do not bulk
 rewrite or merge ambiguous historical rows. Existing database records are left
 unchanged, and old-contract data remains available for historical reads.
 
-Contract wallet authorization remains global, as it is today; canonical
-registration prevents name aliases from splitting accounting keys but does not
-bind an authorized wallet to one barangay. Adding that binding requires an
-explicit wallet-to-jurisdiction administration workflow.
+Record submission requires both global official authorization and an explicit
+assignment to that record's registered barangay. Global revocation blocks all
+record writes but does not remove barangay assignments; reauthorization restores
+the assignments that remain in place. No wallet, including the owner, receives
+barangay access implicitly.
 
 ## Export the frontend ABI
 

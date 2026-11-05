@@ -24,6 +24,8 @@ contract SkLedge {
 
     mapping(address => bool) public isAuthorizedOfficial;
     mapping(address => bool) public isApprover;
+    mapping(address => mapping(uint256 => bool))
+        private officialBarangayAuthorizationById;
 
     string[] private canonicalBarangayNames;
     mapping(bytes32 => uint256) private canonicalBarangayIds;
@@ -49,6 +51,13 @@ contract SkLedge {
 
     event OfficialAuthorizationChanged(
         address indexed official,
+        bool isAuthorized
+    );
+
+    event OfficialBarangayAuthorizationChanged(
+        address indexed official,
+        uint256 indexed barangayId,
+        string barangay,
         bool isAuthorized
     );
 
@@ -122,6 +131,46 @@ contract SkLedge {
             _official,
             _status
         );
+    }
+
+    /**
+     * @notice Assigns or revokes an official's access to a registered barangay.
+     * @param _official Wallet address of the SK Official.
+     * @param _barangay Registered canonical barangay name or alias.
+     * @param _status True = authorize, False = revoke.
+     */
+    function setOfficialBarangayAuthorization(
+        address _official,
+        string calldata _barangay,
+        bool _status
+    ) external onlyOwner {
+        require(
+            _official != address(0),
+            "SkLedge: Invalid wallet address"
+        );
+
+        uint256 barangayId = _getBarangayId(_barangay);
+        officialBarangayAuthorizationById[_official][barangayId] = _status;
+
+        emit OfficialBarangayAuthorizationChanged(
+            _official,
+            barangayId,
+            canonicalBarangayNames[barangayId - 1],
+            _status
+        );
+    }
+
+    /**
+     * @notice Checks an official's access to a registered barangay.
+     */
+    function isOfficialAuthorizedForBarangay(
+        address _official,
+        string calldata _barangay
+    ) external view returns (bool) {
+        return
+            officialBarangayAuthorizationById[_official][
+                _getBarangayId(_barangay)
+            ];
     }
 
     /**
@@ -274,6 +323,11 @@ contract SkLedge {
         string calldata _recordType
     ) external onlyAuthorizedOfficial {
         uint256 barangayId = _getBarangayId(_barangay);
+        require(
+            officialBarangayAuthorizationById[msg.sender][barangayId],
+            "SkLedge: Your wallet is not authorized for this barangay."
+        );
+
         string memory canonicalBarangay = canonicalBarangayNames[
             barangayId - 1
         ];

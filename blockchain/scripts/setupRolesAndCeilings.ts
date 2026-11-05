@@ -65,6 +65,10 @@ async function main(): Promise<void> {
   }
 
   const officialAddress = process.env.TARGET_OFFICIAL_ADDRESS?.trim();
+  const officialBarangayAddress =
+    process.env.TARGET_OFFICIAL_BARANGAY_ADDRESS?.trim();
+  const officialBarangayName =
+    process.env.TARGET_OFFICIAL_BARANGAY_NAME?.trim();
   const approverAddress = process.env.TARGET_APPROVER_ADDRESS?.trim();
   const barangay = process.env.BARANGAY_NAME?.trim();
   const ceilingValue = process.env.ALLOCATION_CEILING_CENTAVOS?.trim();
@@ -83,12 +87,31 @@ async function main(): Promise<void> {
   ) {
     throw new Error("TARGET_APPROVER_ADDRESS must be a valid nonzero Ethereum address.");
   }
+  if (
+    officialBarangayAddress &&
+    (!ethers.isAddress(officialBarangayAddress) ||
+      officialBarangayAddress.toLowerCase() === ethers.ZeroAddress)
+  ) {
+    throw new Error(
+      "TARGET_OFFICIAL_BARANGAY_ADDRESS must be a valid nonzero Ethereum address."
+    );
+  }
+  if (Boolean(officialBarangayAddress) !== Boolean(officialBarangayName)) {
+    throw new Error(
+      "Set both TARGET_OFFICIAL_BARANGAY_ADDRESS and TARGET_OFFICIAL_BARANGAY_NAME to configure barangay access."
+    );
+  }
   if (Boolean(barangay) !== Boolean(ceilingValue)) {
     throw new Error(
       "Set both BARANGAY_NAME and ALLOCATION_CEILING_CENTAVOS to configure a ceiling."
     );
   }
-  if (!officialAddress && !approverAddress && !barangay) {
+  if (
+    !officialAddress &&
+    !officialBarangayAddress &&
+    !approverAddress &&
+    !barangay
+  ) {
     throw new Error(
       "Configure an official, an approver, and/or a barangay ceiling before running setup."
     );
@@ -116,6 +139,30 @@ async function main(): Promise<void> {
     );
     if ((await contract.isApprover(approverAddress)) !== authorized) {
       throw new Error("Approver authorization did not match the requested status.");
+    }
+  }
+
+  if (officialBarangayAddress && officialBarangayName) {
+    const authorized = authorizationStatus(
+      "OFFICIAL_BARANGAY_AUTHORIZATION_STATUS"
+    );
+    await submitAndConfirm(
+      `Set barangay access for ${officialBarangayAddress} to ${officialBarangayName}: ${authorized}`,
+      contract.setOfficialBarangayAuthorization(
+        officialBarangayAddress,
+        officialBarangayName,
+        authorized
+      )
+    );
+    if (
+      (await contract.isOfficialAuthorizedForBarangay(
+        officialBarangayAddress,
+        officialBarangayName
+      )) !== authorized
+    ) {
+      throw new Error(
+        "Official barangay authorization did not match the requested status."
+      );
     }
   }
 

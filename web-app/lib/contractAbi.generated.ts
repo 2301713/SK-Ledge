@@ -124,6 +124,37 @@ export const SK_LEDGE_ABI = [
     "inputs": [
       {
         "indexed": true,
+        "internalType": "address",
+        "name": "official",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "barangayId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "barangay",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "isAuthorized",
+        "type": "bool"
+      }
+    ],
+    "name": "OfficialBarangayAuthorizationChanged",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
         "internalType": "uint256",
         "name": "id",
         "type": "uint256"
@@ -463,6 +494,30 @@ export const SK_LEDGE_ABI = [
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_official",
+        "type": "address"
+      },
+      {
+        "internalType": "string",
+        "name": "_barangay",
+        "type": "string"
+      }
+    ],
+    "name": "isOfficialAuthorizedForBarangay",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "nextRecordId",
     "outputs": [
@@ -615,6 +670,29 @@ export const SK_LEDGE_ABI = [
       }
     ],
     "name": "setOfficialAuthorization",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_official",
+        "type": "address"
+      },
+      {
+        "internalType": "string",
+        "name": "_barangay",
+        "type": "string"
+      },
+      {
+        "internalType": "bool",
+        "name": "_status",
+        "type": "bool"
+      }
+    ],
+    "name": "setOfficialBarangayAuthorization",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

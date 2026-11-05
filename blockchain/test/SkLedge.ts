@@ -32,6 +32,11 @@ describe("SkLedge Contract Test Suite", function () {
         ...testBarangays.slice(0, -1),
         "Adia",
       ]);
+    for (const barangay of testBarangays) {
+      await skLedge
+        .connect(owner)
+        .setOfficialBarangayAuthorization(owner.address, barangay, true);
+    }
 
     return { skLedge, owner, official1, official2, nonOfficial, ethers };
   }
@@ -67,6 +72,116 @@ describe("SkLedge Contract Test Suite", function () {
       const { skLedge, owner, ethers } = await deploySkLedgeFixture();
       await expect(
         skLedge.connect(owner).setOfficialAuthorization(ethers.ZeroAddress, true)
+      ).to.be.revertedWith("SkLedge: Invalid wallet address");
+    });
+
+    it("Should allow the owner to assign and revoke an official's barangay access", async function () {
+      const { skLedge, owner, official1 } = await deploySkLedgeFixture();
+
+      const tx = await skLedge
+        .connect(owner)
+        .setOfficialBarangayAuthorization(
+          official1.address,
+          "Barangay 1",
+          true
+        );
+      const receipt = await tx.wait();
+      if (!receipt) {
+        throw new Error("Barangay authorization transaction was not confirmed.");
+      }
+      const event = receipt.logs
+        .map((log: { topics: readonly string[]; data: string }) =>
+          skLedge.interface.parseLog(log)
+        )
+        .find((parsed: { name: string; args: readonly unknown[] } | null) =>
+          parsed?.name === "OfficialBarangayAuthorizationChanged"
+        );
+      expect(event?.args[0]).to.equal(official1.address);
+      expect(event?.args[1]).to.equal(1);
+      expect(event?.args[2]).to.equal("Barangay 1");
+      expect(event?.args[3]).to.equal(true);
+      expect(
+        await skLedge.isOfficialAuthorizedForBarangay(
+          official1.address,
+          "Barangay 1"
+        )
+      ).to.equal(true);
+
+      await skLedge
+        .connect(owner)
+        .setOfficialBarangayAuthorization(
+          official1.address,
+          "Barangay 1",
+          false
+        );
+      expect(
+        await skLedge.isOfficialAuthorizedForBarangay(
+          official1.address,
+          "Barangay 1"
+        )
+      ).to.equal(false);
+    });
+
+    it("Should resolve barangay aliases to the same authorization", async function () {
+      const { skLedge, owner, official1 } = await deploySkLedgeFixture();
+
+      await skLedge
+        .connect(owner)
+        .setOfficialBarangayAuthorization(
+          official1.address,
+          "Barangay Adia",
+          true
+        );
+
+      expect(
+        await skLedge.isOfficialAuthorizedForBarangay(
+          official1.address,
+          "Adia, Agoncillo"
+        )
+      ).to.equal(true);
+    });
+
+    it("Should reject barangay access management by a non-owner", async function () {
+      const { skLedge, nonOfficial, official1 } = await deploySkLedgeFixture();
+
+      await expect(
+        skLedge
+          .connect(nonOfficial)
+          .setOfficialBarangayAuthorization(
+            official1.address,
+            "Barangay 1",
+            true
+          )
+      ).to.be.revertedWith(
+        "SkLedge: Only the contract owner can perform this action."
+      );
+    });
+
+    it("Should reject barangay access for an unknown barangay", async function () {
+      const { skLedge, owner, official1 } = await deploySkLedgeFixture();
+
+      await expect(
+        skLedge
+          .connect(owner)
+          .setOfficialBarangayAuthorization(
+            official1.address,
+            "Unknown Barangay",
+            true
+          )
+      ).to.be.revertedWith("SkLedge: Unknown barangay");
+    });
+
+    it("Should reject barangay access for the zero address", async function () {
+      const { skLedge, owner, ethers } = await deploySkLedgeFixture();
+
+      await expect(
+        skLedge
+          .connect(owner)
+          .setOfficialBarangayAuthorization(
+            ethers.ZeroAddress,
+            "Barangay 1",
+            true
+          )
       ).to.be.revertedWith("SkLedge: Invalid wallet address");
     });
 
@@ -114,6 +229,13 @@ describe("SkLedge Contract Test Suite", function () {
     it("Should allow an authorized official to add an Expense record", async function () {
       const { skLedge, owner, nonOfficial } = await deploySkLedgeFixture();
       await skLedge.connect(owner).setOfficialAuthorization(nonOfficial.address, true);
+      await skLedge
+        .connect(owner)
+        .setOfficialBarangayAuthorization(
+          nonOfficial.address,
+          "Barangay 2",
+          true
+        );
       await skLedge.connect(nonOfficial).addRecord("Barangay 2", 1500, "Equipment Purchase", "Expense");
       const records = await skLedge.getAllRecords();
       expect(records.length).to.equal(1);
@@ -133,6 +255,91 @@ describe("SkLedge Contract Test Suite", function () {
       await expect(
         skLedge.connect(nonOfficial).addRecord("Barangay 1", 1000, "Clean Up", "Allocation")
       ).to.be.revertedWith("SkLedge: Your wallet is not an authorized SK Official.");
+    });
+
+    it("Should reject globally authorized officials without barangay access", async function () {
+      const { skLedge, owner, official1 } = await deploySkLedgeFixture();
+      await skLedge
+        .connect(owner)
+        .setOfficialAuthorization(official1.address, true);
+
+      await expect(
+        skLedge
+          .connect(official1)
+          .addRecord("Barangay 1", 1000, "Unassigned", "Allocation")
+      ).to.be.revertedWith(
+        "SkLedge: Your wallet is not authorized for this barangay."
+      );
+    });
+
+    it("Should allow an official to submit records for multiple assigned barangays", async function () {
+      const { skLedge, owner, official1 } = await deploySkLedgeFixture();
+      await skLedge
+        .connect(owner)
+        .setOfficialAuthorization(official1.address, true);
+      await skLedge
+        .connect(owner)
+        .setOfficialBarangayAuthorization(
+          official1.address,
+          "Barangay 1",
+          true
+        );
+      await skLedge
+        .connect(owner)
+        .setOfficialBarangayAuthorization(
+          official1.address,
+          "Barangay 2",
+          true
+        );
+
+      await skLedge
+        .connect(official1)
+        .addRecord("Barangay 1", 1000, "First barangay", "Allocation");
+      await skLedge
+        .connect(official1)
+        .addRecord("Barangay 2", 1000, "Second barangay", "Allocation");
+
+      expect((await skLedge.getAllRecords()).length).to.equal(2);
+    });
+
+    it("Should retain barangay assignments through global revocation and reauthorization", async function () {
+      const { skLedge, owner, official1 } = await deploySkLedgeFixture();
+      await skLedge
+        .connect(owner)
+        .setOfficialAuthorization(official1.address, true);
+      await skLedge
+        .connect(owner)
+        .setOfficialBarangayAuthorization(
+          official1.address,
+          "Barangay 1",
+          true
+        );
+
+      await skLedge
+        .connect(owner)
+        .setOfficialAuthorization(official1.address, false);
+      await expect(
+        skLedge
+          .connect(official1)
+          .addRecord("Barangay 1", 1000, "Globally revoked", "Allocation")
+      ).to.be.revertedWith(
+        "SkLedge: Your wallet is not an authorized SK Official."
+      );
+
+      expect(
+        await skLedge.isOfficialAuthorizedForBarangay(
+          official1.address,
+          "Barangay 1"
+        )
+      ).to.equal(true);
+
+      await skLedge
+        .connect(owner)
+        .setOfficialAuthorization(official1.address, true);
+      await skLedge
+        .connect(official1)
+        .addRecord("Barangay 1", 1000, "Reauthorized", "Allocation");
+      expect((await skLedge.getAllRecords()).length).to.equal(1);
     });
 
     it("Should revert if amount is zero", async function () {
@@ -167,6 +374,13 @@ describe("SkLedge Contract Test Suite", function () {
     it("Should revert if a revoked official attempts to add a record", async function () {
       const { skLedge, owner, official1 } = await deploySkLedgeFixture();
       await skLedge.connect(owner).setOfficialAuthorization(official1.address, true);
+      await skLedge
+        .connect(owner)
+        .setOfficialBarangayAuthorization(
+          official1.address,
+          "Barangay 3",
+          true
+        );
       await skLedge.connect(official1).addRecord("Barangay 3", 1000, "First Action", "Allocation");
 
       await skLedge.connect(owner).setOfficialAuthorization(official1.address, false);
@@ -445,6 +659,13 @@ describe("SkLedge Contract Test Suite", function () {
       }
 
       for (let i = 1; i <= 50; i++) {
+        await skLedge
+          .connect(owner)
+          .setOfficialBarangayAuthorization(
+            owner.address,
+            `Barangay ${i}`,
+            true
+          );
         await skLedge
           .connect(owner)
           .addRecord(
