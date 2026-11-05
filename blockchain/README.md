@@ -40,6 +40,11 @@ contract deployed on Sepolia.
 
 Run `npm test` from this directory to execute the contract tests.
 
+Barangay names and aliases are limited to 64 UTF-8 bytes, and record purposes
+are limited to 256 UTF-8 bytes. Both values must be non-empty. The contract
+reports over-limit inputs with custom errors; these limits count encoded bytes,
+not displayed characters.
+
 ## Canonical barangay registry
 
 The canonical identity is `<barangay>, <municipality>`, sourced from

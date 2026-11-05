@@ -5,6 +5,8 @@ declare global {
   namespace Chai {
     interface Assertion {
       revertedWith(reason: string | RegExp): Promise<void>;
+      revertedWithCustomError(contract: unknown, errorName: string): Assertion;
+      withArgs(...args: unknown[]): Promise<void>;
     }
   }
 }
@@ -424,7 +426,7 @@ describe("SkLedge Contract Test Suite", function () {
 
       await expect(
         skLedge.setAllocationCeiling("", 1000)
-      ).to.be.revertedWith("SkLedge: Unknown barangay");
+      ).to.be.revertedWithCustomError(skLedge, "StringEmpty");
     });
 
     it("Should use one identity for canonical and unambiguous aliases", async function () {
@@ -640,6 +642,87 @@ describe("SkLedge Contract Test Suite", function () {
       await expect(
         skLedge.connect(owner).addRecord("Barangay A", 1000, "Expense while still locked", "Expense")
       ).to.be.revertedWith("SkLedge: Barangay is locked after approval");
+    });
+  });
+
+  describe("Input Byte Length Validation", function () {
+    it("accepts a canonical barangay name at exactly 64 UTF-8 bytes", async function () {
+      const { skLedge, owner } = await deploySkLedgeFixture();
+      const valid64ByteName = "Barangay-Niño-" + "A".repeat(49);
+
+      expect(new TextEncoder().encode(valid64ByteName).length).to.equal(64);
+      await skLedge
+        .connect(owner)
+        .registerCanonicalBarangays([valid64ByteName], [""]);
+      await skLedge
+        .connect(owner)
+        .setAllocationCeiling(valid64ByteName, 50000000);
+    });
+
+    it("rejects a barangay name longer than 64 UTF-8 bytes", async function () {
+      const { skLedge, owner } = await deploySkLedgeFixture();
+      const invalid65ByteName = "A".repeat(65);
+
+      await expect(
+        skLedge
+          .connect(owner)
+          .registerCanonicalBarangays([invalid65ByteName], [""])
+      )
+        .to.be.revertedWithCustomError(skLedge, "BarangayNameTooLong")
+        .withArgs(65, 64);
+    });
+
+    it("rejects an empty barangay name", async function () {
+      const { skLedge, owner } = await deploySkLedgeFixture();
+
+      await expect(
+        skLedge.connect(owner).registerCanonicalBarangays([""], [""])
+      ).to.be.revertedWithCustomError(skLedge, "StringEmpty");
+    });
+
+    it("enforces the barangay byte limit on aliases", async function () {
+      const { skLedge, owner } = await deploySkLedgeFixture();
+
+      await expect(
+        skLedge
+          .connect(owner)
+          .registerCanonicalBarangays(["Short Name"], ["A".repeat(65)])
+      )
+        .to.be.revertedWithCustomError(skLedge, "BarangayNameTooLong")
+        .withArgs(65, 64);
+    });
+
+    it("accepts a purpose at exactly 256 UTF-8 bytes", async function () {
+      const { skLedge, owner } = await deploySkLedgeFixture();
+      const valid256BytePurpose = "ñ".repeat(128);
+
+      expect(new TextEncoder().encode(valid256BytePurpose).length).to.equal(256);
+      await skLedge
+        .connect(owner)
+        .addRecord("Barangay 1", 1000, valid256BytePurpose, "Allocation");
+    });
+
+    it("rejects a purpose longer than 256 UTF-8 bytes", async function () {
+      const { skLedge, owner } = await deploySkLedgeFixture();
+      const invalid257BytePurpose = "P".repeat(255) + "ñ";
+
+      await expect(
+        skLedge
+          .connect(owner)
+          .addRecord("Barangay 1", 1000, invalid257BytePurpose, "Allocation")
+      )
+        .to.be.revertedWithCustomError(skLedge, "PurposeTooLong")
+        .withArgs(257, 256);
+    });
+
+    it("rejects an empty purpose", async function () {
+      const { skLedge, owner } = await deploySkLedgeFixture();
+
+      await expect(
+        skLedge
+          .connect(owner)
+          .addRecord("Barangay 1", 1000, "", "Allocation")
+      ).to.be.revertedWithCustomError(skLedge, "StringEmpty");
     });
   });
 

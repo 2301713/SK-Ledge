@@ -6,6 +6,43 @@ export const SK_LEDGE_ABI = [
     "type": "constructor"
   },
   {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "length",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "max",
+        "type": "uint256"
+      }
+    ],
+    "name": "BarangayNameTooLong",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "length",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "max",
+        "type": "uint256"
+      }
+    ],
+    "name": "PurposeTooLong",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "StringEmpty",
+    "type": "error"
+  },
+  {
     "anonymous": false,
     "inputs": [
       {
@@ -192,6 +229,32 @@ export const SK_LEDGE_ABI = [
     ],
     "name": "RecordAdded",
     "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "MAX_BARANGAY_NAME_BYTES",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "MAX_PURPOSE_BYTES",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
   },
   {
     "inputs": [

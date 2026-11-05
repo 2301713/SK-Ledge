@@ -4,6 +4,12 @@ pragma solidity ^0.8.28;
 // Contract
 contract SkLedge {
     uint256 private constant MAX_CANONICAL_BARANGAYS_PER_BATCH = 20;
+    uint256 public constant MAX_BARANGAY_NAME_BYTES = 64;
+    uint256 public constant MAX_PURPOSE_BYTES = 256;
+
+    error StringEmpty();
+    error BarangayNameTooLong(uint256 length, uint256 max);
+    error PurposeTooLong(uint256 length, uint256 max);
 
     address public owner;
     uint256 public nextRecordId;
@@ -111,6 +117,22 @@ contract SkLedge {
         nextRecordId = 1;
     }
 
+    function _validateBarangayName(string calldata _name) internal pure {
+        uint256 len = bytes(_name).length;
+        if (len == 0) revert StringEmpty();
+        if (len > MAX_BARANGAY_NAME_BYTES) {
+            revert BarangayNameTooLong(len, MAX_BARANGAY_NAME_BYTES);
+        }
+    }
+
+    function _validatePurpose(string calldata _purpose) internal pure {
+        uint256 len = bytes(_purpose).length;
+        if (len == 0) revert StringEmpty();
+        if (len > MAX_PURPOSE_BYTES) {
+            revert PurposeTooLong(len, MAX_PURPOSE_BYTES);
+        }
+    }
+
     /**
      * @notice Authorizes or revokes SK Official wallets.
      * @param _official Wallet address of the SK Official.
@@ -211,10 +233,7 @@ contract SkLedge {
         );
 
         for (uint256 i = 0; i < _names.length; i++) {
-            require(
-                bytes(_names[i]).length > 0,
-                "SkLedge: Invalid barangay"
-            );
+            _validateBarangayName(_names[i]);
 
             bytes32 canonicalKey = _barangayKey(_names[i]);
             uint256 barangayId = canonicalBarangayIds[canonicalKey];
@@ -232,6 +251,7 @@ contract SkLedge {
             }
 
             if (bytes(_aliases[i]).length > 0) {
+                _validateBarangayName(_aliases[i]);
                 bytes32 aliasKey = _barangayKey(_aliases[i]);
                 uint256 existingId = canonicalBarangayIds[aliasKey];
                 require(
@@ -272,6 +292,7 @@ contract SkLedge {
         string calldata _barangay,
         uint256 _ceiling
     ) external onlyOwner {
+        _validateBarangayName(_barangay);
         uint256 barangayId = _getBarangayId(_barangay);
 
         require(
@@ -322,6 +343,9 @@ contract SkLedge {
         string calldata _purpose,
         string calldata _recordType
     ) external onlyAuthorizedOfficial {
+        _validateBarangayName(_barangay);
+        _validatePurpose(_purpose);
+
         uint256 barangayId = _getBarangayId(_barangay);
         require(
             officialBarangayAuthorizationById[msg.sender][barangayId],
