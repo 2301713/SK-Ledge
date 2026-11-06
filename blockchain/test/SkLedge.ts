@@ -233,6 +233,21 @@ describe("SkLedge Contract Test Suite", function () {
       expect(await skLedge.owner()).to.equal(owner.address);
     });
 
+    it("keeps owner-only permissions with the current owner until acceptance", async function () {
+      const { skLedge, owner, newOwner, official1 } = await deploySkLedgeFixture();
+      await skLedge.connect(owner).transferOwnership(newOwner.address);
+
+      await expect(
+        skLedge.connect(newOwner).setOfficialAuthorization(official1.address, true)
+      ).to.be.revertedWith(
+        "SkLedge: Only the contract owner can perform this action."
+      );
+
+      await skLedge.connect(owner).setOfficialAuthorization(official1.address, true);
+      expect(await skLedge.isAuthorizedOfficial(official1.address)).to.equal(true);
+      expect(await skLedge.owner()).to.equal(owner.address);
+    });
+
     it("Hindi dapat makapag-nominate ng zero address", async function () {
       const { skLedge, owner, ethers } = await deploySkLedgeFixture();
       await expect(
