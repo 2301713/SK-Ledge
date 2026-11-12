@@ -161,12 +161,25 @@ export default function ABYIPPage() {
             return;
           }
 
+          if (profileData.approval_status !== "approved") {
+            router.push("/unauthorized");
+            return;
+          }
+
+          const canonicalBarangay = canonicalizeBarangay(
+            profileData.barangay ?? "",
+          );
+          if (!canonicalBarangay) {
+            router.push("/unauthorized");
+            return;
+          }
+
           const profile = {
             id: profileData.id,
             username: profileData.username,
             full_name: profileData.full_name || profileData.username,
             role_type: profileData.role_type,
-            barangay: profileData.barangay || "",
+            barangay: canonicalBarangay,
             email: profileData.email,
             approval_status: profileData.approval_status,
           };

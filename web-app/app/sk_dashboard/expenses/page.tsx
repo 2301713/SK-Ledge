@@ -133,12 +133,31 @@ export default function ExpensesPage() {
             return;
           }
 
+          if (profileData.approval_status !== "approved") {
+            toast.error(
+              "Your account must be approved before logging blockchain expenses.",
+            );
+            router.push("/unauthorized");
+            return;
+          }
+
+          const canonicalBarangay = canonicalizeBarangay(
+            profileData.barangay ?? "",
+          );
+          if (!canonicalBarangay) {
+            toast.error(
+              "Your profile must have a valid canonical barangay before logging expenses.",
+            );
+            router.push("/unauthorized");
+            return;
+          }
+
           const profile = {
             id: profileData.id,
             username: profileData.username,
             full_name: profileData.full_name || profileData.username,
             role_type: profileData.role_type,
-            barangay: profileData.barangay || "No Barangay Assigned",
+            barangay: canonicalBarangay,
             email: profileData.email,
             approval_status: profileData.approval_status,
           };
@@ -153,7 +172,7 @@ export default function ExpensesPage() {
     };
 
     fetchUserProfile();
-  }, [router]);
+  }, [router, toast]);
 
   const handleInputChange = (field: keyof ExpenseForm, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));

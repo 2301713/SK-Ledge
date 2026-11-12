@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
 
     const { data: profile, error: profileError } = await supabaseAdmin
       .from("profiles")
-      .select("role_type, approval_status")
+      .select("role_type, approval_status, barangay")
       .eq("id", user.id)
       .maybeSingle();
 
@@ -195,6 +195,16 @@ export async function POST(req: NextRequest) {
       return errorResponse(
         "Invalid or ambiguous barangay. Select its municipality and use the registered canonical identity.",
         400,
+      );
+    }
+
+    if (
+      ["SK_Chairperson", "SK_Treasurer"].includes(profile.role_type) &&
+      canonicalizeBarangay(profile.barangay ?? "") !== canonicalBarangay
+    ) {
+      return errorResponse(
+        "Forbidden. The submitted barangay does not match your approved profile.",
+        403,
       );
     }
 

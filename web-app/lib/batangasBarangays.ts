@@ -980,6 +980,12 @@ export function canonicalizeBarangay(value: string): string | null {
   return canonicalByKey.get(key) ?? uniqueBarangayByKey.get(key) ?? null;
 }
 
+export function isCanonicalBarangay(value: string): boolean {
+  return BATANGAS_BARANGAY_IDENTITIES.some(
+    (identity) => identity.canonical === value,
+  );
+}
+
 export function getUniqueBarangayAlias(
   identity: BarangayIdentity,
 ): string {

@@ -20,6 +20,7 @@ import {
   BATANGAS_MUNICIPALITIES,
   type BarangayMunicipality,
   canonicalizeBarangay,
+  isCanonicalBarangay,
 } from "@/lib/batangasBarangays";
 
 export default function CompleteProfilePage() {
@@ -116,7 +117,12 @@ export default function CompleteProfilePage() {
       const canonicalBarangay = isSKRole
         ? canonicalizeBarangay(formData.barangay)
         : null;
-      if (isSKRole && !canonicalBarangay) {
+      if (
+        isSKRole &&
+        (!canonicalBarangay ||
+          !isCanonicalBarangay(canonicalBarangay) ||
+          !canonicalBarangay.endsWith(`, ${selectedMunicipality}`))
+      ) {
         throw new Error("Select a valid barangay and municipality.");
       }
 

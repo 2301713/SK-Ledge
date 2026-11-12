@@ -12,6 +12,7 @@ import StatusBadge from "@/components/dashboard/ui/StatusBadge";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/lib/useAuthStore";
 import { useToast } from "@/lib/useToast";
+import { canonicalizeBarangay } from "@/lib/batangasBarangays";
 import { Check, Loader2, X } from "lucide-react";
 
 interface AccountRow {
@@ -125,6 +126,18 @@ export default function AccountsPage() {
     setBusyId(id);
 
     try {
+      const account = accounts.find((item) => item.id === id);
+      if (
+        status === "approved" &&
+        account &&
+        ["SK_Chairperson", "SK_Treasurer"].includes(account.role_type) &&
+        canonicalizeBarangay(account.barangay) !== account.barangay
+      ) {
+        throw new Error(
+          "This SK account cannot be approved until it has a valid canonical barangay.",
+        );
+      }
+
       const { error } = await supabase
         .from("profiles")
         .update({ approval_status: status })
