@@ -98,9 +98,9 @@ function LoginPageContent() {
               height={44}
               width={44}
               alt="SK-Ledge Logo"
-              className="shrink-0"
+              className="shrink-0 animate-fadein"
             />
-            <div>
+            <div className="animate-fadein">
               <p className="text-xl font-bold leading-none tracking-tight text-white">
                 SK-Ledge
               </p>
@@ -111,20 +111,20 @@ function LoginPageContent() {
           </div>
 
           {/* HERO HEADLINE */}
-          <h2 className="mb-4 text-3xl font-bold leading-[1.18] tracking-tight text-white xl:text-4xl">
+          <h2 className="mb-4 animate-fadein text-3xl font-bold leading-[1.18] tracking-tight text-white xl:text-4xl">
             Smart Financial Transparency for{" "}
             <span className="text-tertiary">Youth Governance</span>
           </h2>
 
           {/* DESCRIPTION */}
-          <p className="mb-8 text-sm font-normal leading-relaxed text-white/75 sm:text-base">
+          <p className="mb-8 animate-fadein text-sm font-normal leading-relaxed text-white/75 sm:text-base">
             The premier digital backbone for Sangguniang Kabataan auditing and
             resource management. Secure. Transparent. Automated.
           </p>
 
           {/* FEATURE HIGHLIGHTS CONTAINER */}
           <div className="mb-5 space-y-4 rounded-2xl border border-white/10 bg-white/[0.05] p-5 backdrop-blur-sm">
-            <div className="flex items-start gap-3">
+            <div className="flex animate-fadein items-start gap-3">
               <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-tertiary" />
               <div>
                 <p className="text-sm font-bold text-white">
@@ -137,7 +137,7 @@ function LoginPageContent() {
               </div>
             </div>
 
-            <div className="flex items-start gap-3">
+            <div className="flex animate-fadein items-start gap-3">
               <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-tertiary" />
               <div>
                 <p className="text-sm font-bold text-white">
@@ -154,15 +154,15 @@ function LoginPageContent() {
           {/* TRUST BADGES */}
           <div className="grid grid-cols-2 gap-3.5">
             <div className="flex items-center gap-3 rounded-xl border border-white/15 bg-white/[0.03] px-4 py-3.5">
-              <CheckCircle2 className="h-4 w-4 shrink-0 text-success" />
-              <span className="text-xs font-semibold text-white/95 sm:text-sm">
+              <CheckCircle2 className="h-4 w-4 shrink-0 animate-fadein text-success" />
+              <span className="animate-fadein text-xs font-semibold text-white/95 sm:text-sm">
                 Verified Official Accounts
               </span>
             </div>
 
             <div className="flex items-center gap-3 rounded-xl border border-white/15 bg-white/[0.03] px-4 py-3.5">
-              <Lock className="h-4 w-4 shrink-0 text-tertiary" />
-              <span className="text-xs font-semibold text-white/95 sm:text-sm">
+              <Lock className="h-4 w-4 shrink-0 animate-fadein text-tertiary" />
+              <span className="animate-fadein text-xs font-semibold text-white/95 sm:text-sm">
                 End-to-End Encryption
               </span>
             </div>
@@ -178,13 +178,13 @@ function LoginPageContent() {
         {/* TOP BAR */}
         <div className="relative z-10 mx-auto flex w-full max-w-lg items-center justify-between">
           <div className="inline-flex items-center gap-2 rounded-full border border-border bg-secondary/40 px-3 py-1.5">
-            <span className="h-2 w-2 rounded-full bg-primary" />
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary-foreground">
+            <span className="h-2 w-2 animate-fadein rounded-full bg-primary" />
+            <span className="animate-fadein text-[10px] font-bold uppercase tracking-[0.2em] text-primary-foreground">
               SK-Ledge Access Portal
             </span>
           </div>
 
-          <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-secondary-foreground/60">
+          <span className="animate-fadein text-[10px] font-bold uppercase tracking-[0.22em] text-secondary-foreground/60">
             Batangas Province
           </span>
         </div>

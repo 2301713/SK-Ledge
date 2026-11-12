@@ -74,7 +74,7 @@ function RegisterPageContent() {
   };
 
   return (
-    <main className="grid min-h-dvh w-full animate-fadein overflow-x-hidden bg-white lg:h-dvh lg:grid-cols-2 lg:overflow-hidden selection:bg-tertiary selection:text-primary">
+    <main className="grid min-h-dvh w-full overflow-x-hidden bg-white lg:h-dvh lg:grid-cols-2 lg:overflow-hidden selection:bg-tertiary selection:text-primary">
       {/* LEFT SIDE: BALANCED REGISTRATION PANEL */}
       <section className="relative flex min-h-dvh flex-col justify-between overflow-hidden bg-white px-5 py-6 sm:px-8 lg:h-full lg:min-h-0 lg:px-8 lg:py-9 xl:px-10 xl:py-11">
         {/* SUBTLE DECORATIVE ACCENTS */}
@@ -85,10 +85,10 @@ function RegisterPageContent() {
         <div className="relative mx-auto flex w-full max-w-xl shrink-0 items-center justify-center lg:justify-between">
           {/* MOBILE LOGO */}
           <div className="flex items-center gap-3 lg:hidden">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary shadow-sm">
+            <div className="flex h-10 w-10 animate-fadein items-center justify-center rounded-xl bg-primary shadow-sm">
               <ShieldCheck className="h-5 w-5 text-tertiary" />
             </div>
-            <div>
+            <div className="animate-fadein">
               <p className="text-base font-bold leading-none tracking-tight text-primary-foreground">
                 SK-Ledge Portal
               </p>
@@ -100,13 +100,13 @@ function RegisterPageContent() {
 
           {/* DESKTOP PORTAL PILL BADGE */}
           <div className="hidden items-center gap-2 rounded-full border border-border bg-secondary/60 px-3.5 py-1.5 lg:inline-flex">
-            <span className="h-2 w-2 rounded-full bg-primary" />
-            <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-secondary-foreground">
+            <span className="h-2 w-2 animate-fadein rounded-full bg-primary" />
+            <span className="animate-fadein text-[11px] font-semibold uppercase tracking-[0.2em] text-secondary-foreground">
               SK-Ledge Access Portal
             </span>
           </div>
 
-          <span className="hidden text-[11px] font-semibold uppercase tracking-[0.18em] text-secondary-foreground/60 lg:inline">
+          <span className="hidden animate-fadein text-[11px] font-semibold uppercase tracking-[0.18em] text-secondary-foreground/60 lg:inline">
             Batangas Province
           </span>
         </div>
@@ -114,7 +114,7 @@ function RegisterPageContent() {
         {/* CENTERED FORM CONTENT */}
         <div className="relative mx-auto my-auto w-full max-w-xl py-2">
           {/* HEADER */}
-          <div className="mb-5 text-center lg:text-left">
+          <div className="mb-5 animate-fadein text-center lg:text-left">
             <p className="text-xs font-semibold uppercase tracking-[0.25em] text-primary">
               Registration
             </p>
@@ -132,7 +132,7 @@ function RegisterPageContent() {
             type="button"
             onClick={handleGoogleSignIn}
             disabled={isLoading}
-            className="group flex w-full items-center justify-center gap-3 rounded-xl border border-border bg-white px-5 py-4 text-sm font-bold text-primary-foreground shadow-[0_2px_6px_rgba(15,23,42,0.05)] transition-all hover:border-primary/40 hover:bg-secondary hover:shadow-md active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+            className="group flex w-full animate-fadein items-center justify-center gap-3 rounded-xl border border-border bg-white px-5 py-4 text-sm font-bold text-primary-foreground shadow-[0_2px_6px_rgba(15,23,42,0.05)] transition-all hover:border-primary/40 hover:bg-secondary hover:shadow-md active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
           >
             <svg className="h-5 w-5" viewBox="0 0 24 24">
               <path
@@ -159,44 +159,50 @@ function RegisterPageContent() {
 
           {/* 3-STEP ONBOARDING FLOW */}
           <div className="mt-5 rounded-2xl border border-border/80 bg-secondary/30 p-4">
-            <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.18em] text-secondary-foreground/80">
+            <p className="mb-3 animate-fadein text-[11px] font-bold uppercase tracking-[0.18em] text-secondary-foreground/80">
               How Portal Access Works
             </p>
             <div className="grid grid-cols-3 gap-3">
               <div className="rounded-xl border border-border/60 bg-white p-3.5">
-                <div className="mb-2 flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <div className="animate-fadein">
+                  <div className="mb-2 flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
                   <UserCheck className="h-4 w-4" />
-                </div>
-                <p className="text-xs font-bold text-primary-foreground">
+                  </div>
+                  <p className="text-xs font-bold text-primary-foreground">
                   1. Authenticate
-                </p>
-                <p className="mt-0.5 text-[11px] leading-snug text-secondary-foreground">
+                  </p>
+                  <p className="mt-0.5 text-[11px] leading-snug text-secondary-foreground">
                   Sign in with your Google email
-                </p>
+                  </p>
+                </div>
               </div>
 
               <div className="rounded-xl border border-border/60 bg-white p-3.5">
-                <div className="mb-2 flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <div className="animate-fadein">
+                  <div className="mb-2 flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
                   <FileCheck2 className="h-4 w-4" />
-                </div>
-                <p className="text-xs font-bold text-primary-foreground">
+                  </div>
+                  <p className="text-xs font-bold text-primary-foreground">
                   2. Verification
-                </p>
-                <p className="mt-0.5 text-[11px] leading-snug text-secondary-foreground">
+                  </p>
+                  <p className="mt-0.5 text-[11px] leading-snug text-secondary-foreground">
                   Admin reviews SK credentials
-                </p>
+                  </p>
+                </div>
               </div>
 
               <div className="rounded-xl border border-border/60 bg-white p-3.5">
-                <div className="mb-2 flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <div className="animate-fadein">
+                  <div className="mb-2 flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
                   <LayoutDashboard className="h-4 w-4" />
-                </div>
-                <p className="text-xs font-bold text-primary-foreground">
+                  </div>
+                  <p className="text-xs font-bold text-primary-foreground">
                   3. Portal Access
-                </p>
-                <p className="mt-0.5 text-[11px] leading-snug text-secondary-foreground">
+                  </p>
+                  <p className="mt-0.5 text-[11px] leading-snug text-secondary-foreground">
                   Manage records &amp; governance
-                </p>
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -204,7 +210,7 @@ function RegisterPageContent() {
           {/* LOGIN PROMPT */}
           <div className="mt-5 rounded-2xl border border-dashed border-border bg-secondary/40 p-4 sm:px-5 sm:py-4">
             <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
-              <div className="text-center sm:text-left">
+              <div className="animate-fadein text-center sm:text-left">
                 <p className="text-xs font-medium text-secondary-foreground">
                   Already have an official account?
                 </p>
@@ -215,7 +221,7 @@ function RegisterPageContent() {
               <button
                 type="button"
                 onClick={() => router.push("/login")}
-                className="group inline-flex items-center gap-2 whitespace-nowrap rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-white transition-all hover:bg-primary/90 active:scale-95"
+                className="group inline-flex animate-fadein items-center gap-2 whitespace-nowrap rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-white transition-all hover:bg-primary/90 active:scale-95"
               >
                 Login Now{" "}
                 <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
@@ -226,7 +232,7 @@ function RegisterPageContent() {
 
         {/* BOTTOM FOOTER */}
         <footer className="relative mx-auto w-full max-w-xl shrink-0 text-center lg:text-left">
-          <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-secondary-foreground/60">
+          <p className="animate-fadein text-[10px] font-bold uppercase tracking-[0.22em] text-secondary-foreground/60">
             &copy; 2026 National Youth Governance Portal &bull; Authorized
             Personnel Only
           </p>
@@ -250,7 +256,7 @@ function RegisterPageContent() {
         {/* CENTER HERO & BRAND LOCKUP */}
         <div className="relative mx-auto my-auto w-full max-w-xl py-2">
           {/* BRAND LOCKUP (NO WHITE BOX) */}
-          <div className="mb-6 flex items-center gap-3.5">
+          <div className="mb-6 flex animate-fadein items-center gap-3.5">
             <Image
               src="/skledge-logo.png"
               height={44}
@@ -268,13 +274,13 @@ function RegisterPageContent() {
             </div>
           </div>
 
-          <h2 className="mb-3.5 text-4xl font-bold leading-[1.15] tracking-tight text-white xl:text-[42px]">
+          <h2 className="mb-3.5 animate-fadein text-4xl font-bold leading-[1.15] tracking-tight text-white xl:text-[42px]">
             Empower{" "}
             <span className="text-tertiary">Youth Governance</span> across
             Batangas
           </h2>
 
-          <p className="mb-6 text-sm font-medium leading-relaxed text-white/80 xl:text-base">
+          <p className="mb-6 animate-fadein text-sm font-medium leading-relaxed text-white/80 xl:text-base">
             Join the growing network of SK officials using SK-Ledge to drive
             transparency, accountability, and real progress for the Batangueño
             youth.
@@ -284,7 +290,7 @@ function RegisterPageContent() {
           <div className="space-y-3.5 rounded-2xl border border-white/15 bg-white/[0.06] p-5 backdrop-blur-sm">
             <div className="flex items-start gap-3">
               <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-tertiary" />
-              <div>
+              <div className="animate-fadein">
                 <p className="text-sm font-bold text-white">
                   Transparent Fund &amp; Project Ledger
                 </p>
@@ -299,7 +305,7 @@ function RegisterPageContent() {
 
             <div className="flex items-start gap-3">
               <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-tertiary" />
-              <div>
+              <div className="animate-fadein">
                 <p className="text-sm font-bold text-white">
                   Role-Based Official Access
                 </p>
@@ -315,14 +321,14 @@ function RegisterPageContent() {
         {/* BOTTOM TRUST BADGES */}
         <div className="relative mx-auto grid w-full max-w-xl shrink-0 grid-cols-2 gap-3.5">
           <div className="flex items-center gap-3 rounded-2xl border border-white/15 bg-white/5 px-4 py-3 backdrop-blur-sm">
-            <CheckCircle2 className="h-5 w-5 shrink-0 text-success" />
-            <p className="text-xs font-semibold text-white/95 xl:text-sm">
+            <CheckCircle2 className="h-5 w-5 shrink-0 animate-fadein text-success" />
+            <p className="animate-fadein text-xs font-semibold text-white/95 xl:text-sm">
               Verified Official Accounts
             </p>
           </div>
           <div className="flex items-center gap-3 rounded-2xl border border-white/15 bg-white/5 px-4 py-3 backdrop-blur-sm">
-            <Lock className="h-5 w-5 shrink-0 text-tertiary" />
-            <p className="text-xs font-semibold text-white/95 xl:text-sm">
+            <Lock className="h-5 w-5 shrink-0 animate-fadein text-tertiary" />
+            <p className="animate-fadein text-xs font-semibold text-white/95 xl:text-sm">
               End-to-End Encryption
             </p>
           </div>
