@@ -842,6 +842,127 @@ describe("SkLedge Contract Test Suite", function () {
     });
   });
 
+  describe("Record Corrections", function () {
+    it("should submit a pending correction and preserve the predecessor", async function () {
+      const { skLedge, owner, official1 } = await deploySkLedgeFixture();
+      await skLedge.setOfficialAuthorization(official1.address, true);
+      await skLedge.setOfficialBarangayAuthorization(
+        official1.address,
+        "Barangay A",
+        true
+      );
+      await skLedge.addRecord("Barangay A", 1000, "Original", "Allocation");
+      await skLedge.setRecordApproval(1, true);
+
+      await expect(
+        skLedge
+          .connect(official1)
+          .submitCorrection(1, 800, "Corrected amount", "Allocation")
+      )
+        .to.emit(skLedge, "RecordCorrectionSubmitted")
+        .withArgs(1, 2, official1.address);
+
+      const records = await skLedge.getAllRecords();
+      expect(records[0].amount).to.equal(1000);
+      expect(records[0].superseded).to.equal(false);
+      expect(records[1].predecessorId).to.equal(1);
+      expect(records[1].approved).to.equal(false);
+      expect(await skLedge.getAllocated("Barangay A")).to.equal(1000);
+    });
+
+    it("should require authorization and reject invalid or competing predecessors", async function () {
+      const { skLedge, owner, official1, nonOfficial } =
+        await deploySkLedgeFixture();
+
+      await expect(
+        skLedge.connect(nonOfficial).submitCorrection(1, 1, "Correction", "Expense")
+      ).to.be.revertedWith("SkLedge: Your wallet is not an authorized SK Official.");
+
+      await skLedge.addRecord("Barangay A", 1000, "Original", "Allocation");
+      await expect(
+        skLedge.submitCorrection(1, 900, "Correction", "Allocation")
+      ).to.be.revertedWith("SkLedge: Predecessor is not active");
+
+      await skLedge.setRecordApproval(1, true);
+      await skLedge.submitCorrection(1, 900, "Correction", "Allocation");
+      await expect(
+        skLedge.submitCorrection(1, 800, "Competing", "Allocation")
+      ).to.be.revertedWith("SkLedge: Predecessor already has a successor");
+
+      await expect(
+        skLedge.submitCorrection(99, 800, "Missing", "Allocation")
+      ).to.be.revertedWith("SkLedge: Predecessor does not exist");
+    });
+
+    it("should activate a correction atomically and update allocation totals", async function () {
+      const { skLedge, owner } = await deploySkLedgeFixture();
+      await skLedge.setAllocationCeiling("Barangay A", 1200);
+      await skLedge.addRecord("Barangay A", 1000, "Original", "Allocation");
+      await skLedge.setRecordApproval(1, true);
+      await skLedge.submitCorrection(1, 800, "Corrected", "Allocation");
+
+      await expect(skLedge.setRecordApproval(2, true))
+        .to.emit(skLedge, "RecordCorrectionActivated")
+        .withArgs(1, 2);
+
+      const records = await skLedge.getAllRecords();
+      expect(records[0].amount).to.equal(1000);
+      expect(records[0].superseded).to.equal(true);
+      expect(records[1].approved).to.equal(true);
+      expect(await skLedge.getAllocated("Barangay A")).to.equal(800);
+      expect(await skLedge.isBarangayLocked("Barangay A")).to.equal(true);
+      await expect(skLedge.setRecordApproval(2, false)).to.be.revertedWith(
+        "SkLedge: Approved correction cannot be removed"
+      );
+
+      await expect(
+        skLedge.submitCorrection(1, 700, "Competing", "Allocation")
+      ).to.be.revertedWith("SkLedge: Predecessor is not active");
+    });
+
+    it("should enforce the ceiling only when an allocation correction is approved", async function () {
+      const { skLedge } = await deploySkLedgeFixture();
+      await skLedge.setAllocationCeiling("Barangay A", 1200);
+      await skLedge.addRecord("Barangay A", 1000, "Original", "Allocation");
+      await skLedge.setRecordApproval(1, true);
+      await skLedge.submitCorrection(1, 1500, "Too large", "Allocation");
+
+      expect(await skLedge.getAllocated("Barangay A")).to.equal(1000);
+      await expect(skLedge.setRecordApproval(2, true)).to.be.revertedWith(
+        "SkLedge: Allocation exceeds ceiling"
+      );
+      const records = await skLedge.getAllRecords();
+      expect(records[0].superseded).to.equal(false);
+      expect(records[1].approved).to.equal(false);
+    });
+
+    it("should support correction chains and reject a rejected correction", async function () {
+      const { skLedge } = await deploySkLedgeFixture();
+      await skLedge.addRecord("Barangay A", 1000, "Original", "Allocation");
+      await skLedge.setRecordApproval(1, true);
+      await skLedge.submitCorrection(1, 900, "First correction", "Allocation");
+      await skLedge.setRecordApproval(2, true);
+      await skLedge.submitCorrection(2, 700, "Second correction", "Allocation");
+      await skLedge.setRecordApproval(3, true);
+
+      const records = await skLedge.getAllRecords();
+      expect(records[0].superseded).to.equal(true);
+      expect(records[1].predecessorId).to.equal(1);
+      expect(records[1].superseded).to.equal(true);
+      expect(records[2].predecessorId).to.equal(2);
+      expect(await skLedge.getAllocated("Barangay A")).to.equal(700);
+
+      await skLedge.addRecord("Barangay B", 500, "Original", "Allocation");
+      await skLedge.setRecordApproval(4, true);
+      await skLedge.submitCorrection(4, 400, "Rejected correction", "Allocation");
+      await skLedge.setRecordApproval(5, false);
+      await expect(skLedge.setRecordApproval(5, true)).to.be.revertedWith(
+        "SkLedge: Correction was rejected"
+      );
+      await skLedge.submitCorrection(4, 300, "Replacement correction", "Allocation");
+    });
+  });
+
   describe("Input Byte Length Validation", function () {
     it("accepts a canonical barangay name at exactly 64 UTF-8 bytes", async function () {
       const { skLedge, owner } = await deploySkLedgeFixture();

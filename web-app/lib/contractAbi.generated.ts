@@ -309,6 +309,50 @@ export const SK_LEDGE_ABI = [
       {
         "indexed": true,
         "internalType": "uint256",
+        "name": "predecessorId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "correctionId",
+        "type": "uint256"
+      }
+    ],
+    "name": "RecordCorrectionActivated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "predecessorId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "correctionId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "official",
+        "type": "address"
+      }
+    ],
+    "name": "RecordCorrectionSubmitted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
         "name": "id",
         "type": "uint256"
       },
@@ -520,6 +564,16 @@ export const SK_LEDGE_ABI = [
             "internalType": "string",
             "name": "voidReason",
             "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "predecessorId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bool",
+            "name": "superseded",
+            "type": "bool"
           }
         ],
         "internalType": "struct SkLedge.FinancialRecord[]",
@@ -615,6 +669,16 @@ export const SK_LEDGE_ABI = [
             "internalType": "string",
             "name": "voidReason",
             "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "predecessorId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bool",
+            "name": "superseded",
+            "type": "bool"
           }
         ],
         "internalType": "struct SkLedge.FinancialRecord[]",
@@ -828,6 +892,16 @@ export const SK_LEDGE_ABI = [
         "internalType": "string",
         "name": "voidReason",
         "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "predecessorId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bool",
+        "name": "superseded",
+        "type": "bool"
       }
     ],
     "stateMutability": "view",
@@ -942,6 +1016,34 @@ export const SK_LEDGE_ABI = [
       }
     ],
     "name": "setRecordApproval",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_predecessorId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_amount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "_purpose",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "_recordType",
+        "type": "string"
+      }
+    ],
+    "name": "submitCorrection",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

@@ -29,6 +29,8 @@ contract SkLedge {
         address approvedBy;
         bool voided;
         string voidReason;
+        uint256 predecessorId;
+        bool superseded;
     }
 
     FinancialRecord[] public records;
@@ -49,6 +51,8 @@ contract SkLedge {
 
     // True when a barangay is locked after record approval
     mapping(uint256 => bool) private barangayLockedById;
+    mapping(uint256 => uint256) private successorById;
+    mapping(uint256 => bool) private correctionRejectedById;
 
     // Events
     event RecordAdded(
@@ -92,6 +96,17 @@ contract SkLedge {
         uint256 indexed id,
         address indexed voidedBy,
         string reason
+    );
+
+    event RecordCorrectionSubmitted(
+        uint256 indexed predecessorId,
+        uint256 indexed correctionId,
+        address indexed official
+    );
+
+    event RecordCorrectionActivated(
+        uint256 indexed predecessorId,
+        uint256 indexed correctionId
     );
 
     event BarangayLocked(string barangay, bool locked);
@@ -489,7 +504,9 @@ contract SkLedge {
                 approved: false,
                 approvedBy: address(0),
                 voided: false,
-                voidReason: ""
+                voidReason: "",
+                predecessorId: 0,
+                superseded: false
             })
         );
 
@@ -521,15 +538,44 @@ contract SkLedge {
 
         FinancialRecord storage record = records[_id - 1];
         require(!record.voided, "SkLedge: Record is voided");
+        require(
+            !correctionRejectedById[_id],
+            "SkLedge: Correction was rejected"
+        );
+        require(
+            _approved || !record.approved || record.predecessorId == 0,
+            "SkLedge: Approved correction cannot be removed"
+        );
         uint256 barangayId = _getBarangayId(record.barangay);
 
-        record.approved = _approved;
+        if (!_approved && record.predecessorId != 0) {
+            correctionRejectedById[_id] = true;
+            successorById[record.predecessorId] = 0;
+        }
 
         if (_approved) {
+            if (record.predecessorId != 0) {
+                FinancialRecord storage predecessor = records[
+                    record.predecessorId - 1
+                ];
+                require(
+                    successorById[record.predecessorId] == _id &&
+                        predecessor.approved &&
+                        !predecessor.voided &&
+                        !predecessor.superseded,
+                    "SkLedge: Predecessor is no longer active"
+                );
+                _applyCorrectionAccounting(predecessor, record, barangayId);
+                predecessor.superseded = true;
+                emit RecordCorrectionActivated(record.predecessorId, _id);
+            }
+
+            record.approved = true;
             record.approvedBy = msg.sender;
             barangayLockedById[barangayId] = true;
             emit BarangayLocked(record.barangay, true);
         } else {
+            record.approved = false;
             record.approvedBy = address(0);
 
             // Unlock the barangay only if no OTHER record for it is still approved.
@@ -559,6 +605,120 @@ contract SkLedge {
     }
 
     /**
+     * @notice Submits a pending correction for an approved active record.
+     * @dev The predecessor remains active until this correction is approved.
+     */
+    function submitCorrection(
+        uint256 _predecessorId,
+        uint256 _amount,
+        string calldata _purpose,
+        string calldata _recordType
+    ) external onlyAuthorizedOfficial {
+        require(
+            _predecessorId > 0 && _predecessorId < nextRecordId,
+            "SkLedge: Predecessor does not exist"
+        );
+        require(_amount > 0, "SkLedge: Amount must be greater than zero");
+        _validatePurpose(_purpose);
+
+        FinancialRecord storage predecessor = records[_predecessorId - 1];
+        require(
+            predecessor.approved &&
+                !predecessor.voided &&
+                !predecessor.superseded &&
+                !correctionRejectedById[_predecessorId],
+            "SkLedge: Predecessor is not active"
+        );
+        require(
+            successorById[_predecessorId] == 0,
+            "SkLedge: Predecessor already has a successor"
+        );
+
+        uint256 barangayId = _getBarangayId(predecessor.barangay);
+        require(
+            officialBarangayAuthorizationById[msg.sender][barangayId],
+            "SkLedge: Your wallet is not authorized for this barangay."
+        );
+
+        bytes32 typeHash = keccak256(abi.encodePacked(_recordType));
+        require(
+            typeHash == keccak256(abi.encodePacked("Allocation")) ||
+                typeHash == keccak256(abi.encodePacked("Expense")) ||
+                typeHash == keccak256(abi.encodePacked("Award")),
+            "SkLedge: Type must be 'Allocation', 'Expense', or 'Award'"
+        );
+
+        string memory canonicalBarangay = canonicalBarangayNames[
+            barangayId - 1
+        ];
+        records.push(
+            FinancialRecord({
+                id: nextRecordId,
+                official: msg.sender,
+                barangay: canonicalBarangay,
+                amount: _amount,
+                timestamp: block.timestamp,
+                purpose: _purpose,
+                recordType: _recordType,
+                approved: false,
+                approvedBy: address(0),
+                voided: false,
+                voidReason: "",
+                predecessorId: _predecessorId,
+                superseded: false
+            })
+        );
+
+        successorById[_predecessorId] = nextRecordId;
+        emit RecordCorrectionSubmitted(
+            _predecessorId,
+            nextRecordId,
+            msg.sender
+        );
+        emit RecordAdded(
+            nextRecordId,
+            msg.sender,
+            canonicalBarangay,
+            _amount,
+            block.timestamp,
+            _recordType
+        );
+        nextRecordId++;
+    }
+
+    function _applyCorrectionAccounting(
+        FinancialRecord storage _predecessor,
+        FinancialRecord storage _correction,
+        uint256 _barangayId
+    ) private {
+        bool predecessorIsAllocation =
+            keccak256(bytes(_predecessor.recordType)) ==
+            keccak256(bytes("Allocation"));
+        bool correctionIsAllocation =
+            keccak256(bytes(_correction.recordType)) ==
+            keccak256(bytes("Allocation"));
+
+        if (predecessorIsAllocation) {
+            require(
+                allocatedTotalsById[_barangayId] >= _predecessor.amount,
+                "SkLedge: Allocation total is inconsistent"
+            );
+            allocatedTotalsById[_barangayId] -= _predecessor.amount;
+        }
+
+        if (correctionIsAllocation) {
+            uint256 resultingTotal =
+                allocatedTotalsById[_barangayId] + _correction.amount;
+            uint256 ceiling = allocationCeilingsById[_barangayId];
+            require(
+                ceiling == 0 || resultingTotal <= ceiling,
+                "SkLedge: Allocation exceeds ceiling"
+            );
+            allocatedTotalsById[_barangayId] = resultingTotal;
+        }
+    }
+
+    /**
      * @notice Permanently voids an invalid record without deleting its history.
      * @dev The reason is public and permanent; callers must not include confidential
      *      or personal information.
@@ -575,6 +735,10 @@ contract SkLedge {
 
         FinancialRecord storage record = records[_id - 1];
         require(!record.voided, "SkLedge: Record is already voided");
+        if (successorById[_id] != 0) {
+            correctionRejectedById[successorById[_id]] = true;
+            successorById[_id] = 0;
+        }
 
         bool wasApproved = record.approved;
         uint256 barangayId = _getBarangayId(record.barangay);
