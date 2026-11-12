@@ -43,6 +43,22 @@ export const SK_LEDGE_ABI = [
     "type": "error"
   },
   {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "length",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "max",
+        "type": "uint256"
+      }
+    ],
+    "name": "VoidReasonTooLong",
+    "type": "error"
+  },
+  {
     "anonymous": false,
     "inputs": [
       {
@@ -288,6 +304,75 @@ export const SK_LEDGE_ABI = [
     "type": "event"
   },
   {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "predecessorId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "correctionId",
+        "type": "uint256"
+      }
+    ],
+    "name": "RecordCorrectionActivated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "predecessorId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "correctionId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "official",
+        "type": "address"
+      }
+    ],
+    "name": "RecordCorrectionSubmitted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "voidedBy",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "reason",
+        "type": "string"
+      }
+    ],
+    "name": "RecordVoided",
+    "type": "event"
+  },
+  {
     "inputs": [],
     "name": "MAX_BARANGAY_NAME_BYTES",
     "outputs": [
@@ -303,6 +388,19 @@ export const SK_LEDGE_ABI = [
   {
     "inputs": [],
     "name": "MAX_PURPOSE_BYTES",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "MAX_VOID_REASON_BYTES",
     "outputs": [
       {
         "internalType": "uint256",
@@ -456,6 +554,26 @@ export const SK_LEDGE_ABI = [
             "internalType": "address",
             "name": "approvedBy",
             "type": "address"
+          },
+          {
+            "internalType": "bool",
+            "name": "voided",
+            "type": "bool"
+          },
+          {
+            "internalType": "string",
+            "name": "voidReason",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "predecessorId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bool",
+            "name": "superseded",
+            "type": "bool"
           }
         ],
         "internalType": "struct SkLedge.FinancialRecord[]",
@@ -541,6 +659,26 @@ export const SK_LEDGE_ABI = [
             "internalType": "address",
             "name": "approvedBy",
             "type": "address"
+          },
+          {
+            "internalType": "bool",
+            "name": "voided",
+            "type": "bool"
+          },
+          {
+            "internalType": "string",
+            "name": "voidReason",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "predecessorId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bool",
+            "name": "superseded",
+            "type": "bool"
           }
         ],
         "internalType": "struct SkLedge.FinancialRecord[]",
@@ -744,6 +882,26 @@ export const SK_LEDGE_ABI = [
         "internalType": "address",
         "name": "approvedBy",
         "type": "address"
+      },
+      {
+        "internalType": "bool",
+        "name": "voided",
+        "type": "bool"
+      },
+      {
+        "internalType": "string",
+        "name": "voidReason",
+        "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "predecessorId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bool",
+        "name": "superseded",
+        "type": "bool"
       }
     ],
     "stateMutability": "view",
@@ -865,12 +1023,58 @@ export const SK_LEDGE_ABI = [
   {
     "inputs": [
       {
+        "internalType": "uint256",
+        "name": "_predecessorId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_amount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "_purpose",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "_recordType",
+        "type": "string"
+      }
+    ],
+    "name": "submitCorrection",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "address",
         "name": "newOwner",
         "type": "address"
       }
     ],
     "name": "transferOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_id",
+        "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "_reason",
+        "type": "string"
+      }
+    ],
+    "name": "voidRecord",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
