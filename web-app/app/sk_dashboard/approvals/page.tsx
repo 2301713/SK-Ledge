@@ -22,18 +22,6 @@ import ApproveRecordModal from "@/components/ApproveRecordModal";
 import { ConnectButton } from "@/components/ConnectButton";
 import { Search } from "lucide-react";
 
-interface RecordItem {
-  id: bigint;
-  official: string;
-  barangay: string;
-  amount: bigint;
-  timestamp: bigint;
-  purpose: string;
-  recordType: string;
-  approved: boolean;
-  approvedBy: string;
-}
-
 export default function RecordApprovalsPage() {
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
@@ -136,7 +124,7 @@ export default function RecordApprovalsPage() {
     setSelectedRecordId(recordId);
   };
 
-  const formattedRecords = ((records as RecordItem[]) || []).map((r) => ({
+  const formattedRecords = [...(records ?? [])].map((r) => ({
     id: Number(r.id),
     barangay: r.barangay,
     amount: Number(r.amount) / 100,

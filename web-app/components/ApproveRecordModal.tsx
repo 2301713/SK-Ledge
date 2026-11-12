@@ -39,7 +39,7 @@ export default function ApproveRecordModal({
     hash,
   });
 
-  const allRecords = (records as RecordItem[]) || [];
+  const allRecords: readonly RecordItem[] = records ?? [];
   const record = allRecords.find((r) => Number(r.id) === Number(recordId));
 
   const handleAction = (approved: boolean) => {
