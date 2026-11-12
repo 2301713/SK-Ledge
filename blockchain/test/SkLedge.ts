@@ -737,6 +737,111 @@ describe("SkLedge Contract Test Suite", function () {
     });
   });
 
+  describe("Record Voiding", function () {
+    it("should void a record while preserving its data and reason", async function () {
+      const { skLedge, owner } = await deploySkLedgeFixture();
+
+      await skLedge.addRecord("Barangay A", 5000, "Original purpose", "Allocation");
+
+      await expect(skLedge.voidRecord(1, "Invalid supporting document"))
+        .to.emit(skLedge, "RecordVoided")
+        .withArgs(1, owner.address, "Invalid supporting document");
+
+      const [record] = await skLedge.getAllRecords();
+      expect(record.id).to.equal(1);
+      expect(record.amount).to.equal(5000);
+      expect(record.purpose).to.equal("Original purpose");
+      expect(record.voided).to.equal(true);
+      expect(record.voidReason).to.equal("Invalid supporting document");
+      expect(await skLedge.getAllocated("Barangay A")).to.equal(0);
+    });
+
+    it("should allow only the owner to void records", async function () {
+      const { skLedge, owner, official1, official2, nonOfficial } =
+        await deploySkLedgeFixture();
+      await skLedge.setApproverAuthorization(official1.address, true);
+      await skLedge.setOfficialAuthorization(official2.address, true);
+      await skLedge.addRecord("Barangay A", 1000, "Purpose", "Allocation");
+
+      for (const signer of [official1, official2, nonOfficial]) {
+        await expect(
+          skLedge.connect(signer).voidRecord(1, "Invalid")
+        ).to.be.revertedWith(
+          "SkLedge: Only the contract owner can perform this action."
+        );
+      }
+
+      await expect(skLedge.connect(owner).voidRecord(1, "Invalid"))
+        .to.emit(skLedge, "RecordVoided")
+        .withArgs(1, owner.address, "Invalid");
+    });
+
+    it("should reject empty and over-limit reasons using UTF-8 byte length", async function () {
+      const { skLedge, owner } = await deploySkLedgeFixture();
+      await skLedge.addRecord("Barangay A", 1000, "Purpose", "Allocation");
+
+      await expect(skLedge.voidRecord(1, ""))
+        .to.be.revertedWithCustomError(skLedge, "StringEmpty");
+
+      const validReason = "ñ".repeat(128);
+      expect(new TextEncoder().encode(validReason).length).to.equal(256);
+      await skLedge.voidRecord(1, validReason);
+
+      await skLedge.addRecord("Barangay A", 1000, "Purpose 2", "Allocation");
+      const invalidReason = "ñ".repeat(129);
+      await expect(skLedge.voidRecord(2, invalidReason))
+        .to.be.revertedWithCustomError(skLedge, "VoidReasonTooLong")
+        .withArgs(258, 256);
+    });
+
+    it("should reject nonexistent, repeated, and approval changes for voided records", async function () {
+      const { skLedge } = await deploySkLedgeFixture();
+
+      await expect(skLedge.voidRecord(999, "Invalid")).to.be.revertedWith(
+        "SkLedge: Record does not exist"
+      );
+
+      await skLedge.addRecord("Barangay A", 1000, "Purpose", "Expense");
+      await skLedge.voidRecord(1, "Invalid");
+      await expect(skLedge.voidRecord(1, "Another reason")).to.be.revertedWith(
+        "SkLedge: Record is already voided"
+      );
+      await expect(skLedge.setRecordApproval(1, true)).to.be.revertedWith(
+        "SkLedge: Record is voided"
+      );
+    });
+
+    it("should decrement allocation totals once and allow the released ceiling", async function () {
+      const { skLedge } = await deploySkLedgeFixture();
+      await skLedge.setAllocationCeiling("Barangay A", 1000);
+      await skLedge.addRecord("Barangay A", 1000, "Purpose", "Allocation");
+
+      await skLedge.voidRecord(1, "Invalid allocation");
+      expect(await skLedge.getAllocated("Barangay A")).to.equal(0);
+
+      await skLedge.addRecord("Barangay A", 1000, "Replacement", "Allocation");
+      expect(await skLedge.getAllocated("Barangay A")).to.equal(1000);
+    });
+
+    it("should unlock only when no other approved record remains", async function () {
+      const { skLedge, ethers } = await deploySkLedgeFixture();
+      await skLedge.addRecord("Barangay A", 1000, "First", "Allocation");
+      await skLedge.addRecord("Barangay A", 1000, "Second", "Allocation");
+      await skLedge.setRecordApproval(1, true);
+      await skLedge.setRecordApproval(2, true);
+
+      await skLedge.voidRecord(1, "First is invalid");
+      const [voidedRecord] = await skLedge.getAllRecords();
+      expect(voidedRecord.approved).to.equal(false);
+      expect(voidedRecord.approvedBy).to.equal(ethers.ZeroAddress);
+      expect(await skLedge.getAllocated("Barangay A")).to.equal(1000);
+      expect(await skLedge.isBarangayLocked("Barangay A")).to.equal(true);
+
+      await skLedge.voidRecord(2, "Second is invalid");
+      expect(await skLedge.isBarangayLocked("Barangay A")).to.equal(false);
+    });
+  });
+
   describe("Input Byte Length Validation", function () {
     it("accepts a canonical barangay name at exactly 64 UTF-8 bytes", async function () {
       const { skLedge, owner } = await deploySkLedgeFixture();

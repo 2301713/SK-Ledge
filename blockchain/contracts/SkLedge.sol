@@ -6,10 +6,12 @@ contract SkLedge {
     uint256 private constant MAX_CANONICAL_BARANGAYS_PER_BATCH = 20;
     uint256 public constant MAX_BARANGAY_NAME_BYTES = 64;
     uint256 public constant MAX_PURPOSE_BYTES = 256;
+    uint256 public constant MAX_VOID_REASON_BYTES = 256;
 
     error StringEmpty();
     error BarangayNameTooLong(uint256 length, uint256 max);
     error PurposeTooLong(uint256 length, uint256 max);
+    error VoidReasonTooLong(uint256 length, uint256 max);
 
     address public owner;
     address public pendingOwner;
@@ -25,6 +27,8 @@ contract SkLedge {
         string recordType; // "Allocation", "Expense", or "Award"
         bool approved;
         address approvedBy;
+        bool voided;
+        string voidReason;
     }
 
     FinancialRecord[] public records;
@@ -82,6 +86,12 @@ contract SkLedge {
         uint256 indexed id,
         bool approved,
         address indexed approvedBy
+    );
+
+    event RecordVoided(
+        uint256 indexed id,
+        address indexed voidedBy,
+        string reason
     );
 
     event BarangayLocked(string barangay, bool locked);
@@ -190,6 +200,14 @@ contract SkLedge {
         if (len == 0) revert StringEmpty();
         if (len > MAX_PURPOSE_BYTES) {
             revert PurposeTooLong(len, MAX_PURPOSE_BYTES);
+        }
+    }
+
+    function _validateVoidReason(string calldata _reason) internal pure {
+        uint256 len = bytes(_reason).length;
+        if (len == 0) revert StringEmpty();
+        if (len > MAX_VOID_REASON_BYTES) {
+            revert VoidReasonTooLong(len, MAX_VOID_REASON_BYTES);
         }
     }
 
@@ -469,7 +487,9 @@ contract SkLedge {
                 purpose: _purpose,
                 recordType: _recordType,
                 approved: false,
-                approvedBy: address(0)
+                approvedBy: address(0),
+                voided: false,
+                voidReason: ""
             })
         );
 
@@ -500,6 +520,7 @@ contract SkLedge {
         );
 
         FinancialRecord storage record = records[_id - 1];
+        require(!record.voided, "SkLedge: Record is voided");
         uint256 barangayId = _getBarangayId(record.barangay);
 
         record.approved = _approved;
@@ -535,6 +556,68 @@ contract SkLedge {
             _approved,
             record.approvedBy
         );
+    }
+
+    /**
+     * @notice Permanently voids an invalid record without deleting its history.
+     * @dev The reason is public and permanent; callers must not include confidential
+     *      or personal information.
+     */
+    function voidRecord(
+        uint256 _id,
+        string calldata _reason
+    ) external onlyOwner {
+        _validateVoidReason(_reason);
+        require(
+            _id > 0 && _id < nextRecordId,
+            "SkLedge: Record does not exist"
+        );
+
+        FinancialRecord storage record = records[_id - 1];
+        require(!record.voided, "SkLedge: Record is already voided");
+
+        bool wasApproved = record.approved;
+        uint256 barangayId = _getBarangayId(record.barangay);
+
+        if (
+            keccak256(bytes(record.recordType)) ==
+            keccak256(bytes("Allocation"))
+        ) {
+            require(
+                allocatedTotalsById[barangayId] >= record.amount,
+                "SkLedge: Allocation total is inconsistent"
+            );
+            allocatedTotalsById[barangayId] -= record.amount;
+        }
+
+        record.voided = true;
+        record.voidReason = _reason;
+        record.approved = false;
+        record.approvedBy = address(0);
+
+        if (wasApproved) {
+            bool anyOtherApproved = false;
+            for (uint256 i = 0; i < records.length; i++) {
+                if (
+                    i != _id - 1 &&
+                    records[i].approved &&
+                    !records[i].voided &&
+                    _getBarangayId(records[i].barangay) == barangayId
+                ) {
+                    anyOtherApproved = true;
+                    break;
+                }
+            }
+
+            if (!anyOtherApproved) {
+                barangayLockedById[barangayId] = false;
+                emit BarangayLocked(record.barangay, false);
+            }
+
+            emit ApprovalChanged(_id, false, address(0));
+        }
+
+        emit RecordVoided(_id, msg.sender, _reason);
     }
 
     /**

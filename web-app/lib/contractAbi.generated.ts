@@ -43,6 +43,22 @@ export const SK_LEDGE_ABI = [
     "type": "error"
   },
   {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "length",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "max",
+        "type": "uint256"
+      }
+    ],
+    "name": "VoidReasonTooLong",
+    "type": "error"
+  },
+  {
     "anonymous": false,
     "inputs": [
       {
@@ -288,6 +304,31 @@ export const SK_LEDGE_ABI = [
     "type": "event"
   },
   {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "voidedBy",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "reason",
+        "type": "string"
+      }
+    ],
+    "name": "RecordVoided",
+    "type": "event"
+  },
+  {
     "inputs": [],
     "name": "MAX_BARANGAY_NAME_BYTES",
     "outputs": [
@@ -303,6 +344,19 @@ export const SK_LEDGE_ABI = [
   {
     "inputs": [],
     "name": "MAX_PURPOSE_BYTES",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "MAX_VOID_REASON_BYTES",
     "outputs": [
       {
         "internalType": "uint256",
@@ -456,6 +510,16 @@ export const SK_LEDGE_ABI = [
             "internalType": "address",
             "name": "approvedBy",
             "type": "address"
+          },
+          {
+            "internalType": "bool",
+            "name": "voided",
+            "type": "bool"
+          },
+          {
+            "internalType": "string",
+            "name": "voidReason",
+            "type": "string"
           }
         ],
         "internalType": "struct SkLedge.FinancialRecord[]",
@@ -541,6 +605,16 @@ export const SK_LEDGE_ABI = [
             "internalType": "address",
             "name": "approvedBy",
             "type": "address"
+          },
+          {
+            "internalType": "bool",
+            "name": "voided",
+            "type": "bool"
+          },
+          {
+            "internalType": "string",
+            "name": "voidReason",
+            "type": "string"
           }
         ],
         "internalType": "struct SkLedge.FinancialRecord[]",
@@ -744,6 +818,16 @@ export const SK_LEDGE_ABI = [
         "internalType": "address",
         "name": "approvedBy",
         "type": "address"
+      },
+      {
+        "internalType": "bool",
+        "name": "voided",
+        "type": "bool"
+      },
+      {
+        "internalType": "string",
+        "name": "voidReason",
+        "type": "string"
       }
     ],
     "stateMutability": "view",
@@ -871,6 +955,24 @@ export const SK_LEDGE_ABI = [
       }
     ],
     "name": "transferOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_id",
+        "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "_reason",
+        "type": "string"
+      }
+    ],
+    "name": "voidRecord",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
