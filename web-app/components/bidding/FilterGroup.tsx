@@ -3,12 +3,15 @@ import type { FilterGroupProps } from "../../app/open_bidding/types";
 
 export default function FilterGroup({ label, value }: FilterGroupProps) {
   return (
-    <div className="flex flex-col text-sm px-2">
-      <p className="text-[10px] font-black text-secondary-foreground uppercase tracking-widest leading-none mb-1">
+    <div className="px-1.5">
+      <p className="mb-1 text-[9px] font-black uppercase leading-none tracking-widest text-secondary-foreground">
         {label}
       </p>
-      <div className="flex items-center gap-1 font-bold text-primary-foreground cursor-pointer hover:text-primary transition-colors">
-        {value} <ChevronDown size={14} />
+      <div className="flex cursor-pointer items-center gap-1.5 text-xs font-bold text-primary-foreground transition-colors hover:text-primary">
+        {value}
+        <span className="flex h-5 w-5 items-center justify-center rounded-md bg-secondary">
+          <ChevronDown size={12} />
+        </span>
       </div>
     </div>
   );

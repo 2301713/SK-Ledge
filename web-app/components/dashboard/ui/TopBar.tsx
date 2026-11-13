@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { Bell, Command, Mail, Search } from "lucide-react";
-import { useAuthStore } from "@/lib/useAuthStore";
+import { useAvatarUrl } from "@/lib/useAvatarUrl";
 
 interface TopBarProps {
   userName: string;
@@ -21,9 +21,8 @@ export default function TopBar({
   hideSearch = false,
   className = "",
 }: TopBarProps) {
-  const { currentUser } = useAuthStore();
   const hasSearch = typeof onSearchChange === "function";
-  const resolvedAvatarUrl = avatarUrl || currentUser?.avatar_url;
+  const resolvedAvatarUrl = useAvatarUrl(avatarUrl);
 
   return (
     <div className={`flex items-center gap-4 ${className}`}>

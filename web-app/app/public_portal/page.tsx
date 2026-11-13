@@ -74,20 +74,32 @@ export default function PublicDashboard() {
   }, [searchQuery, projects]);
 
   return (
-    <div className="min-h-screen bg-background selection:bg-tertiary selection:text-primary">
-      <PortalNav />
-      <main>
-        <PortalHero />
-        <MetricsRow projects={projects} />
-        <AnalyticsSection projects={projects} disbursements={disbursements} />
-        <OnChainVerifier />
-        <ProjectRegistry
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          filteredProjects={filteredProjects}
-        />
-      </main>
-      <PortalFooter />
+    <div className="relative min-h-screen overflow-hidden bg-background selection:bg-tertiary selection:text-primary">
+      {/* AMBIENT BACKDROP */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-[460px] bg-gradient-to-b from-primary/[0.07] via-background to-background"
+      />
+      <div
+        aria-hidden
+        className="ledger-grid pointer-events-none absolute inset-x-0 top-0 h-80 opacity-60"
+      />
+
+      <div className="relative">
+        <PortalNav />
+        <main>
+          <PortalHero />
+          <MetricsRow projects={projects} />
+          <AnalyticsSection projects={projects} disbursements={disbursements} />
+          <OnChainVerifier />
+          <ProjectRegistry
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            filteredProjects={filteredProjects}
+          />
+        </main>
+        <PortalFooter />
+      </div>
     </div>
   );
 }

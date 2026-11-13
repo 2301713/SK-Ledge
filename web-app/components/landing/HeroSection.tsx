@@ -1,6 +1,46 @@
 import Link from "next/link";
-import { ArrowRight, ShieldCheck, Wallet, ChevronRight } from "lucide-react";
+import {
+  ArrowRight,
+  ShieldCheck,
+  Wallet,
+  ChevronRight,
+  ArrowUpRight,
+  ArrowDownLeft,
+  BadgeCheck,
+} from "lucide-react";
 import Image from "next/image";
+
+const LEDGER_ROWS = [
+  {
+    title: "Youth Sports Clinic",
+    amount: "−₱15,000",
+    date: "Today",
+    status: "Verified",
+    positive: false,
+  },
+  {
+    title: "LGU Annual Budget",
+    amount: "+₱50,000",
+    date: "Yesterday",
+    status: "Verified",
+    positive: true,
+  },
+  {
+    title: "Office Supplies",
+    amount: "−₱4,500",
+    date: "Oct 12",
+    status: "Pending",
+    positive: false,
+  },
+];
+
+const HERO_STATS = [
+  { value: "100%", label: "Transparent" },
+  { value: "₱0", label: "Lost Funds" },
+  { value: "1×", label: "Source of Truth" },
+];
+
+const SPARKLINE = [38, 55, 42, 68, 60, 84, 72];
 
 export default function HeroSection() {
   return (
@@ -23,14 +63,20 @@ export default function HeroSection() {
       {/* Glow orb */}
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-150 h-150 rounded-full bg-primary/8 blur-[120px] pointer-events-none" />
 
-      <div className="max-w-6xl mx-auto w-full relative z-10 pt-32 pb-20 animate-fadein">
+      <div className="max-w-6xl mx-auto w-full relative z-10 pt-32 pb-20">
         <div className="grid lg:grid-cols-[1fr_420px] gap-16 items-center">
           {/* LEFT: Copy */}
-          <div className="space-y-8">
+          <div className="space-y-8 animate-in-left motion-reduce:animate-none">
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/10 bg-white/5 text-slate-300 text-xs font-semibold uppercase tracking-widest">
-              <ShieldCheck className="w-3.5 h-3.5 text-primary" />
-              Secure & Transparent
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/10 bg-white/5 text-slate-300 text-xs font-semibold uppercase tracking-widest">
+                <ShieldCheck className="w-3.5 h-3.5 text-tertiary" />
+                Secure &amp; Transparent
+              </div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-tertiary/20 bg-tertiary/10 text-[10px] font-bold uppercase tracking-widest text-tertiary">
+                <span className="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse motion-reduce:animate-none" />
+                On Sepolia
+              </div>
             </div>
 
             {/* Headline */}
@@ -60,24 +106,20 @@ export default function HeroSection() {
                 href="#features"
                 className="inline-flex items-center justify-center gap-2 px-7 py-4 bg-white/6 text-slate-300 border border-white/10 rounded-xl font-bold text-sm hover:bg-white/10 hover:text-white transition-all"
               >
-                Learn More
+                Explore Features
                 <ChevronRight className="w-4 h-4 text-slate-500" />
               </Link>
             </div>
 
             {/* Stat strip */}
-            <div className="flex items-center gap-8 pt-4 border-t border-white/8">
-              {[
-                { value: "100%", label: "Transparent" },
-                { value: "₱0", label: "Lost Funds" },
-                { value: "1×", label: "Source of Truth" },
-              ].map((s, i) => (
-                <div key={i}>
+            <div className="grid grid-cols-3 gap-4 pt-6 border-t border-white/8 max-w-md">
+              {HERO_STATS.map((stat) => (
+                <div key={stat.label}>
                   <p className="text-2xl font-extrabold text-white tabular-nums">
-                    {s.value}
+                    {stat.value}
                   </p>
                   <p className="text-xs text-slate-500 font-medium mt-0.5">
-                    {s.label}
+                    {stat.label}
                   </p>
                 </div>
               ))}
@@ -85,93 +127,139 @@ export default function HeroSection() {
           </div>
 
           {/* RIGHT: Live Ledger Card */}
-          <div className="hidden lg:block">
-            <div className="bg-slate-900 border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
-              {/* Card top bar */}
-              <div className="flex items-center justify-between px-5 py-4 border-b border-white/8">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 bg-tertiary/15 rounded-lg flex items-center justify-center">
-                    <Wallet className="w-4 h-4 text-tertiary" />
+          <div
+            className="hidden lg:block animate-in-right motion-reduce:animate-none"
+            style={{ animationDelay: "140ms" }}
+          >
+            <div className="relative">
+              <div
+                aria-hidden
+                className="absolute -inset-4 rounded-[2rem] bg-primary/10 blur-2xl"
+              />
+
+              <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-slate-900/90 shadow-2xl backdrop-blur">
+                <div className="h-1 w-full" />
+
+                {/* Card top bar */}
+                <div className="flex items-center justify-between border-b border-white/8 px-5 py-4">
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-tertiary/15">
+                      <Wallet className="h-4 w-4 text-tertiary" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-white">
+                        SK Fund Ledger
+                      </p>
+                      <p className="text-[10px] text-slate-500">
+                        Barangay Transparency
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs font-bold text-white">
-                      SK Fund Ledger
-                    </p>
-                    <p className="text-[10px] text-slate-500">
-                      Barangay Transparency
-                    </p>
+                  <span className="flex items-center gap-1.5 rounded-full border border-tertiary/20 bg-tertiary/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-tertiary">
+                    <span className="h-1.5 w-1.5 rounded-full bg-tertiary animate-pulse motion-reduce:animate-none" />
+                    Live
+                  </span>
+                </div>
+
+                {/* Balance display */}
+                <div className="border-b border-white/8 px-5 py-5">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="mb-1 text-xs font-medium text-slate-500">
+                        Total SK Fund
+                      </p>
+                      <p className="text-4xl font-extrabold tabular-nums text-white">
+                        ₱450,000
+                      </p>
+                      <p className="mt-1 flex items-center gap-1 text-xs font-semibold text-tertiary">
+                        <ArrowUpRight className="h-3.5 w-3.5" />
+                        12% this quarter
+                      </p>
+                    </div>
+
+                    {/* Sparkline */}
+                    <div className="flex h-12 items-end gap-1">
+                      {SPARKLINE.map((height, index) => (
+                        <span
+                          key={index}
+                          style={{ height: `${height}%` }}
+                          className="w-1.5 rounded-full "
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="mt-4">
+                    <div className="mb-1.5 flex items-center justify-between text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                      <span>Budget utilization</span>
+                      <span className="text-slate-300">68%</span>
+                    </div>
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/8">
+                      <div className="h-full w-[68%] rounded-full bg-tertiary" />
+                    </div>
                   </div>
                 </div>
-                <span className="flex items-center gap-1.5 text-[10px] font-bold text-tertiary bg-tertiary/10 border border-tertiary/20 px-2.5 py-1 rounded-full uppercase tracking-wide">
-                  <span className="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse" />
-                  Live
-                </span>
-              </div>
 
-              {/* Balance display */}
-              <div className="px-5 py-5 border-b border-white/8">
-                <p className="text-xs text-slate-500 font-medium mb-1">
-                  Total SK Fund
-                </p>
-                <p className="text-4xl font-extrabold text-white tabular-nums">
-                  ₱450,000
-                </p>
-                <p className="text-xs text-tertiary font-semibold mt-1">
-                  ↑ 12% this quarter
-                </p>
-              </div>
+                {/* Transactions */}
+                <div className="space-y-2.5 px-5 py-4">
+                  {LEDGER_ROWS.map((item) => (
+                    <div
+                      key={item.title}
+                      className="flex items-center gap-3 rounded-xl bg-white/4 p-3 transition-colors hover:bg-white/6"
+                    >
+                      <div
+                        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${
+                          item.positive
+                            ? "bg-tertiary/10 text-tertiary"
+                            : "bg-white/5 text-slate-400"
+                        }`}
+                      >
+                        {item.positive ? (
+                          <ArrowDownLeft className="h-3.5 w-3.5" />
+                        ) : (
+                          <ArrowUpRight className="h-3.5 w-3.5" />
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-xs font-semibold text-white">
+                          {item.title}
+                        </p>
+                        <p className="mt-0.5 text-[10px] text-slate-500">
+                          {item.date}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p
+                          className={`text-xs font-bold tabular-nums ${
+                            item.positive ? "text-tertiary" : "text-slate-100"
+                          }`}
+                        >
+                          {item.amount}
+                        </p>
+                        <p
+                          className={`mt-0.5 text-[9px] font-bold uppercase tracking-wide ${
+                            item.status === "Verified"
+                              ? "text-tertiary/70"
+                              : "text-amber-400/70"
+                          }`}
+                        >
+                          {item.status}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
 
-              {/* Transactions */}
-              <div className="px-5 py-4 space-y-2.5">
-                {[
-                  {
-                    title: "Youth Sports Clinic",
-                    amount: "−₱15,000",
-                    date: "Today",
-                    status: "Verified",
-                    positive: false,
-                  },
-                  {
-                    title: "LGU Annual Budget",
-                    amount: "+₱50,000",
-                    date: "Yesterday",
-                    status: "Verified",
-                    positive: true,
-                  },
-                  {
-                    title: "Office Supplies",
-                    amount: "−₱4,500",
-                    date: "Oct 12",
-                    status: "Pending",
-                    positive: false,
-                  },
-                ].map((item, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center justify-between p-3 rounded-xl bg-white/4 hover:bg-white/6 transition-colors"
-                  >
-                    <div>
-                      <p className="text-xs font-semibold text-white">
-                        {item.title}
-                      </p>
-                      <p className="text-[10px] text-slate-500 mt-0.5">
-                        {item.date}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p
-                        className={`text-xs font-bold tabular-nums ${item.positive ? "text-tertiary" : "text-slate-100"}`}
-                      >
-                        {item.amount}
-                      </p>
-                      <p
-                        className={`text-[9px] font-bold mt-0.5 uppercase tracking-wide ${item.status === "Verified" ? "text-tertiary/70" : "text-amber-400/70"}`}
-                      >
-                        {item.status}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+                {/* Footer */}
+                <div className="flex items-center justify-between border-t border-white/8 px-5 py-3">
+                  <span className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                    <BadgeCheck className="h-3.5 w-3.5 text-tertiary" />
+                    Anchored on Sepolia
+                  </span>
+                  <span className="font-mono text-[10px] text-slate-600">
+                    0x8f…3a2c
+                  </span>
+                </div>
               </div>
             </div>
           </div>

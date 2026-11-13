@@ -10,7 +10,7 @@ import ContactSection from "@/components/landing/ContactSection";
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen overflow-x-hidden bg-slate-50">
       <NavBar />
       <main>
         <HeroSection />

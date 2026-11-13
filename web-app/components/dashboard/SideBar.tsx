@@ -3,9 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { useAuthStore } from "@/lib/useAuthStore";
+import { useAvatarUrl } from "@/lib/useAvatarUrl";
 import { useToast } from "@/lib/useToast";
 import { canonicalizeBarangay } from "@/lib/batangasBarangays";
 import {
@@ -246,38 +246,28 @@ export default function Sidebar({
   avatarUrl,
 }: SidebarProps) {
   const pathname = usePathname();
-  const router = useRouter();
   const displayBarangay = barangay
     ? (canonicalizeBarangay(barangay) ?? barangay)
     : undefined;
   const toast = useToast();
-  const { clearSession, currentUser } = useAuthStore();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const resolvedAvatarUrl = avatarUrl || currentUser?.avatar_url;
+  const resolvedAvatarUrl = useAvatarUrl(avatarUrl);
 
   const navLinks = ROLE_LINKS[roleType] || [];
-
-  const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut();
-      clearSession();
-      toast.success("Logged out successfully!");
-      router.push("/login");
-    } catch (error) {
-      toast.error("Failed to logout. Please try again.");
-      console.error("Error logging out:", error);
-    }
-  };
 
   const confirmLogout = async () => {
     setIsLoggingOut(true);
     try {
-      await handleLogout();
-    } finally {
+      await supabase.auth.signOut();
+      // Full navigation: clearing the session in-place briefly rendered the
+      // dashboard without a user, flashing the unauthorized screen.
+      window.location.replace("/login");
+    } catch (error) {
       setIsLoggingOut(false);
-      setShowLogoutConfirm(false);
+      toast.error("Failed to logout. Please try again.");
+      console.error("Error logging out:", error);
     }
   };
 
@@ -395,83 +385,115 @@ export default function Sidebar({
         </div>
       </aside>
 
-      {/* LOGOUT CONFIRMATION MODAL */}
+      {/* LOGOUT CONFIRMATION DRAWER */}
       {showLogoutConfirm && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm animate-fadein"
+          className="fixed inset-0 z-[100] flex justify-end bg-slate-950/45 backdrop-blur-sm animate-fadein"
           onClick={() => !isLoggingOut && setShowLogoutConfirm(false)}
         >
-          <div
-            className="relative w-full max-w-sm rounded-3xl border border-border bg-white p-6 shadow-[0_20px_50px_-12px_rgba(15,23,42,0.25)] sm:p-7"
+          <aside
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="logout-title"
             onClick={(e) => e.stopPropagation()}
+            className="relative flex h-full w-full max-w-md flex-col overflow-hidden border-l border-border bg-white shadow-[-24px_0_60px_-24px_rgba(1,56,168,0.35)] animate-slidein"
           >
-            {/* CLOSE BUTTON */}
-            <button
-              type="button"
-              disabled={isLoggingOut}
-              onClick={() => setShowLogoutConfirm(false)}
-              aria-label="Close modal"
-              className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full text-secondary-foreground transition hover:bg-secondary hover:text-primary-foreground disabled:opacity-50"
-            >
-              <X className="h-4 w-4" />
-            </button>
+            {/* BRAND ACCENT */}
+            <div className="h-1 w-full bg-gradient-to-r from-primary via-primary to-tertiary" />
 
-            {/* ICON BADGE */}
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-danger/10 text-danger ring-8 ring-danger/[0.04]">
-              <LogOut className="h-6 w-6" />
-            </div>
-
-            {/* TITLE & DESCRIPTION */}
-            <div className="text-center">
-              <h3 className="text-xl font-bold tracking-tight text-primary-foreground">
-                Confirm Sign Out
-              </h3>
-              <p className="mt-2 text-sm leading-relaxed text-secondary-foreground">
-                Are you sure you want to log out of your SK-Ledge official
-                portal account?
-              </p>
-            </div>
-
-            {/* ACTIVE SESSION SUMMARY */}
-            <div className="mt-5 flex items-center gap-3 rounded-2xl border border-border bg-secondary/40 px-3.5 py-2.5">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary text-xs font-bold text-white">
-                {resolvedAvatarUrl ? (
-                  <Image
-                    src={resolvedAvatarUrl}
-                    alt={userName}
-                    width={32}
-                    height={32}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  userName.charAt(0).toUpperCase()
-                )}
+            {/* HEADER */}
+            <header className="flex items-center justify-between gap-4 border-b border-border px-6 py-5">
+              <div className="flex items-center gap-3">
+                <Image
+                  src="/skledge-logo.png"
+                  height={36}
+                  width={36}
+                  alt="SK-Ledge Logo"
+                />
+                <div>
+                  <p className="text-sm font-bold leading-none tracking-tight text-primary-foreground">
+                    SK-Ledge
+                  </p>
+                  <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
+                    Portal
+                  </p>
+                </div>
               </div>
-              <div className="min-w-0 flex-1 text-left">
-                <p className="truncate text-xs font-bold text-primary-foreground">
-                  {userName}
-                </p>
-                <p className="truncate text-[10px] font-bold uppercase tracking-[0.15em] text-secondary-foreground">
-                  {roleType.replace("_", " ")}
-                </p>
-              </div>
-            </div>
-
-            {/* ACTION BUTTONS */}
-            <div className="mt-6 grid grid-cols-2 gap-3">
               <button
                 type="button"
                 disabled={isLoggingOut}
                 onClick={() => setShowLogoutConfirm(false)}
-                className="w-full rounded-xl border border-border bg-white px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-secondary active:scale-[0.98] disabled:opacity-50"
+                aria-label="Close sign out confirmation"
+                className="flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-white text-secondary-foreground transition hover:bg-secondary hover:text-primary-foreground disabled:opacity-50"
               >
-                Cancel
+                <X className="h-4 w-4" />
               </button>
+            </header>
+
+            {/* BODY */}
+            <div className="flex-1 overflow-y-auto px-6 py-7">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-8 ring-primary/[0.04]">
+                <LogOut className="h-6 w-6" />
+              </div>
+
+              <h3
+                id="logout-title"
+                className="mt-5 text-2xl font-black tracking-tight text-primary-foreground"
+              >
+                Sign out of your account?
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-secondary-foreground">
+                You are about to end this session on the SK-Ledge official
+                portal. You will be returned to the sign-in page.
+              </p>
+
+              {/* ACTIVE SESSION */}
+              <div className="mt-6 flex items-center gap-3 rounded-2xl border border-border bg-secondary/40 p-3.5">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary text-sm font-bold text-white">
+                  {resolvedAvatarUrl ? (
+                    <Image
+                      src={resolvedAvatarUrl}
+                      alt={userName}
+                      width={40}
+                      height={40}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    userName.charAt(0).toUpperCase()
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-bold text-primary-foreground">
+                    {userName}
+                  </p>
+                  <p className="truncate text-[10px] font-bold uppercase tracking-[0.15em] text-secondary-foreground">
+                    {roleType.replace("_", " ")}
+                  </p>
+                </div>
+                <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-success/10 px-2.5 py-1 text-[9px] font-bold uppercase tracking-widest text-success">
+                  <span className="h-1.5 w-1.5 rounded-full bg-success" />
+                  Active
+                </span>
+              </div>
+
+              {/* SAFETY NOTE */}
+              <div className="mt-4 flex gap-3 rounded-2xl border border-tertiary/40 bg-tertiary/10 p-4">
+                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                <p className="text-xs leading-relaxed text-secondary-foreground">
+                  Your ledger records stay safe on-chain and in the database.
+                  Sign in again with your registered account to continue
+                  auditing or managing barangay funds.
+                </p>
+              </div>
+            </div>
+
+            {/* ACTIONS */}
+            <footer className="space-y-2.5 border-t border-border px-6 py-5">
               <button
                 type="button"
                 disabled={isLoggingOut}
                 onClick={confirmLogout}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-danger px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-danger/90 active:scale-[0.98] disabled:opacity-60"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-danger px-4 py-3 text-sm font-bold text-white shadow-[0_6px_16px_-8px_rgba(220,38,38,0.6)] transition hover:bg-danger/90 active:scale-[0.98] disabled:opacity-60"
               >
                 {isLoggingOut ? (
                   <>
@@ -479,11 +501,22 @@ export default function Sidebar({
                     <span>Signing out...</span>
                   </>
                 ) : (
-                  <span>Yes, Log Out</span>
+                  <>
+                    <LogOut className="h-4 w-4" />
+                    <span>Yes, Log Out</span>
+                  </>
                 )}
               </button>
-            </div>
-          </div>
+              <button
+                type="button"
+                disabled={isLoggingOut}
+                onClick={() => setShowLogoutConfirm(false)}
+                className="w-full rounded-xl border border-border bg-white px-4 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-secondary active:scale-[0.98] disabled:opacity-50"
+              >
+                Stay Signed In
+              </button>
+            </footer>
+          </aside>
         </div>
       )}
     </>

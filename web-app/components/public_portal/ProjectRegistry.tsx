@@ -1,4 +1,4 @@
-import { Search, ExternalLink } from "lucide-react";
+import { Search, ExternalLink, ScrollText, Inbox } from "lucide-react";
 import StatusBadge from "./StatusBadge";
 import { StatusType } from "../../app/public_portal/types";
 
@@ -32,18 +32,28 @@ export default function ProjectRegistry({
   filteredProjects,
 }: ProjectRegistryProps) {
   return (
-    <section className="px-4 sm:px-6 pb-12">
+    <section id="project-registry" className="scroll-mt-24 px-4 pb-12 sm:px-6">
       <div className="max-w-7xl mx-auto">
-        <div className="rounded-3xl border border-border bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(15,23,42,0.10)] overflow-hidden">
+        <div className="animate-rise overflow-hidden rounded-3xl border border-border bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(15,23,42,0.10)] motion-reduce:animate-none">
           {/* Table Header */}
-          <div className="px-7 py-5 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <p className="text-[10px] font-bold text-secondary-foreground uppercase tracking-[0.15em] mb-1">
-                Registry
-              </p>
-              <h2 className="text-base font-bold text-primary-foreground">
-                Project Registry
-              </h2>
+          <div className="flex flex-col justify-between gap-4 border-b border-border px-6 py-5 md:flex-row md:items-center sm:px-7">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border/70 bg-secondary">
+                <ScrollText className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <p className="mb-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-secondary-foreground">
+                  Registry
+                </p>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-base font-bold text-primary-foreground">
+                    Project Registry
+                  </h2>
+                  <span className="rounded-full border border-border bg-secondary px-2 py-0.5 text-[10px] font-bold text-secondary-foreground">
+                    {filteredProjects.length}
+                  </span>
+                </div>
+              </div>
             </div>
 
             {/* Search Input */}
@@ -87,11 +97,18 @@ export default function ProjectRegistry({
               <tbody>
                 {filteredProjects.length === 0 ? (
                   <tr>
-                    <td
-                      colSpan={6}
-                      className="px-7 py-14 text-center text-sm text-secondary-foreground"
-                    >
-                      No projects match your search.
+                    <td colSpan={6} className="px-7 py-14 text-center">
+                      <div className="mx-auto flex max-w-xs flex-col items-center">
+                        <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl border border-border bg-secondary">
+                          <Inbox className="h-5 w-5 text-secondary-foreground" />
+                        </div>
+                        <p className="text-sm font-bold text-primary-foreground">
+                          No projects found
+                        </p>
+                        <p className="mt-1 text-xs text-secondary-foreground">
+                          Try a different project name, barangay, or category.
+                        </p>
+                      </div>
                     </td>
                   </tr>
                 ) : (
@@ -169,13 +186,13 @@ export default function ProjectRegistry({
                               href={`https://sepolia.etherscan.io/tx/${txHash}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors font-medium"
+                              className="inline-flex items-center gap-1.5 rounded-full border border-primary/15 bg-primary/5 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-primary transition-colors hover:border-primary/30 hover:bg-primary/10"
                             >
                               Verify
-                              <ExternalLink className="w-3 h-3" />
+                              <ExternalLink className="h-3 w-3" />
                             </a>
                           ) : (
-                            <span className="text-[11px] text-secondary-foreground italic">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-secondary-foreground/70">
                               Pending Sync
                             </span>
                           )}
@@ -189,9 +206,13 @@ export default function ProjectRegistry({
           </div>
 
           {/* Footer count */}
-          <div className="px-7 py-4 border-t border-border bg-secondary/20">
-            <p className="text-[10px] text-secondary-foreground font-semibold uppercase tracking-widest">
+          <div className="flex items-center justify-between border-t border-border bg-secondary/20 px-6 py-4 sm:px-7">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-secondary-foreground">
               Showing {filteredProjects.length} records
+            </p>
+            <p className="hidden items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-secondary-foreground sm:flex">
+              <span className="h-1.5 w-1.5 rounded-full bg-success" />
+              Synced from Supabase
             </p>
           </div>
         </div>

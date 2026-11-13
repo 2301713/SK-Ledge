@@ -4,11 +4,11 @@ export default function AboutSection() {
   return (
     <section
       id="about"
-      className="py-16 bg-white px-6 animate-fadein scroll-mt-24"
+      className="py-20 bg-white px-6 scroll-mt-24"
     >
       <div className="max-w-6xl mx-auto">
         {/* Top: Compact editorial statement */}
-        <div className="mb-12 pb-10 border-b border-slate-100">
+        <div className="mb-12 pb-10 border-b border-slate-100 animate-in-left motion-reduce:animate-none">
           <p className="text-xs font-bold text-primary uppercase tracking-[0.2em] mb-4">
             About The Project
           </p>
@@ -25,7 +25,7 @@ export default function AboutSection() {
         {/* Bottom: Two column */}
         <div className="grid lg:grid-cols-2 gap-12 items-start">
           {/* LEFT: Story */}
-          <div className="space-y-6">
+          <div className="space-y-6 animate-in-left motion-reduce:animate-none">
             <div className="space-y-3">
               <p className="text-base text-slate-600 leading-relaxed">
                 We noticed that many Sangguniang Kabataan councils struggle with
@@ -44,7 +44,7 @@ export default function AboutSection() {
             {/* Mission & Vision */}
             <div className="grid sm:grid-cols-2 gap-4 pt-2">
               {/* Mission — brand anchor card */}
-              <div className="p-6 rounded-3xl bg-primary text-white shadow-[0_8px_28px_-10px_rgba(1,56,168,0.45)]">
+              <div className="p-6 rounded-3xl bg-primary text-white shadow-[0_8px_28px_-10px_rgba(1,56,168,0.45)] transition duration-200 hover:-translate-y-0.5">
                 <div className="w-9 h-9 rounded-xl bg-white/15 text-tertiary flex items-center justify-center mb-3">
                   <Target className="w-4 h-4" />
                 </div>
@@ -58,7 +58,7 @@ export default function AboutSection() {
               </div>
 
               {/* Vision — light card */}
-              <div className="p-6 rounded-3xl border border-slate-200 bg-slate-50 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(15,23,42,0.10)]">
+              <div className="p-6 rounded-3xl border border-slate-200 bg-slate-50 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(15,23,42,0.10)] transition duration-200 hover:-translate-y-0.5 hover:border-primary/20">
                 <div className="w-9 h-9 rounded-xl bg-tertiary/20 text-primary flex items-center justify-center mb-3">
                   <Sparkles className="w-4 h-4" />
                 </div>
@@ -74,13 +74,16 @@ export default function AboutSection() {
           </div>
 
           {/* RIGHT: Before / After comparison */}
-          <div className="space-y-4">
+          <div
+            className="space-y-4 animate-in-right motion-reduce:animate-none"
+            style={{ animationDelay: "120ms" }}
+          >
             <p className="text-xs font-bold text-slate-400 uppercase tracking-[0.15em] mb-4">
               The Difference
             </p>
 
             {/* Old Way */}
-            <div className="p-5 rounded-3xl border border-slate-200 bg-white">
+            <div className="p-5 rounded-3xl border border-slate-200 bg-white transition duration-200 hover:border-danger/20">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-7 h-7 rounded-xl bg-red-50 flex items-center justify-center">
                   <XCircle className="w-3.5 h-3.5 text-red-400" />
@@ -108,7 +111,7 @@ export default function AboutSection() {
             </div>
 
             {/* SK-Ledge Way */}
-            <div className="p-5 rounded-3xl bg-slate-950 border border-white/10 relative overflow-hidden">
+            <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-slate-950 p-5 transition duration-200 hover:border-tertiary/30">
               <div className="absolute -top-2 -right-2">
                 <span className="relative flex h-4 w-4">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary/80 opacity-75" />

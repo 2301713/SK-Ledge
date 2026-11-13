@@ -12,6 +12,7 @@ import {
   Title,
 } from "chart.js";
 import { Pie, Bar } from "react-chartjs-2";
+import { BarChart3, PieChart } from "lucide-react";
 
 ChartJS.register(
   ArcElement,
@@ -95,17 +96,25 @@ export default function AnalyticsSection({
   }, [disbursements]);
 
   return (
-    <section className="px-4 sm:px-6 mb-8">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <section className="mb-8 px-4 sm:px-6">
+      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Pie Chart */}
-        <div className="lg:col-span-1 rounded-3xl border border-border bg-white p-7 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(15,23,42,0.10)]">
-          <div className="mb-6">
-            <p className="text-[10px] font-bold text-secondary-foreground uppercase tracking-[0.15em] mb-1">
-              Analytics
-            </p>
-            <h3 className="text-base font-bold text-primary-foreground">
-              Fund Distribution
-            </h3>
+        <div className="animate-rise rounded-3xl border border-border bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(15,23,42,0.10)] motion-reduce:animate-none sm:p-7 lg:col-span-1">
+          <div className="mb-6 flex items-start justify-between gap-3">
+            <div>
+              <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.15em] text-secondary-foreground">
+                Analytics
+              </p>
+              <h3 className="text-base font-bold text-primary-foreground">
+                Fund Distribution
+              </h3>
+              <p className="mt-1 text-[11px] text-secondary-foreground">
+                Budget share per project category
+              </p>
+            </div>
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border/70 bg-secondary">
+              <PieChart className="h-4 w-4 text-primary" />
+            </div>
           </div>
           <div className="h-64">
             <Pie
@@ -138,14 +147,25 @@ export default function AnalyticsSection({
         </div>
 
         {/* Bar Chart */}
-        <div className="lg:col-span-2 rounded-3xl border border-border bg-white p-7 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(15,23,42,0.10)]">
-          <div className="mb-6">
-            <p className="text-[10px] font-bold text-secondary-foreground uppercase tracking-[0.15em] mb-1">
-              Analytics
-            </p>
-            <h3 className="text-base font-bold text-primary-foreground">
-              Disbursement Trend (Quarterly)
-            </h3>
+        <div
+          className="animate-rise rounded-3xl border border-border bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(15,23,42,0.10)] motion-reduce:animate-none sm:p-7 lg:col-span-2"
+          style={{ animationDelay: "90ms" }}
+        >
+          <div className="mb-6 flex items-start justify-between gap-3">
+            <div>
+              <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.15em] text-secondary-foreground">
+                Analytics
+              </p>
+              <h3 className="text-base font-bold text-primary-foreground">
+                Disbursement Trend (Quarterly)
+              </h3>
+              <p className="mt-1 text-[11px] text-secondary-foreground">
+                Live allocation and expense movement
+              </p>
+            </div>
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border/70 bg-secondary">
+              <BarChart3 className="h-4 w-4 text-primary" />
+            </div>
           </div>
           <div className="h-64">
             <Bar

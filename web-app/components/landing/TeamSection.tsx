@@ -37,12 +37,12 @@ export default function TeamSection() {
   return (
     <section
       id="team"
-      className="py-16 bg-white px-6 animate-fadein scroll-mt-24"
+      className="bg-white px-6 py-20 scroll-mt-24"
     >
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-10 pb-8 border-b border-slate-100">
-          <div>
+        <div className="mb-10 flex flex-col gap-6 border-b border-slate-100 pb-8 md:flex-row md:items-end md:justify-between">
+          <div className="animate-in-left motion-reduce:animate-none">
             <p className="text-xs font-bold text-primary uppercase tracking-[0.2em] mb-3">
               Our Team
             </p>
@@ -52,7 +52,7 @@ export default function TeamSection() {
               behind <span className="text-primary">SK-Ledge.</span>
             </h2>
           </div>
-          <p className="text-slate-400 max-w-xs text-sm leading-relaxed md:text-right">
+          <p className="max-w-xs text-sm leading-relaxed text-slate-400 animate-in-right motion-reduce:animate-none md:text-right">
             Passionate developers bringing modern technology to local
             governance.
           </p>
@@ -63,7 +63,8 @@ export default function TeamSection() {
           {TEAM.map((member, idx) => (
             <div
               key={idx}
-              className="group flex flex-col items-center p-6 rounded-3xl border border-slate-100 bg-white text-center hover:border-primary/30 hover:ring-2 hover:ring-primary/10 hover:shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_32px_-16px_rgba(15,23,42,0.14)] hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
+              style={{ animationDelay: `${idx * 60}ms` }}
+              className="group flex cursor-pointer flex-col items-center rounded-3xl border border-slate-100 bg-white p-6 text-center animate-rise transition-all duration-300 motion-reduce:animate-none hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_32px_-16px_rgba(15,23,42,0.14)] hover:ring-2 hover:ring-primary/10"
             >
               {/* Avatar */}
               <div className="w-16 h-16 shrink-0 rounded-2xl overflow-hidden border border-slate-100 mb-4 ring-4 ring-slate-50">

@@ -32,12 +32,12 @@ export default function HowItWorksSection() {
   return (
     <section
       id="how-it-works"
-      className="py-16 bg-slate-50 px-6 animate-fadein scroll-mt-24 border-y border-slate-100"
+      className="border-y border-slate-100 bg-slate-50 px-6 py-20 scroll-mt-24"
     >
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12 pb-8 border-b border-slate-100">
-          <div>
+        <div className="mb-12 flex flex-col gap-6 border-b border-slate-100 pb-8 md:flex-row md:items-end md:justify-between">
+          <div className="animate-in-left motion-reduce:animate-none">
             <p className="text-xs font-bold text-primary uppercase tracking-[0.2em] mb-3">
               How It Works
             </p>
@@ -48,7 +48,7 @@ export default function HowItWorksSection() {
               <span className="text-primary">four steps.</span>
             </h2>
           </div>
-          <p className="text-slate-400 max-w-xs text-sm leading-relaxed md:text-right">
+          <p className="max-w-xs text-sm leading-relaxed text-slate-400 animate-in-right motion-reduce:animate-none md:text-right">
             A simple, secure workflow built for real barangay governance.
           </p>
         </div>
@@ -58,13 +58,14 @@ export default function HowItWorksSection() {
           {STEPS.map((step, idx) => (
             <div
               key={idx}
-              className="relative p-6 rounded-3xl border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(15,23,42,0.10)] group hover:border-primary/30 hover:-translate-y-0.5 transition-all duration-300"
+              style={{ animationDelay: `${idx * 80}ms` }}
+              className="group relative animate-rise rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(15,23,42,0.10)] transition-all duration-300 motion-reduce:animate-none hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[0_14px_34px_-18px_rgba(1,56,168,0.3)]"
             >
-              <span className="absolute top-6 right-6 text-[10px] font-bold text-slate-300 uppercase tracking-widest">
-                0{idx + 1}
+              <span className="absolute right-6 top-6 text-[10px] font-black uppercase tracking-widest text-slate-300 transition-colors group-hover:text-primary/50">
+                Step 0{idx + 1}
               </span>
-              <div className="w-11 h-11 rounded-xl bg-primary flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
-                <step.icon className="w-5 h-5 text-tertiary" />
+              <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-primary shadow-lg shadow-primary/20 transition-transform group-hover:scale-105">
+                <step.icon className="h-5 w-5 text-tertiary" />
               </div>
               <h3 className="text-sm font-bold text-slate-900 mb-1.5">
                 {step.title}
@@ -77,7 +78,7 @@ export default function HowItWorksSection() {
         </div>
 
         {/* Link */}
-        <div className="mt-10 flex justify-center">
+        <div className="mt-10 flex justify-center animate-rise motion-reduce:animate-none">
           <Link
             href="/register"
             className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-xl font-bold text-sm hover:bg-primary/90 transition-all group shadow-lg shadow-primary/20"

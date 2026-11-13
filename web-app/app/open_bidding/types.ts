@@ -29,6 +29,7 @@ export interface StatCardProps {
   lineColor: string;
   isActive?: boolean;
   subtitle?: string;
+  delayMs?: number;
 }
 
 export interface StatusBadgeProps {

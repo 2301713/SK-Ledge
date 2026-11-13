@@ -9,6 +9,15 @@ import {
   CheckCircle2,
   FileText,
   Mic,
+  MapPin,
+  Tag,
+  Layers,
+  Radio,
+  Headset,
+  FileStack,
+  ShieldCheck,
+  Loader2,
+  Inbox,
 } from "lucide-react";
 import PortalNav from "../../components/public_portal/PortalNav";
 import StatCard from "../../components/bidding/StatCard";
@@ -74,6 +83,39 @@ const toBiddingProject = (row: ProjectRow): BiddingProject => {
     awardTxHash: row.award_tx_hash ?? undefined,
   };
 };
+
+const marketplaceStats = (
+  projectCount: number,
+  openBidsCount: number,
+): {
+  icon: React.ElementType;
+  label: string;
+  value: string;
+  sub: string;
+  color: string;
+}[] => [
+  {
+    icon: Layers,
+    label: "Marketplace Status",
+    value: String(projectCount),
+    sub: "Total published bid opportunities",
+    color: "text-primary",
+  },
+  {
+    icon: Radio,
+    label: "Open for Submission",
+    value: String(openBidsCount),
+    sub: "Procurements accepting proposals",
+    color: "text-success",
+  },
+  {
+    icon: Headset,
+    label: "Vendor Readiness",
+    value: "24/7",
+    sub: "Tender documents available online",
+    color: "text-tertiary",
+  },
+];
 
 export default function BiddingPortal() {
   const [projects, setProjects] = useState<BiddingProject[]>([]);
@@ -148,318 +190,474 @@ export default function BiddingPortal() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-primary-foreground relative pb-16 selection:bg-tertiary selection:text-primary">
-      <PortalNav />
+    <div className="relative min-h-screen overflow-hidden bg-background pb-16 text-primary-foreground selection:bg-tertiary selection:text-primary">
+      {/* AMBIENT BACKDROP */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-gradient-to-b from-primary/[0.07] via-background to-background"
+      />
+      <div
+        aria-hidden
+        className="ledger-grid pointer-events-none absolute inset-x-0 top-0 h-72 opacity-60"
+      />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="flex flex-wrap items-center gap-4 mb-8">
-          <div className="flex-1 min-w-[240px] bg-white border border-border rounded-xl flex items-center px-4 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-all focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary">
-            <Search className="text-secondary-foreground mr-3" size={18} />
-            <input
-              type="text"
-              placeholder='"Construction of Youth..."'
-              className="bg-transparent border-none outline-none text-sm w-full placeholder:text-secondary-foreground text-primary-foreground"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <div className="h-5 w-px bg-border mx-3" />
-            <Mic
-              className="text-secondary-foreground cursor-pointer hover:text-primary transition"
-              size={18}
-            />
-          </div>
+      <div className="relative">
+        <PortalNav />
 
-          <div className="flex items-center gap-4 bg-white border border-border rounded-xl px-4 py-2 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-            <FilterGroup label="Status" value="All" />
-            <span className="w-px h-6 bg-border" />
-            <FilterGroup label="Barangay" value="All" />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-          <div className="xl:col-span-8 space-y-8">
-            <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/10 bg-primary/5 text-primary text-[10px] font-bold uppercase tracking-widest mb-4">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+        {/* HEADER */}
+        <section className="mx-auto max-w-7xl px-4 pb-8 pt-10 sm:px-6">
+          <div className="flex flex-wrap items-end justify-between gap-6">
+            <div className="max-w-2xl animate-in-left motion-reduce:animate-none">
+              <div className="inline-flex items-center gap-2 rounded-full border border-primary/10 bg-primary/5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-primary">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary motion-reduce:animate-none" />
                 Live Procurement Board
               </div>
-              <h1 className="text-3xl font-extrabold tracking-tight text-primary-foreground">
+              <h1 className="mt-5 text-3xl font-black leading-[1.05] tracking-tight sm:text-4xl">
                 Official <span className="text-primary">SK</span> Procurement &
-                Bidding Board
+                Bidding
               </h1>
-              <p className="text-secondary-foreground text-sm mt-2">
-                Ensuring 100% transparency in local youth governance and public
+              <p className="mt-3 max-w-xl text-sm leading-relaxed text-secondary-foreground">
+                Every solicitation, bid, and award is published in the open —
+                ensuring 100% transparency in local youth governance and public
                 spending.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <StatCard
-                icon={<FileText size={20} className="text-primary" />}
-                label="ACTIVE SOLICITATIONS"
-                value={`${openBidsCount} Projects`}
-                lineColor="bg-primary"
+            <div
+              className="flex flex-wrap items-center gap-2 animate-in-right motion-reduce:animate-none"
+              style={{ animationDelay: "100ms" }}
+            >
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-success/20 bg-success/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-success">
+                <span className="h-1.5 w-1.5 rounded-full bg-success" />
+                Open board
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
+                <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+                Sepolia verified
+              </span>
+            </div>
+          </div>
+
+          {/* SEARCH + FILTERS */}
+          <div
+            className="mt-8 flex flex-wrap items-center gap-3 animate-rise motion-reduce:animate-none"
+            style={{ animationDelay: "120ms" }}
+          >
+            <div className="flex min-w-[240px] flex-1 items-center rounded-2xl border border-border bg-white px-4 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-all focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
+              <Search className="mr-3 h-4 w-4 text-secondary-foreground" />
+              <input
+                type="text"
+                placeholder='Search a project or barangay, e.g. "Youth Center"'
+                className="w-full border-none bg-transparent text-sm text-primary-foreground outline-none placeholder:text-secondary-foreground"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
-              <StatCard
-                icon={<Wallet size={20} className="text-tertiary" />}
-                label="TOTAL BUDGET POSTED"
-                value={`₱ ${totalBudgetPosted.toLocaleString("en-US")}`}
-                lineColor="bg-tertiary"
-                isActive
-              />
-              <StatCard
-                icon={<CheckCircle2 size={20} className="text-success" />}
-                label="RECENTLY AWARDED"
-                value={`${awardedCount} Projects`}
-                subtitle="on the ledger"
-                lineColor="bg-success"
-              />
+              <div className="mx-3 h-5 w-px bg-border" />
+              <Mic className="h-4 w-4 cursor-pointer text-secondary-foreground transition hover:text-primary" />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-5">
-              <div className="rounded-3xl border border-border bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(15,23,42,0.10)]">
-                <p className="text-[10px] uppercase tracking-widest font-black text-secondary-foreground">
-                  Marketplace Status
-                </p>
-                <p className="text-3xl font-extrabold mt-4 text-primary-foreground tabular-nums">
-                  {projects.length}
-                </p>
-                <p className="text-sm text-secondary-foreground mt-2">
-                  Total published bid opportunities
-                </p>
-              </div>
-              <div className="rounded-3xl border border-border bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(15,23,42,0.10)]">
-                <p className="text-[10px] uppercase tracking-widest font-black text-secondary-foreground">
-                  Open for Submission
-                </p>
-                <p className="text-3xl font-extrabold mt-4 text-success tabular-nums">
-                  {openBidsCount}
-                </p>
-                <p className="text-sm text-secondary-foreground mt-2">
-                  Ongoing procurement projects accepting proposals
-                </p>
-              </div>
-              <div className="rounded-3xl border border-border bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(15,23,42,0.10)]">
-                <p className="text-[10px] uppercase tracking-widest font-black text-secondary-foreground">
-                  Vendor Readiness
-                </p>
-                <p className="text-3xl font-extrabold mt-4 text-primary tabular-nums">
-                  24/7
-                </p>
-                <p className="text-sm text-secondary-foreground mt-2">
-                  Support and tender documents available online
-                </p>
+            <div className="flex items-center gap-4 rounded-2xl border border-border bg-white px-4 py-2 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+              <FilterGroup label="Status" value="All" />
+              <span className="h-6 w-px bg-border" />
+              <FilterGroup label="Barangay" value="All" />
+            </div>
+          </div>
+
+          {/* STATS */}
+          <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+            <StatCard
+              icon={<FileText size={20} className="text-primary" />}
+              label="ACTIVE SOLICITATIONS"
+              value={`${openBidsCount} Projects`}
+              lineColor="bg-primary"
+              delayMs={0}
+            />
+            <StatCard
+              icon={<Wallet size={20} className="text-tertiary" />}
+              label="TOTAL BUDGET POSTED"
+              value={`₱ ${totalBudgetPosted.toLocaleString("en-US")}`}
+              lineColor="bg-tertiary"
+              isActive
+              delayMs={70}
+            />
+            <StatCard
+              icon={<CheckCircle2 size={20} className="text-success" />}
+              label="RECENTLY AWARDED"
+              value={`${awardedCount} Projects`}
+              subtitle="on the ledger"
+              lineColor="bg-success"
+              delayMs={140}
+            />
+          </div>
+        </section>
+
+        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-4 sm:px-6 xl:grid-cols-12">
+          <div className="space-y-6 xl:col-span-8">
+            {/* MARKETPLACE SNAPSHOT */}
+            <div className="animate-rise overflow-hidden rounded-3xl border border-border bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(15,23,42,0.10)] motion-reduce:animate-none">
+              <div className="grid grid-cols-1 divide-y divide-border sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+                {marketplaceStats(projects.length, openBidsCount).map(
+                  (stat) => {
+                    const Icon = stat.icon;
+                    return (
+                      <div key={stat.label} className="p-5 sm:p-6">
+                        <div className="flex items-center justify-between">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-secondary-foreground">
+                            {stat.label}
+                          </p>
+                          <Icon className={`h-4 w-4 ${stat.color}`} />
+                        </div>
+                        <p
+                          className={`mt-3 text-3xl font-black tabular-nums ${stat.color}`}
+                        >
+                          {stat.value}
+                        </p>
+                        <p className="mt-1.5 text-xs text-secondary-foreground">
+                          {stat.sub}
+                        </p>
+                      </div>
+                    );
+                  },
+                )}
               </div>
             </div>
 
-            <div className="bg-white rounded-3xl overflow-hidden shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(15,23,42,0.10)] border border-border">
-              <div className="p-5 border-b border-border flex justify-between items-center">
-                <h3 className="font-black text-[11px] uppercase tracking-widest text-primary-foreground">
-                  Bidding Ledger
-                </h3>
+            {/* BIDDING LEDGER */}
+            <div
+              className="animate-rise overflow-hidden rounded-3xl border border-border bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(15,23,42,0.10)] motion-reduce:animate-none"
+              style={{ animationDelay: "90ms" }}
+            >
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-5">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border/70 bg-secondary">
+                    <FileStack className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="mb-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-secondary-foreground">
+                      Bidding Ledger
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-base font-bold text-primary-foreground">
+                        Open solicitations
+                      </h2>
+                      <span className="rounded-full border border-border bg-secondary px-2 py-0.5 text-[10px] font-bold text-secondary-foreground">
+                        {filteredProjects.length}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
+                  <span className="h-1.5 w-1.5 rounded-full bg-success" />
+                  Updated live
+                </span>
               </div>
+
               <div className="overflow-x-auto">
                 <table className="w-full text-left">
-                  <thead className="bg-secondary/40 text-[10px] font-bold text-secondary-foreground uppercase tracking-widest">
+                  <thead className="bg-secondary/40 text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
                     <tr>
-                      <th className="px-6 py-4">#</th>
-                      <th className="px-6 py-4">Project</th>
-                      <th className="px-6 py-4">P Value</th>
-                      <th className="px-6 py-4">Status</th>
-                      <th className="px-6 py-4">Deadline</th>
-                      <th className="px-6 py-4"></th>
+                      <th className="px-6 py-3.5">#</th>
+                      <th className="px-6 py-3.5">Project</th>
+                      <th className="px-6 py-3.5">P Value</th>
+                      <th className="px-6 py-3.5">Status</th>
+                      <th className="px-6 py-3.5">Deadline</th>
+                      <th className="px-6 py-3.5"></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {filteredProjects.map((project, idx) => (
-                      <tr
-                        key={project.id}
-                        onClick={() => setSelectedProject(project)}
-                        className={`hover:bg-secondary/40 transition-colors cursor-pointer ${
-                          activeProject?.id === project.id ? "bg-secondary/60" : ""
-                        }`}
-                      >
-                        <td className="px-6 py-5 font-bold text-secondary-foreground">
-                          {idx + 1}.
-                        </td>
-                        <td className="px-6 py-5">
-                          <p className="font-black text-sm leading-tight text-primary-foreground">
-                            {project.name}
-                          </p>
-                          <p className="text-[10px] text-secondary-foreground font-bold uppercase mt-1 tracking-tighter">
-                            {project.location}
-                          </p>
-                        </td>
-                        <td className="px-6 py-5 font-black text-sm text-primary-foreground tabular-nums">
-                          ₱{" "}
-                          {project.abc.toLocaleString("en-US", {
-                            minimumFractionDigits: 2,
-                          })}
-                        </td>
-                        <td className="px-6 py-5">
-                          <StatusBadge status={project.status} />
-                        </td>
-                        <td className="px-6 py-5">
-                          <p className="font-black text-xs text-primary-foreground">
-                            {project.deadline}
-                          </p>
-                          {project.daysLeft > 0 && (
-                            <p className="text-[10px] font-bold text-pending mt-0.5 tracking-tighter">
-                              {project.daysLeft} Days Left
-                            </p>
-                          )}
-                        </td>
-                        <td className="px-6 py-5 text-secondary-foreground">
-                          <ChevronRight size={20} />
-                        </td>
-                      </tr>
-                    ))}
-                    {!isLoading && filteredProjects.length === 0 && (
-                      <tr>
-                        <td
-                          colSpan={6}
-                          className="px-6 py-12 text-center text-sm font-bold text-secondary-foreground"
-                        >
-                          No open procurement projects found.
-                        </td>
-                      </tr>
+                    {isLoading ? (
+                      Array.from({ length: 3 }).map((_, index) => (
+                        <tr key={`skeleton-${index}`}>
+                          <td colSpan={6} className="px-6 py-4">
+                            <div className="h-10 animate-pulse rounded-xl bg-secondary" />
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      filteredProjects.map((project, idx) => {
+                        const isActive = activeProject?.id === project.id;
+                        return (
+                          <tr
+                            key={project.id}
+                            onClick={() => setSelectedProject(project)}
+                            className={`cursor-pointer transition-colors ${
+                              isActive
+                                ? "bg-primary/[0.04]"
+                                : "hover:bg-secondary/40"
+                            }`}
+                          >
+                            <td className="relative px-6 py-4">
+                              {isActive && (
+                                <span className="absolute inset-y-3 left-0 w-0.5 rounded-full bg-primary" />
+                              )}
+                              <span className="text-xs font-bold tabular-nums text-secondary-foreground">
+                                {String(idx + 1).padStart(2, "0")}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <p
+                                className={`text-sm font-bold leading-tight transition-colors ${
+                                  isActive
+                                    ? "text-primary"
+                                    : "text-primary-foreground"
+                                }`}
+                              >
+                                {project.name}
+                              </p>
+                              <p className="mt-1 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-secondary-foreground">
+                                <MapPin className="h-3 w-3" />
+                                {project.location.split(";")[0]}
+                              </p>
+                            </td>
+                            <td className="px-6 py-4 text-sm font-bold tabular-nums text-primary-foreground">
+                              ₱{" "}
+                              {project.abc.toLocaleString("en-US", {
+                                minimumFractionDigits: 2,
+                              })}
+                            </td>
+                            <td className="px-6 py-4">
+                              <StatusBadge status={project.status} />
+                            </td>
+                            <td className="px-6 py-4">
+                              <p className="text-xs font-bold text-primary-foreground">
+                                {project.deadline}
+                              </p>
+                              {project.daysLeft > 0 && (
+                                <p className="mt-1 inline-flex rounded-md bg-pending/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-pending">
+                                  {project.daysLeft} days left
+                                </p>
+                              )}
+                            </td>
+                            <td className="px-6 py-4">
+                              <span
+                                className={`flex h-8 w-8 items-center justify-center rounded-full border transition ${
+                                  isActive
+                                    ? "border-primary/20 bg-primary/10 text-primary"
+                                    : "border-border bg-white text-secondary-foreground"
+                                }`}
+                              >
+                                <ChevronRight size={16} />
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })
                     )}
                   </tbody>
                 </table>
+
+                {!isLoading && filteredProjects.length === 0 && (
+                  <div className="flex flex-col items-center justify-center border-t border-border px-6 py-14 text-center">
+                    <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl border border-border bg-secondary">
+                      <Inbox className="h-5 w-5 text-secondary-foreground" />
+                    </div>
+                    <p className="text-sm font-bold text-primary-foreground">
+                      No open procurement projects found
+                    </p>
+                    <p className="mt-1 text-xs text-secondary-foreground">
+                      Try a different project name or barangay.
+                    </p>
+                  </div>
+                )}
               </div>
-              <div className="p-4 bg-secondary/20 border-t border-border flex justify-end">
-                <button className="bg-primary hover:bg-primary/90 text-white px-6 py-2.5 rounded-xl font-black text-xs uppercase transition shadow-lg shadow-primary/20 active:scale-95">
-                  View All Solicitations
-                </button>
+
+              <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border bg-secondary/20 px-6 py-4">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-secondary-foreground">
+                  Showing {filteredProjects.length} solicitations
+                </p>
+                <p className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-secondary-foreground">
+                  <span className="h-1.5 w-1.5 rounded-full bg-success" />
+                  Synced from Supabase
+                </p>
               </div>
             </div>
           </div>
 
-          <div className="xl:col-span-4 bg-white border border-border rounded-3xl p-8 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(15,23,42,0.10)] flex flex-col min-h-150 relative overflow-hidden">
-            <div className="absolute -right-20 top-40 w-40 h-40 bg-primary/5 blur-[80px] rounded-full pointer-events-none" />
-
-            {!activeProject ? (
-              <div className="flex flex-1 items-center justify-center text-center">
-                <p className="text-sm font-bold text-secondary-foreground">
-                  {isLoading
-                    ? "Loading procurements..."
-                    : "Select a project from the bidding ledger."}
-                </p>
-              </div>
-            ) : (
-              <div className="flex-1">
-                <h2 className="text-2xl font-extrabold leading-tight tracking-tight text-primary-foreground">
-                  {activeProject.name}
-                </h2>
-                <p className="text-secondary-foreground text-sm mt-1">
-                  ({activeProject.location.split(";")[0]})
-                </p>
-
-                <div className="mt-4">
-                  <StatusBadge status={activeProject.status} isLarge />
-                </div>
-
-                <div className="mt-8 space-y-1">
-                  <p className="text-[10px] font-black text-secondary-foreground uppercase tracking-widest">
-                    Category: {activeProject.location.split(";")[1] || "—"}
-                  </p>
-                  <p className="text-secondary-foreground text-[13px] leading-relaxed mt-4">
-                    {activeProject.description}
-                  </p>
-                </div>
-
-                <div className="mt-10 space-y-8 relative">
-                  <div className="absolute left-2.75 top-2 bottom-2 w-px bg-border" />
-                  <TimelineItem
-                    label="Pre-Bid Conference"
-                    date="Upon publication"
-                    active
-                  />
-                  <TimelineItem
-                    label="Bid Opening & Evaluation"
-                    date={activeProject.opening}
-                    active={
-                      activeProject.status === "Evaluation" ||
-                      activeProject.status === "Awarded"
-                    }
-                    isInactive={activeProject.status === "Accepting Bids"}
-                  />
-                  <TimelineItem
-                    label="Notice of Award"
-                    isStar={activeProject.status === "Awarded"}
-                    isInactive={activeProject.status !== "Awarded"}
-                  />
-                </div>
-
-                {activeProject.status === "Awarded" && (
-                  <div className="mt-10 bg-tertiary/10 border border-tertiary/30 p-6 rounded-2xl relative overflow-hidden">
-                    <h4 className="font-black text-xs uppercase tracking-widest text-secondary-foreground mb-2">
-                      Winning Bidder Reveal
-                    </h4>
-                    <div className="h-px bg-border w-full mb-3" />
-                    <p className="text-[10px] font-bold text-secondary-foreground uppercase">
-                      Winning Bidder:{" "}
-                      <span className="text-primary-foreground">
-                        {activeProject.winner || "Pending publication"}
-                      </span>
-                    </p>
-                    {activeProject.awardTxHash && (
-                      <a
-                        href={`https://sepolia.etherscan.io/tx/${activeProject.awardTxHash}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="mt-2 inline-flex items-center gap-1 text-[10px] font-bold uppercase text-primary hover:underline break-all"
-                      >
-                        Verified on-chain — View transaction
-                      </a>
-                    )}
-                  </div>
-                )}
-
-                <div className="mt-10 rounded-3xl border border-border bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(15,23,42,0.10)]">
-                  <div className="flex items-center justify-between mb-5">
-                    <div>
-                      <p className="text-[10px] uppercase tracking-widest font-black text-secondary-foreground">
-                        Vendor Participation
+          {/* DETAIL PANEL */}
+          <aside className="xl:col-span-4">
+            <div
+              className="animate-rise overflow-hidden rounded-3xl border border-border bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(15,23,42,0.10)] motion-reduce:animate-none xl:sticky xl:top-28"
+              style={{ animationDelay: "160ms" }}
+            >
+              {!activeProject ? (
+                <div className="flex min-h-100 flex-col items-center justify-center px-6 py-16 text-center">
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mb-3 h-6 w-6 animate-spin text-primary" />
+                      <p className="text-sm font-bold text-secondary-foreground">
+                        Loading procurements...
                       </p>
-                      <h3 className="text-xl font-extrabold mt-2 text-primary-foreground">
-                        Submit your proposal
-                      </h3>
+                    </>
+                  ) : (
+                    <>
+                      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl border border-border bg-secondary">
+                        <Inbox className="h-5 w-5 text-secondary-foreground" />
+                      </div>
+                      <p className="text-sm font-bold text-secondary-foreground">
+                        Select a project from the bidding ledger.
+                      </p>
+                    </>
+                  )}
+                </div>
+              ) : (
+                <>
+                  {/* PANEL HEADER */}
+                  <div className="relative border-b border-border bg-gradient-to-br from-primary/[0.07] via-white to-white px-6 py-6">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
+                      Selected Procurement
+                    </p>
+                    <h2 className="mt-2 text-xl font-black leading-tight tracking-tight text-primary-foreground">
+                      {activeProject.name}
+                    </h2>
+
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <span className="inline-flex items-center gap-1 rounded-full border border-border bg-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-secondary-foreground">
+                        <MapPin className="h-3 w-3" />
+                        {activeProject.location.split(";")[0] || "—"}
+                      </span>
+                      <span className="inline-flex items-center gap-1 rounded-full border border-border bg-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-secondary-foreground">
+                        <Tag className="h-3 w-3" />
+                        {activeProject.location.split(";")[1] || "General"}
+                      </span>
                     </div>
-                    <div className="rounded-full bg-success/10 text-success border border-success/20 px-3 py-1 text-[10px] uppercase font-black tracking-widest">
-                      Open Now
+
+                    <div className="mt-4">
+                      <StatusBadge status={activeProject.status} />
+                    </div>
+
+                    <div className="mt-5 grid grid-cols-2 gap-3">
+                      <div className="rounded-2xl border border-border bg-white/90 p-3">
+                        <p className="text-[9px] font-bold uppercase tracking-widest text-secondary-foreground">
+                          Approved Budget
+                        </p>
+                        <p className="mt-1 text-sm font-black tabular-nums text-primary-foreground">
+                          ₱{" "}
+                          {activeProject.abc.toLocaleString("en-US", {
+                            minimumFractionDigits: 2,
+                          })}
+                        </p>
+                      </div>
+                      <div className="rounded-2xl border border-border bg-white/90 p-3">
+                        <p className="text-[9px] font-bold uppercase tracking-widest text-secondary-foreground">
+                          Deadline
+                        </p>
+                        <p className="mt-1 text-sm font-black text-primary-foreground">
+                          {activeProject.deadline}
+                        </p>
+                        {activeProject.daysLeft > 0 && (
+                          <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-pending">
+                            {activeProject.daysLeft} days left
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
-                  <ol className="space-y-4 text-sm text-secondary-foreground">
-                    <li className="flex gap-3">
-                      <span className="mt-1 font-black text-primary">1.</span>
-                      Download the bid documents and review the scope.
-                    </li>
-                    <li className="flex gap-3">
-                      <span className="mt-1 font-black text-primary">2.</span>
-                      Prepare your technical and financial proposal package.
-                    </li>
-                    <li className="flex gap-3">
-                      <span className="mt-1 font-black text-primary">3.</span>
-                      Submit before the deadline through the SK procurement office.
-                    </li>
-                  </ol>
-                  <button
-                    type="button"
-                    onClick={() => setIsRequestModalOpen(true)}
-                    className="mt-6 w-full rounded-xl bg-primary text-white font-black uppercase tracking-widest py-3 transition hover:bg-primary/90 shadow-lg shadow-primary/20 active:scale-95"
-                  >
-                    Request Bid Package
-                  </button>
-                </div>
-              </div>
-            )}
 
-            <button className="mt-8 w-full py-4 bg-primary text-white rounded-xl font-black uppercase text-[11px] tracking-widest shadow-lg shadow-primary/20 flex items-center justify-center gap-3 transition hover:bg-primary/90 active:scale-95">
-              <Download size={18} strokeWidth={3} /> Download Bidding Documents
-              (PDF)
-            </button>
-          </div>
+                  <div className="px-6 py-6">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-secondary-foreground">
+                      Scope of Work
+                    </p>
+                    <p className="mt-2 text-[13px] leading-relaxed text-secondary-foreground">
+                      {activeProject.description}
+                    </p>
+
+                    <div className="relative mt-8 space-y-7">
+                      <div className="absolute bottom-2 left-[7px] top-2 w-px bg-border" />
+                      <TimelineItem
+                        label="Pre-Bid Conference"
+                        date="Upon publication"
+                        active
+                      />
+                      <TimelineItem
+                        label="Bid Opening & Evaluation"
+                        date={activeProject.opening}
+                        active={
+                          activeProject.status === "Evaluation" ||
+                          activeProject.status === "Awarded"
+                        }
+                        isInactive={activeProject.status === "Accepting Bids"}
+                      />
+                      <TimelineItem
+                        label="Notice of Award"
+                        isStar={activeProject.status === "Awarded"}
+                        isInactive={activeProject.status !== "Awarded"}
+                      />
+                    </div>
+
+                    {activeProject.status === "Awarded" && (
+                      <div className="relative mt-8 overflow-hidden rounded-2xl border border-tertiary/30 bg-tertiary/10 p-5">
+                        <h4 className="mb-2 text-[10px] font-black uppercase tracking-widest text-secondary-foreground">
+                          Winning Bidder Reveal
+                        </h4>
+                        <div className="mb-3 h-px w-full bg-border" />
+                        <p className="text-[10px] font-bold uppercase text-secondary-foreground">
+                          Winning Bidder:{" "}
+                          <span className="text-primary-foreground">
+                            {activeProject.winner || "Pending publication"}
+                          </span>
+                        </p>
+                        {activeProject.awardTxHash && (
+                          <a
+                            href={`https://sepolia.etherscan.io/tx/${activeProject.awardTxHash}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="mt-2 inline-flex break-all text-[10px] font-bold uppercase text-primary hover:underline"
+                          >
+                            Verified on-chain — View transaction
+                          </a>
+                        )}
+                      </div>
+                    )}
+
+                    {/* VENDOR PARTICIPATION */}
+                    <div className="mt-8 rounded-2xl border border-border bg-secondary/25 p-5">
+                      <div className="mb-4 flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-[10px] font-black uppercase tracking-widest text-secondary-foreground">
+                            Vendor Participation
+                          </p>
+                          <h3 className="mt-1 text-lg font-black text-primary-foreground">
+                            Submit your proposal
+                          </h3>
+                        </div>
+                        <span className="shrink-0 rounded-full border border-success/20 bg-success/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-widest text-success">
+                          Open Now
+                        </span>
+                      </div>
+
+                      <ol className="space-y-3 text-xs leading-relaxed text-secondary-foreground">
+                        {[
+                          "Download the bid documents and review the scope.",
+                          "Prepare your technical and financial proposal package.",
+                          "Submit before the deadline through the SK procurement office.",
+                        ].map((step, index) => (
+                          <li key={step} className="flex gap-3">
+                            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-black text-primary">
+                              {index + 1}
+                            </span>
+                            {step}
+                          </li>
+                        ))}
+                      </ol>
+
+                      <button
+                        type="button"
+                        onClick={() => setIsRequestModalOpen(true)}
+                        className="mt-5 w-full rounded-xl bg-primary py-3 text-[11px] font-black uppercase tracking-widest text-white shadow-lg shadow-primary/20 transition hover:bg-primary/90 active:scale-95"
+                      >
+                        Request Bid Package
+                      </button>
+                    </div>
+
+                    <button className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-white py-3.5 text-[11px] font-black uppercase tracking-widest text-primary-foreground transition hover:border-primary/30 hover:bg-secondary hover:text-primary active:scale-95">
+                      <Download size={16} strokeWidth={2.5} />
+                      Download Bidding Documents
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </aside>
         </div>
       </div>
 

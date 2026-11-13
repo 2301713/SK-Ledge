@@ -28,14 +28,15 @@ export default function MetricsRow({ projects }: { projects: Project[] }) {
   }, 0);
 
   return (
-    <section className="px-6 mb-8">
-      <div className="max-w-7xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <section className="mb-8 px-4 sm:px-6">
+      <div className="mx-auto grid max-w-7xl grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <MetricCard
           label="Total Projects"
           value={String(total)}
           sub="All barangay records"
           accent="bg-primary"
           icon={<Layers className="w-4 h-4 text-primary" />}
+          delayMs={0}
         />
         <MetricCard
           label="Approved"
@@ -44,6 +45,7 @@ export default function MetricsRow({ projects }: { projects: Project[] }) {
           valueColor="text-success"
           accent="bg-success"
           icon={<CheckCircle2 className="w-4 h-4 text-success" />}
+          delayMs={60}
         />
         <MetricCard
           label="Pending"
@@ -52,6 +54,7 @@ export default function MetricsRow({ projects }: { projects: Project[] }) {
           valueColor="text-pending"
           accent="bg-pending"
           icon={<Clock className="w-4 h-4 text-pending" />}
+          delayMs={120}
         />
         <MetricCard
           label="Total Proposed Budget"
@@ -59,6 +62,7 @@ export default function MetricsRow({ projects }: { projects: Project[] }) {
           sub="Across all projects"
           accent="bg-tertiary"
           icon={<Wallet className="w-4 h-4 text-tertiary" />}
+          delayMs={180}
         />
       </div>
     </section>

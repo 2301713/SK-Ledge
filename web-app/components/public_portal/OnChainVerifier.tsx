@@ -4,7 +4,15 @@ import { useState } from "react";
 import { useReadContract } from "wagmi";
 import { CONTRACT_ADDRESS, LEGACY_CONTRACT_ADDRESS, SK_LEDGE_ABI } from "@/lib/contractConfig";
 import { parseExpensePurpose } from "@/lib/formatExpensePurpose";
-import { ShieldCheck, RefreshCw, ExternalLink, Loader2 } from "lucide-react";
+import {
+  ShieldCheck,
+  RefreshCw,
+  ExternalLink,
+  Loader2,
+  Database,
+  Wallet,
+  FileStack,
+} from "lucide-react";
 
 type OnChainRecord = {
   id: bigint;
@@ -86,15 +94,16 @@ export default function OnChainVerifier() {
   return (
     <section className="px-4 sm:px-6 mb-12">
       <div className="max-w-7xl mx-auto">
-        <div className="rounded-3xl border border-border bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(15,23,42,0.10)] overflow-hidden">
+        <div className="animate-rise overflow-hidden rounded-3xl border border-border bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(15,23,42,0.10)] motion-reduce:animate-none">
           {/* Header */}
-          <div className="px-7 py-5 border-b border-border flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border px-6 py-5 sm:px-7">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center">
-                <ShieldCheck className="w-5 h-5 text-success" />
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-success/20 bg-success/10">
+                <ShieldCheck className="h-5 w-5 text-success" />
               </div>
               <div>
-                <p className="text-[10px] font-bold text-success uppercase tracking-[0.15em] mb-0.5">
+                <p className="mb-0.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.15em] text-success">
+                  <span className="h-1.5 w-1.5 rounded-full bg-success" />
                   Blockchain Verification
                 </p>
                 <h2 className="text-base font-bold text-primary-foreground">
@@ -106,16 +115,16 @@ export default function OnChainVerifier() {
               <button
                 onClick={() => refetch()}
                 disabled={isLoading || isRefetching}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-secondary hover:bg-secondary-foreground/10 text-primary-foreground text-xs font-medium rounded-xl transition-colors disabled:opacity-50"
+                className="flex items-center gap-1.5 rounded-xl border border-border bg-white px-3 py-2 text-xs font-bold text-primary-foreground transition-colors hover:bg-secondary disabled:opacity-50"
               >
                 <RefreshCw
-                  className={`w-3.5 h-3.5 ${isRefetching ? "animate-spin" : ""}`}
+                  className={`h-3.5 w-3.5 ${isRefetching ? "animate-spin" : ""}`}
                 />
                 Refresh
               </button>
               <button
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="px-4 py-1.5 bg-primary hover:bg-primary/90 text-white text-xs font-bold rounded-xl transition-colors shadow-lg shadow-primary/20"
+                className="rounded-xl bg-primary px-4 py-2 text-xs font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary/90 active:scale-95"
               >
                 {isExpanded ? "Collapse" : "View Records"}
               </button>
@@ -123,48 +132,57 @@ export default function OnChainVerifier() {
           </div>
 
           {/* Stats Row */}
-          <div className="px-7 py-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="bg-secondary/40 rounded-2xl p-4 border border-border">
-              <p className="text-[10px] font-bold text-secondary-foreground uppercase tracking-widest mb-1">
-                Total Records On-Chain
-              </p>
-              <p className="text-2xl font-black text-primary-foreground">
-                {isLoading ? (
-                  <Loader2 className="w-6 h-6 animate-spin text-secondary-foreground" />
-                ) : (
-                  records.length
-                )}
-              </p>
+          <div className="grid grid-cols-1 gap-3 px-6 py-4 sm:grid-cols-3 sm:px-7">
+            <div className="flex items-start justify-between rounded-2xl border border-border bg-secondary/30 p-4">
+              <div>
+                <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
+                  Total Records On-Chain
+                </p>
+                <p className="text-2xl font-black text-primary-foreground tabular-nums">
+                  {isLoading ? (
+                    <Loader2 className="h-6 w-6 animate-spin text-secondary-foreground" />
+                  ) : (
+                    records.length
+                  )}
+                </p>
+              </div>
+              <Database className="h-5 w-5 text-primary/40" />
             </div>
-            <div className="bg-secondary/40 rounded-2xl p-4 border border-border">
-              <p className="text-[10px] font-bold text-secondary-foreground uppercase tracking-widest mb-1">
-                Allocations / Expenses
-              </p>
-              <p className="text-2xl font-black text-primary-foreground">
-                {isLoading ? (
-                  <Loader2 className="w-6 h-6 animate-spin text-secondary-foreground" />
-                ) : (
-                  `${totalAllocations} / ${totalExpenses}`
-                )}
-              </p>
+            <div className="flex items-start justify-between rounded-2xl border border-border bg-secondary/30 p-4">
+              <div>
+                <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
+                  Allocations / Expenses
+                </p>
+                <p className="text-2xl font-black text-primary-foreground tabular-nums">
+                  {isLoading ? (
+                    <Loader2 className="h-6 w-6 animate-spin text-secondary-foreground" />
+                  ) : (
+                    `${totalAllocations} / ${totalExpenses}`
+                  )}
+                </p>
+              </div>
+              <FileStack className="h-5 w-5 text-primary/40" />
             </div>
-            <div className="bg-secondary/40 rounded-2xl p-4 border border-border">
-              <p className="text-[10px] font-bold text-secondary-foreground uppercase tracking-widest mb-1">
-                Total Tracked Amount
-              </p>
-              <p className="text-2xl font-black text-success">
-                {isLoading ? (
-                  <Loader2 className="w-6 h-6 animate-spin text-secondary-foreground" />
-                ) : (
-                  `₱${(Number(totalAmount) / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                )}
-              </p>
+            <div className="flex items-start justify-between rounded-2xl border border-border bg-secondary/30 p-4">
+              <div>
+                <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
+                  Total Tracked Amount
+                </p>
+                <p className="text-2xl font-black text-success tabular-nums">
+                  {isLoading ? (
+                    <Loader2 className="h-6 w-6 animate-spin text-secondary-foreground" />
+                  ) : (
+                    `₱${(Number(totalAmount) / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                  )}
+                </p>
+              </div>
+              <Wallet className="h-5 w-5 text-success/40" />
             </div>
           </div>
 
           {/* Expanded Records Table */}
           {isExpanded && (
-            <div className="px-7 pb-5">
+            <div className="px-6 pb-5 sm:px-7">
               {isLoading ? (
                 <div className="text-center py-8 text-secondary-foreground">
                   <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
@@ -268,7 +286,7 @@ export default function OnChainVerifier() {
           )}
 
           {/* Contract Info Footer */}
-          <div className="px-7 py-3 bg-secondary/20 border-t border-border flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex flex-col justify-between gap-2 border-t border-border bg-secondary/20 px-6 py-3 sm:flex-row sm:items-center sm:px-7">
             <div className="space-y-1">
               <p className="text-[10px] text-secondary-foreground font-mono">
                 Current: {CONTRACT_ADDRESS}

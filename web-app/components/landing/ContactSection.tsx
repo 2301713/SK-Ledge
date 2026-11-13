@@ -24,12 +24,12 @@ export default function ContactSection() {
   return (
     <section
       id="contact"
-      className="py-16 bg-slate-950 px-6 animate-fadein scroll-mt-24 border-t border-white/8"
+      className="border-t border-white/8 bg-slate-950 px-6 py-20 scroll-mt-24"
     >
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12 pb-8 border-b border-white/8">
-          <div>
+        <div className="mb-12 flex flex-col gap-6 border-b border-white/8 pb-8 md:flex-row md:items-end md:justify-between">
+          <div className="animate-in-left motion-reduce:animate-none">
             <p className="text-xs font-bold text-primary uppercase tracking-[0.2em] mb-3">
               Contact
             </p>
@@ -39,7 +39,7 @@ export default function ContactSection() {
               governance <span className="text-tertiary">together.</span>
             </h2>
           </div>
-          <p className="text-slate-400 max-w-xs text-sm leading-relaxed md:text-right">
+          <p className="max-w-xs text-sm leading-relaxed text-slate-400 animate-in-right motion-reduce:animate-none md:text-right">
             Questions about SK-Ledge? Our team is ready to help your barangay
             get onboarded.
           </p>
@@ -50,7 +50,8 @@ export default function ContactSection() {
           {CARDS.map((card, idx) => (
             <div
               key={idx}
-              className="p-6 rounded-3xl bg-slate-900 border border-white/8 group hover:border-primary/30 transition-all duration-300"
+              style={{ animationDelay: `${idx * 70}ms` }}
+              className="group animate-rise rounded-3xl border border-white/8 bg-slate-900 p-6 transition-all duration-300 motion-reduce:animate-none hover:-translate-y-0.5 hover:border-primary/30"
             >
               <div className="w-10 h-10 rounded-xl bg-tertiary/15 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
                 <card.icon className="w-5 h-5 text-tertiary" />
@@ -73,7 +74,7 @@ export default function ContactSection() {
         </div>
 
         {/* CTA */}
-        <div className="flex justify-center">
+        <div className="flex justify-center animate-rise motion-reduce:animate-none">
           <a
             href={`mailto:${CONTACT_EMAIL}`}
             className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-xl font-bold text-sm hover:bg-primary/90 transition-all group shadow-lg shadow-primary/20"

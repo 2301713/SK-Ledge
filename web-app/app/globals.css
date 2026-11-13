@@ -21,6 +21,12 @@
   --color-background: #F1F5F9;
 
   --animate-fadein: fadein 0.7s ease-in-out;
+  --animate-slidein: slidein 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-breathe: breathe 2.8s ease-in-out infinite;
+  --animate-sweep: sweep 1.8s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+  --animate-rise: rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-in-left: in-left 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-in-right: in-right 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
 
   @keyframes fadein {
     from {
@@ -33,10 +39,96 @@
       transform: translateY(0);
     }
   }
+
+  @keyframes slidein {
+    from {
+      opacity: 0.6;
+      transform: translateX(100%);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes breathe {
+    0%,
+    100% {
+      transform: scale(1);
+    }
+
+    50% {
+      transform: scale(0.965);
+    }
+  }
+
+  @keyframes sweep {
+    0% {
+      transform: translateX(-120%);
+    }
+
+    100% {
+      transform: translateX(360%);
+    }
+  }
+
+  /* Entrance animations use the standalone `translate` property so they can
+     coexist with hover transforms on the same element. */
+  @keyframes rise {
+    from {
+      opacity: 0;
+      translate: 0 14px;
+    }
+
+    to {
+      opacity: 1;
+      translate: 0 0;
+    }
+  }
+
+  @keyframes in-left {
+    from {
+      opacity: 0;
+      translate: -18px 0;
+    }
+
+    to {
+      opacity: 1;
+      translate: 0 0;
+    }
+  }
+
+  @keyframes in-right {
+    from {
+      opacity: 0;
+      translate: 18px 0;
+    }
+
+    to {
+      opacity: 1;
+      translate: 0 0;
+    }
+  }
 }
 
 html {
   scroll-behavior: smooth;
+}
+
+/* Faint ledger-dot backdrop used by the global loading screen. */
+.ledger-grid {
+  background-image: radial-gradient(
+    rgba(1, 56, 168, 0.09) 1px,
+    transparent 1px
+  );
+  background-size: 22px 22px;
+  mask-image: radial-gradient(ellipse at center, black 25%, transparent 72%);
+  -webkit-mask-image: radial-gradient(
+    ellipse at center,
+    black 25%,
+    transparent 72%
+  );
 }
 
 .thin-scrollbar {

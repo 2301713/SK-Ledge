@@ -16,12 +16,22 @@ export default function FeaturesSection() {
   return (
     <section
       id="features"
-      className="py-16 bg-slate-950 px-6 scroll-mt-24"
+      className="relative overflow-hidden bg-slate-950 px-6 py-20 scroll-mt-24"
     >
-      <div className="max-w-6xl mx-auto animate-fadein">
+      {/* Ambient glow */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -right-40 top-10 h-96 w-96 rounded-full bg-primary/10 blur-[120px]"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -left-32 bottom-0 h-80 w-80 rounded-full bg-tertiary/[0.06] blur-[110px]"
+      />
+
+      <div className="relative mx-auto max-w-6xl">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-10 pb-8 border-b border-white/8">
-          <div>
+        <div className="mb-10 flex flex-col gap-6 border-b border-white/8 pb-8 md:flex-row md:items-end md:justify-between">
+          <div className="animate-in-left motion-reduce:animate-none">
             <p className="text-xs font-bold text-primary uppercase tracking-[0.2em] mb-3">
               Features
             </p>
@@ -33,7 +43,7 @@ export default function FeaturesSection() {
               <span className="text-slate-600">{`you don't.`}</span>
             </h2>
           </div>
-          <p className="text-slate-400 max-w-xs text-sm leading-relaxed md:text-right">
+          <p className="max-w-xs text-sm leading-relaxed text-slate-400 animate-in-right motion-reduce:animate-none md:text-right">
             Built specifically for local youth governance — replacing chaos with
             clarity.
           </p>
@@ -42,7 +52,7 @@ export default function FeaturesSection() {
         {/* Bento Grid */}
         <div className="grid grid-cols-1 md:grid-cols-11 gap-4">
           {/* Card 1: Project Management — wide */}
-          <div className="md:col-span-6 p-6 rounded-3xl bg-slate-900 border border-white/8 group hover:border-primary/30 transition-all duration-300 flex flex-col justify-between min-h-60">
+          <div className="group flex min-h-60 animate-rise flex-col justify-between rounded-3xl border border-white/8 bg-slate-900 p-6 transition-all duration-300 motion-reduce:animate-none hover:-translate-y-0.5 hover:border-primary/30 md:col-span-6">
             <div>
               <div className="flex items-start justify-between mb-4">
                 <div className="w-9 h-9 rounded-xl bg-tertiary/15 flex items-center justify-center">
@@ -78,7 +88,10 @@ export default function FeaturesSection() {
           </div>
 
           {/* Card 2: Budget Tracking — narrow */}
-          <div className="md:col-span-5 p-6 rounded-3xl bg-primary border border-primary/30 flex flex-col justify-between min-h-60 group hover:bg-primary/90 transition-all duration-300">
+          <div
+            className="group flex min-h-60 animate-rise flex-col justify-between rounded-3xl border border-primary/30 bg-primary p-6 transition-all duration-300 motion-reduce:animate-none hover:-translate-y-0.5 hover:bg-primary/90 md:col-span-5"
+            style={{ animationDelay: "80ms" }}
+          >
             <div>
               <div className="flex items-start justify-between mb-4">
                 <div className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center">
@@ -112,7 +125,10 @@ export default function FeaturesSection() {
           </div>
 
           {/* Card 3: Public Transparency — narrow */}
-          <div className="md:col-span-4 p-6 rounded-3xl bg-slate-900 border border-white/8 group hover:border-primary/30 transition-all duration-300 flex flex-col justify-between min-h-56">
+          <div
+            className="group flex min-h-56 animate-rise flex-col justify-between rounded-3xl border border-white/8 bg-slate-900 p-6 transition-all duration-300 motion-reduce:animate-none hover:-translate-y-0.5 hover:border-primary/30 md:col-span-4"
+            style={{ animationDelay: "160ms" }}
+          >
             <div>
               <div className="flex items-start justify-between mb-4">
                 <div className="w-9 h-9 rounded-xl bg-slate-800 flex items-center justify-center">
@@ -143,7 +159,10 @@ export default function FeaturesSection() {
           </div>
 
           {/* Card 4: Role-Based Access — wide */}
-          <div className="md:col-span-7 p-6 rounded-3xl bg-slate-900 border border-white/8 group hover:border-primary/30 transition-all duration-300 min-h-56">
+          <div
+            className="group min-h-56 animate-rise rounded-3xl border border-white/8 bg-slate-900 p-6 transition-all duration-300 motion-reduce:animate-none hover:-translate-y-0.5 hover:border-primary/30 md:col-span-7"
+            style={{ animationDelay: "240ms" }}
+          >
             <div className="flex flex-col md:flex-row gap-6 h-full items-start">
               <div className="flex-1">
                 <div className="flex items-start justify-between mb-4">
@@ -205,7 +224,7 @@ export default function FeaturesSection() {
         </div>
 
         {/* Public dashboard link */}
-        <div className="mt-10 flex justify-center">
+        <div className="mt-10 flex justify-center animate-rise motion-reduce:animate-none">
           <Link
             href="/public_portal"
             className="inline-flex items-center gap-2 px-6 py-3 bg-white/5 text-white border border-white/10 rounded-xl font-bold text-sm hover:bg-white/10 transition-all group"

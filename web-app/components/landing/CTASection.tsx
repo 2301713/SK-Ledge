@@ -15,9 +15,9 @@ const STATS = [
 
 export default function CTASection() {
   return (
-    <section className="py-12 px-6 animate-fadein bg-white">
+    <section className="bg-white px-6 py-16">
       <div className="max-w-6xl mx-auto">
-        <div className="bg-slate-950 rounded-3xl overflow-hidden border border-white/8 relative">
+        <div className="relative animate-rise overflow-hidden rounded-3xl border border-white/8 bg-slate-950 motion-reduce:animate-none">
           {/* Grid texture */}
           <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-size-[40px_40px] pointer-events-none" />
 
@@ -26,7 +26,7 @@ export default function CTASection() {
 
           <div className="relative z-10 grid lg:grid-cols-[1fr_320px] items-center gap-8 p-6 md:p-10 lg:p-12">
             {/* LEFT */}
-            <div className="space-y-6">
+            <div className="space-y-6 animate-in-left motion-reduce:animate-none">
               <div>
                 <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-white tracking-tight leading-tight mb-3">
                   Ready to lead your
@@ -84,7 +84,10 @@ export default function CTASection() {
             </div>
 
             {/* RIGHT: Secure Gateway mockup */}
-            <div className="hidden lg:block">
+            <div
+              className="hidden lg:block animate-in-right motion-reduce:animate-none"
+              style={{ animationDelay: "120ms" }}
+            >
               <div className="bg-slate-900 border border-white/10 rounded-xl p-4">
                 <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/8">
                   <div className="flex items-center gap-2">
