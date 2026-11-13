@@ -1,7 +1,7 @@
 "use client";
 
 import LogoLoader from "@/components/LogoLoader";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import SideBar from "@/components/dashboard/SideBar";
 import TopBar from "@/components/dashboard/ui/TopBar";
 import PageHeader from "@/components/dashboard/ui/PageHeader";
@@ -11,6 +11,7 @@ import StatusBadge from "@/components/dashboard/ui/StatusBadge";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/useAuthStore";
+import { useRecordsSync } from "@/lib/useRecordsSync";
 import {
   Download,
   Eye,
@@ -23,20 +24,6 @@ import {
   Loader2,
   CircleAlert,
 } from "lucide-react";
-
-interface SupabaseExpense {
-  id: string;
-  dv_number?: string;
-  reference_number?: string;
-  payee?: string;
-  category?: string;
-  purpose?: string;
-  amount: number;
-  date_submitted?: string;
-  created_at?: string;
-  compliance_status?: string;
-  barangay?: string;
-}
 
 export interface DisbursementItem {
   id: string;
@@ -62,9 +49,6 @@ const mapCompliance = (
 export default function DisbursementsPage() {
   const { currentUser, isLoading, setCurrentUser, setIsLoading } =
     useAuthStore();
-  const [disbursements, setDisbursements] = useState<DisbursementItem[]>([]);
-  const [isDataLoading, setIsDataLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const router = useRouter();
@@ -136,71 +120,56 @@ export default function DisbursementsPage() {
     }
   }, [setCurrentUser, setIsLoading, router]);
 
-  useEffect(() => {
-    if (!currentUser) return;
+  const {
+    records,
+    isLoading: isDataLoading,
+    error,
+    lastSyncedAt,
+  } = useRecordsSync({
+    type: "expense",
+    enabled: Boolean(currentUser),
+    limit: 500,
+  });
 
-    const fetchDisbursements = async () => {
-      try {
-        setIsDataLoading(true);
-        setError(null);
+  const disbursements = useMemo<DisbursementItem[]>(() => {
+    return records.map((item): DisbursementItem => {
+      const rawAmount =
+        typeof item.amount === "number"
+          ? item.amount
+          : parseFloat(String(item.amount ?? "0"));
+      const pesoAmount =
+        (Number.isFinite(rawAmount) ? rawAmount : 0) / 100;
 
-        const { data, error: fetchError } = await supabase
-          .from("expenses")
-          .select("*")
-          .order("created_at", { ascending: false });
+      const rawDate =
+        item.date_submitted ||
+        item.created_at ||
+        new Date().toISOString();
+      const dateSubmitted = new Date(rawDate).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
 
-        if (fetchError) throw fetchError;
+      const dvRef =
+        item.dv_number ||
+        item.reference_number ||
+        (item.id ? `DV-${item.id.slice(0, 8).toUpperCase()}` : "DV-N/A");
 
-        if (data) {
-          setDisbursements(
-            data.map((item: SupabaseExpense): DisbursementItem => {
-              const rawAmount =
-                typeof item.amount === "number"
-                  ? item.amount
-                  : parseFloat(String(item.amount ?? "0"));
-              const pesoAmount =
-                (Number.isFinite(rawAmount) ? rawAmount : 0) / 100;
-
-              const rawDate =
-                item.date_submitted ||
-                item.created_at ||
-                new Date().toISOString();
-              const dateSubmitted = new Date(rawDate).toLocaleDateString(
-                "en-US",
-                {
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
-                },
-              );
-
-              const dvRef =
-                item.dv_number ||
-                item.reference_number ||
-                (item.id ? `DV-${item.id.slice(0, 8).toUpperCase()}` : "DV-N/A");
-
-              return {
-                id: dvRef,
-                payee: item.payee || item.purpose || "N/A",
-                category: item.category || "General MOOE",
-                amount: pesoAmount,
-                dateSubmitted,
-                compliance: mapCompliance(item.compliance_status),
-                brgy: item.barangay || "Unassigned Brgy",
-              };
-            }),
-          );
-        }
-      } catch (err) {
-        console.error("Error fetching disbursements:", err);
-        setError("Failed to load disbursement records from Supabase.");
-      } finally {
-        setIsDataLoading(false);
-      }
-    };
-
-    fetchDisbursements();
-  }, [currentUser]);
+      return {
+        id: dvRef,
+        payee: item.payee || item.purpose || "N/A",
+        category: item.category || "General MOOE",
+        amount: pesoAmount,
+        dateSubmitted,
+        compliance: mapCompliance(
+          typeof item.compliance_status === "string"
+            ? item.compliance_status
+            : undefined,
+        ),
+        brgy: item.barangay || "Unassigned Brgy",
+      };
+    });
+  }, [records]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-PH", {
@@ -340,7 +309,11 @@ export default function DisbursementsPage() {
           <CardHeader
             eyebrow="Voucher Review"
             title="Disbursement Ledger"
-            subtitle="Latest pending disbursements awaiting audit"
+            subtitle={
+              lastSyncedAt
+                ? `Live · updated ${lastSyncedAt.toLocaleTimeString()}`
+                : "Latest pending disbursements awaiting audit"
+            }
           />
 
           <div className="overflow-x-auto">

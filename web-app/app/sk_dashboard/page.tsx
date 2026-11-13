@@ -10,6 +10,8 @@ import { Card, CardHeader } from "@/components/dashboard/ui/Card";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/useAuthStore";
+import { useRecordsSync } from "@/lib/useRecordsSync";
+import { sumAmountCentavos } from "@/lib/records";
 import {
   Plus,
   ChevronRight,
@@ -31,6 +33,10 @@ export default function SKDashboard() {
   const [projects, setProjects] = useState<
     { id: string; name: string; category: string; status: string; budget: number }[]
   >([]);
+  const { records: syncedRecords } = useRecordsSync({
+    enabled: Boolean(currentUser),
+    limit: 500,
+  });
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -164,9 +170,11 @@ export default function SKDashboard() {
     );
   }
 
-  const totalAllocated = 1250000;
-  const totalSpent = 165000;
-  const percentageSpent = (totalSpent / totalAllocated) * 100;
+  // Ledger amounts are stored in centavos; the UI shows pesos.
+  const totalAllocated = sumAmountCentavos(syncedRecords, "allocation") / 100;
+  const totalSpent = sumAmountCentavos(syncedRecords, "expense") / 100;
+  const percentageSpent =
+    totalAllocated > 0 ? (totalSpent / totalAllocated) * 100 : 0;
   const availableFunds = totalAllocated - totalSpent;
   const pendingCount = projects.filter((p) => p.status === "Pending").length;
   const approvedCount = projects.filter((p) => p.status === "Approved").length;

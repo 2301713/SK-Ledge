@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
+import { useRecordsSync } from "@/lib/useRecordsSync";
 import { canonicalizeBarangay } from "@/lib/batangasBarangays";
 import PortalNav from "../../components/public_portal/PortalNav";
 import PortalHero from "../../components/public_portal/PortalHero";
@@ -19,36 +20,39 @@ type Disbursement = {
 
 export default function PublicDashboard() {
   const [projects, setProjects] = useState<Project[]>([]);
-  const [disbursements, setDisbursements] = useState<Disbursement[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const { records: allocations } = useRecordsSync({
+    type: "allocation",
+    public: true,
+    limit: 500,
+  });
+  const { records: expenses } = useRecordsSync({
+    type: "expense",
+    public: true,
+    limit: 500,
+  });
+
+  const disbursements = useMemo<Disbursement[]>(() => {
+    return [...allocations, ...expenses].map((record) => ({
+      amount: Number(record.amount) || 0,
+      created_at: record.created_at ?? undefined,
+    }));
+  }, [allocations, expenses]);
 
   useEffect(() => {
-    async function fetchPortalData() {
+    async function fetchProjects() {
       try {
-        const [projectsRes, allocationsRes, expensesRes] = await Promise.all([
-          supabase.from("projects").select("*"),
-          supabase.from("allocations").select("amount, created_at"),
-          supabase.from("expenses").select("amount, created_at"),
-        ]);
+        const { data, error } = await supabase.from("projects").select("*");
 
-        if (!projectsRes.error && projectsRes.data) {
-          setProjects(projectsRes.data);
+        if (!error && data) {
+          setProjects(data);
         }
-
-        const merged: Disbursement[] = [];
-        if (!allocationsRes.error && allocationsRes.data) {
-          merged.push(...allocationsRes.data);
-        }
-        if (!expensesRes.error && expensesRes.data) {
-          merged.push(...expensesRes.data);
-        }
-        setDisbursements(merged);
       } catch (err) {
         console.error("❌ Network/Fetch Error:", err);
       }
     }
 
-    fetchPortalData();
+    fetchProjects();
   }, []);
 
   const filteredProjects = useMemo(() => {
