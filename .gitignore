@@ -8,11 +8,11 @@ diagrams/
 
 SK-Ledge-Use-Case-Diagram.png
 
-# supabase/
-# !supabase/
+# Supabase: ignore local state, but track schema migrations
 supabase/*
 # !supabase/migrations/
 # supabase/migrations/*
 # !supabase/migrations/20261031000000_sync_record_transaction_hash_indexes.sql
 # !supabase/migrations/20261113000000_add_profile_wallet_binding.sql
 # !supabase/migrations/20261113000001_add_blockchain_sync_failures.sql
+# !supabase/migrations/20261113000002_add_recovery_upsert_conflict_target.sql

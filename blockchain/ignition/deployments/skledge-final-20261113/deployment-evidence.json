@@ -1,0 +1,56 @@
+{
+  "deploymentId": "skledge-final-20261113",
+  "test": "Finalize Deployment Identity",
+  "network": "sepolia",
+  "chainId": 11155111,
+  "contractAddress": "0xc5Abc80b9657b0DF207DB9f21960edc18F806d84",
+  "deploymentTransaction": "0x72c43e9c470b78a1cd3ea1eb72638ff4d4d83178c450d0e8d880f0f19e53f4df",
+  "deploymentBlock": 12123433,
+  "deploymentTimestamp": 1794542232,
+  "deploymentDateUtc": "2026-11-13T03:57:12Z",
+  "deploymentDatePht": "2026-11-13T11:57:12+08:00",
+  "deployer": "0x48055a56f677E8DAa706544f1ebbD3d2F858D1B2",
+  "owner": "0x48055a56f677E8DAa706544f1ebbD3d2F858D1B2",
+  "source": {
+    "file": "blockchain/contracts/SkLedge.sol",
+    "repoHead": "0d06375267e2c4f540a3725875d5b35b83d9eb09",
+    "sourceCommit": "9a03a4f2eb9ace6adc1b00cace187c480d91876d",
+    "sourceTimestamp": "2026-11-12T17:40:42+08:00"
+  },
+  "compiler": {
+    "version": "v0.8.28+commit.7893614a",
+    "optimizer": "enabled",
+    "runs": 200,
+    "evmVersion": "cancun"
+  },
+  "fingerprints": {
+    "abiSha256": "9ede9abca3de739a384650cc74d7bda456c2ae36f36a61de3739fa81a66049be",
+    "creationBytecodeSha256": "4488940fcddadc163b34475012a772e13f51d2a7a2aaaa884fffa62af2620fc4",
+    "runtimeBytecodeSha256": "4833956dd8bdef836da0d89e8f88facc86d09d13e62f259267c903b4423ac09e",
+    "runtimeBytecodeLength": 36420
+  },
+  "etherscan": {
+    "url": "https://sepolia.etherscan.io/address/0xc5Abc80b9657b0DF207DB9f21960edc18F806d84",
+    "verified": true,
+    "contractName": "SkLedge",
+    "compilerVersion": "v0.8.28+commit.7893614a",
+    "optimizationUsed": true,
+    "runs": 200,
+    "evmVersion": "cancun"
+  },
+  "onChainBytecodeMatch": true,
+  "env": {
+    "blockchainDotEnv": "0xc5Abc80b9657b0DF207DB9f21960edc18F806d84",
+    "webAppDotEnv": "0xc5Abc80b9657b0DF207DB9f21960edc18F806d84",
+    "productionHosting": "not-applicable-no-hosted-deployment"
+  },
+  "productionHostingNote": "The web app has not been deployed to any hosting provider, so there is no production environment variable to update. Set NEXT_PUBLIC_CONTRACT_ADDRESS to this address in the hosting environment if/when the web app is deployed, and build without a cached bundle.",
+  "verification": {
+    "owner": "0x48055a56f677E8DAa706544f1ebbD3d2F858D1B2",
+    "isOwner": true,
+    "isAuthorized": true,
+    "totalRecords": 0,
+    "result": "SUCCESS"
+  },
+  "toolingNote": "Hardhat CLI could not start because Windows Application Control blocks @nomicfoundation/edr-win32-x64-msvc and Docker is unavailable. The exact Hardhat build-info standard JSON input was compiled with solc-js 0.8.28 to reproduce the recorded hashes, then ethers v6 was used for direct deployment and Etherscan API v2 for standard-JSON verification."
+}
