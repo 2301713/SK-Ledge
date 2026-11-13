@@ -11,6 +11,7 @@ export interface UserAccount {
   email?: string;
   approval_status?: string;
   avatar_url?: string;
+  wallet_address?: string | null;
 }
 
 interface AuthState {

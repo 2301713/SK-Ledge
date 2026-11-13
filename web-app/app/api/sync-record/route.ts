@@ -51,36 +51,50 @@ export async function POST(req: NextRequest) {
       return errorResponse("Server configuration error.", 500);
     }
 
-    const cookieStore = await cookies();
-    const supabaseAuth = createServerClient(supabaseUrl, supabaseAnonKey, {
-      cookies: {
-        getAll: () => cookieStore.getAll(),
-        setAll: (cookiesToSet) => {
-          cookiesToSet.forEach(({ name, value, options }) =>
-            cookieStore.set(name, value, options),
-          );
+    const recoverySecret = process.env.SYNC_RECOVERY_SECRET;
+    const recoveryUserId = req.headers.get("x-skledge-recovery-user-id");
+    const isInternalRecovery =
+      Boolean(recoverySecret) &&
+      req.headers.get("x-skledge-recovery-secret") === recoverySecret &&
+      Boolean(recoveryUserId);
+
+    let user: { id: string } | null = null;
+    if (isInternalRecovery) {
+      user = { id: recoveryUserId as string };
+    } else {
+      const cookieStore = await cookies();
+      const supabaseAuth = createServerClient(supabaseUrl, supabaseAnonKey, {
+        cookies: {
+          getAll: () => cookieStore.getAll(),
+          setAll: (cookiesToSet) => {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options),
+            );
+          },
         },
-      },
-    });
+      });
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabaseAuth.auth.getUser();
+      const {
+        data: { user: authenticatedUser },
+        error: authError,
+      } = await supabaseAuth.auth.getUser();
 
-    if (authError) {
-      if (authError.status && authError.status < 500) {
+      if (authError) {
+        if (authError.status && authError.status < 500) {
+          return errorResponse("Unauthenticated. Valid session cookie required.", 401);
+        }
+
+        console.error("Supabase authentication failed.", {
+          status: authError.status ?? "unknown",
+        });
+        return errorResponse("Authentication service unavailable.", 500);
+      }
+
+      if (!authenticatedUser) {
         return errorResponse("Unauthenticated. Valid session cookie required.", 401);
       }
 
-      console.error("Supabase authentication failed.", {
-        status: authError.status ?? "unknown",
-      });
-      return errorResponse("Authentication service unavailable.", 500);
-    }
-
-    if (!user) {
-      return errorResponse("Unauthenticated. Valid session cookie required.", 401);
+      user = authenticatedUser;
     }
 
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
@@ -93,7 +107,7 @@ export async function POST(req: NextRequest) {
 
     const { data: profile, error: profileError } = await supabaseAdmin
       .from("profiles")
-      .select("role_type, approval_status, barangay")
+      .select("role_type, approval_status, barangay, wallet_address")
       .eq("id", user.id)
       .maybeSingle();
 
@@ -109,6 +123,13 @@ export async function POST(req: NextRequest) {
       profile.approval_status !== "approved"
     ) {
       return errorResponse("Forbidden. An approved user profile is required.", 403);
+    }
+
+    if (!profile.wallet_address || !isAddress(profile.wallet_address)) {
+      return errorResponse(
+        "Forbidden. Bind your blockchain wallet to your approved profile first.",
+        403,
+      );
     }
 
     let body: unknown;
@@ -182,6 +203,15 @@ export async function POST(req: NextRequest) {
       !isAddress(official_address)
     ) {
       return errorResponse("Invalid official_address format.", 400);
+    }
+
+    if (
+      official_address.toLowerCase() !== profile.wallet_address.toLowerCase()
+    ) {
+      return errorResponse(
+        "Forbidden. The signing wallet does not match your approved profile wallet.",
+        403,
+      );
     }
 
     if (typeof barangay !== "string" || barangay.length > 120) {
@@ -480,6 +510,37 @@ export async function POST(req: NextRequest) {
       console.error("Failed to insert verified sync record.", {
         code: insertError.code,
       });
+
+      const { error: recoveryError } = await supabaseAdmin
+        .from("blockchain_sync_failures")
+        .upsert(
+          {
+            user_id: user.id,
+            record_type: type,
+            blockchain_tx_hash: transactionHash,
+            payload: {
+              type,
+              blockchain_tx_hash: transactionHash,
+              contract_address: expectedContract,
+              official_address,
+              barangay: canonicalBarangay,
+              amount,
+              purpose,
+              ...(projectId ? { project_id: projectId } : {}),
+            },
+            status: "pending",
+            last_error: insertError.message,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "blockchain_tx_hash" },
+        );
+
+      if (recoveryError) {
+        console.error("Failed to record blockchain sync recovery item.", {
+          code: recoveryError.code,
+        });
+      }
+
       return errorResponse("Failed to insert record into database.", 500);
     }
 

@@ -12,6 +12,7 @@ import { useAuthStore, UserAccount } from "@/lib/useAuthStore";
 import { AlertCircle, UserCircle, Pencil } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/lib/useToast";
+import { WalletBinding } from "@/components/WalletBinding";
 
 export default function BMOAccountPage() {
   const router = useRouter();
@@ -53,7 +54,7 @@ export default function BMOAccountPage() {
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .select(
-            "id, username, role_type, full_name, barangay, email, approval_status, avatar_url",
+            "id, username, role_type, full_name, barangay, email, approval_status, avatar_url, wallet_address",
           )
           .eq("id", user.id)
           .single();
@@ -79,6 +80,7 @@ export default function BMOAccountPage() {
             email: profileData.email,
             approval_status: profileData.approval_status,
             avatar_url: profileData.avatar_url || undefined,
+            wallet_address: profileData.wallet_address || null,
           };
 
           setCurrentUser(profile as UserAccount);
@@ -269,6 +271,11 @@ export default function BMOAccountPage() {
             className="absolute -right-[5%] -bottom-[20%] h-48 w-48 text-primary/5 transition-transform duration-700 group-hover:scale-110"
             strokeWidth={1}
           />
+        </Card>
+
+        <Card>
+          <CardHeader eyebrow="Blockchain" title="Wallet authorization" />
+          <WalletBinding boundWallet={userProfile?.wallet_address} />
         </Card>
 
         {/* DETAILS FORM SECTION */}

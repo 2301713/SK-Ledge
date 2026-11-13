@@ -1,13 +1,28 @@
 import { network } from "hardhat";
 import * as fs from "fs";
 import * as path from "path";
+import { ethers as ethersLib } from "ethers";
+
+function requiredContractAddress(): string {
+  const address = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS?.trim();
+  if (
+    !address ||
+    !ethersLib.isAddress(address) ||
+    address.toLowerCase() === ethersLib.ZeroAddress
+  ) {
+    throw new Error(
+      "NEXT_PUBLIC_CONTRACT_ADDRESS must be a valid nonzero Ethereum address."
+    );
+  }
+  return address;
+}
 
 async function main() {
   console.log("----------------------------------------------------------------");
   console.log("Activity: verify-deployment.ts");
   console.log("----------------------------------------------------------------");
 
-  const CONTRACT_ADDRESS = "0x857615c8b31CF1c51ef27B5F8FAA4F019C111549";
+  const contractAddress = requiredContractAddress();
 
   console.log("\n1. Connecting to Sepolia Network...");
   const { ethers } = await network.create({ network: "sepolia" });
@@ -44,10 +59,10 @@ async function main() {
   console.log("Successfully loaded ABI.");
 
   console.log("\n3. Attaching to ALREADY DEPLOYED contract at:");
-  console.log(CONTRACT_ADDRESS);
+  console.log(contractAddress);
 
   const skLedge = new ethers.Contract(
-    CONTRACT_ADDRESS,
+    contractAddress,
     contractAbi,
     sender
   );
@@ -76,7 +91,7 @@ async function main() {
   console.log("\n----------------------------------------------------------------");
   console.log("VERIFICATION RESULTS");
   console.log("----------------------------------------------------------------");
-  console.log(`Contract Address:      ${CONTRACT_ADDRESS}`);
+  console.log(`Contract Address:      ${contractAddress}`);
   console.log(`Contract Owner:        ${owner}`);
   console.log(`Deployer/Sender:       ${sender.address}`);
   console.log(`Are You the Owner?     ${isOwner}`);

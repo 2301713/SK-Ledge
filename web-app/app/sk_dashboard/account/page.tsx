@@ -11,6 +11,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuthStore, UserAccount } from "@/lib/useAuthStore";
 import { AlertCircle, UserCircle, Pencil } from "lucide-react";
 import { useToast } from "@/lib/useToast";
+import { WalletBinding } from "@/components/WalletBinding";
 
 export default function AccountPage() {
   const toast = useToast();
@@ -50,7 +51,7 @@ export default function AccountPage() {
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .select(
-            "id, username, full_name, role_type, barangay, email, approval_status, avatar_url",
+            "id, username, full_name, role_type, barangay, email, approval_status, avatar_url, wallet_address",
           )
           .eq("id", user.id)
           .single();
@@ -69,6 +70,7 @@ export default function AccountPage() {
             email: profileData.email,
             approval_status: profileData.approval_status,
             avatar_url: profileData.avatar_url || undefined,
+            wallet_address: profileData.wallet_address || null,
           } as UserAccount);
 
           // Set Form State
@@ -79,6 +81,7 @@ export default function AccountPage() {
             role_type: profileData.role_type,
             barangay: profileData.barangay || "N/A",
             avatar_url: profileData.avatar_url || undefined,
+            wallet_address: profileData.wallet_address || null,
           });
         }
       } catch (err) {
@@ -266,6 +269,11 @@ export default function AccountPage() {
             className="absolute -right-[5%] -bottom-[20%] h-48 w-48 text-primary/5 transition-transform duration-700 group-hover:scale-110"
             strokeWidth={1}
           />
+        </Card>
+
+        <Card>
+          <CardHeader eyebrow="Blockchain" title="Wallet authorization" />
+          <WalletBinding boundWallet={userProfile?.wallet_address} />
         </Card>
 
         {/* DETAILS FORM SECTION */}

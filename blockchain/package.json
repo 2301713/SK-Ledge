@@ -6,6 +6,7 @@
   "scripts": {
     "test": "hardhat test",
     "export-abi": "hardhat compile && hardhat run scripts/export-abi.ts",
+    "verify-deployment": "hardhat run scripts/verify-deployment.ts --network sepolia",
     "setup-sepolia": "hardhat run scripts/setupRolesAndCeilings.ts --network sepolia",
     "register-barangays": "hardhat run scripts/registerCanonicalBarangays.ts --network sepolia"
   },
