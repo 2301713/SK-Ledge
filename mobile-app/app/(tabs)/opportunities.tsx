@@ -1,8 +1,25 @@
-import { useRouter } from "expo-router";
-import { ChevronRight, Filter, Search } from "lucide-react-native";
-import React, { useEffect, useState } from "react";
+import ScreenHeader from "@/components/ui/ScreenHeader";
+import { ProjectCardSkeleton } from "@/components/ui/Skeletons";
 import {
-  ActivityIndicator,
+  daysLeftLabel,
+  fetchOpenProjects,
+  formatPeso,
+  getErrorMessage,
+  uniqueCategories,
+  type Project,
+} from "@/lib/projects";
+import { useRouter } from "expo-router";
+import {
+  ChevronRight,
+  Inbox,
+  MapPin,
+  RefreshCw,
+  Search,
+  X,
+} from "lucide-react-native";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
+import {
   FlatList,
   RefreshControl,
   Text,
@@ -11,39 +28,49 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { CATEGORIES, Opportunity } from "../../data/data";
-import { supabase } from "../../lib/supabase";
 
 export default function OpportunitiesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
-  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState("");
   const router = useRouter();
 
-  const fetchOpportunities = async () => {
+  const fetchOpportunities = useCallback(async () => {
     try {
-      const { data, error } = await supabase
-        .from("opportunities")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (error) {
-        console.error("Error fetching opportunities:", error.message);
-      } else if (data) {
-        setOpportunities(data);
-      }
+      setProjects(await fetchOpenProjects());
     } catch (err) {
-      console.error("Fetch exception:", err);
+      setError(getErrorMessage(err, "Could not load opportunities."));
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchOpportunities();
+    let active = true;
+
+    fetchOpenProjects()
+      .then((data) => {
+        if (active) setProjects(data);
+      })
+      .catch((err) => {
+        if (active) {
+          setError(getErrorMessage(err, "Could not load opportunities."));
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setLoading(false);
+          setRefreshing(false);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   const onRefresh = () => {
@@ -51,111 +78,149 @@ export default function OpportunitiesPage() {
     fetchOpportunities();
   };
 
-  const filteredData = opportunities.filter((item) => {
-    const matchesSearch = item.title
-      ?.toLowerCase()
-      .includes(searchQuery.toLowerCase());
-    const matchesCategory =
-      activeCategory === "All" || item.category === activeCategory;
-    return matchesSearch && matchesCategory;
-  });
+  const categories = useMemo(
+    () => ["All", ...uniqueCategories(projects)],
+    [projects],
+  );
 
-  const renderItem = ({ item }: { item: Opportunity }) => (
+  const filteredData = useMemo(
+    () =>
+      projects.filter((item) => {
+        const term = searchQuery.trim().toLowerCase();
+        const matchesSearch =
+          !term ||
+          item.name.toLowerCase().includes(term) ||
+          item.location.toLowerCase().includes(term) ||
+          item.category.toLowerCase().includes(term);
+        const matchesCategory =
+          activeCategory === "All" || item.category === activeCategory;
+        return matchesSearch && matchesCategory;
+      }),
+    [projects, searchQuery, activeCategory],
+  );
+
+  const renderItem = ({ item, index }: { item: Project; index: number }) => (
+    <Animated.View
+      entering={FadeInDown.duration(320).delay(Math.min(index, 5) * 40)}
+    >
     <TouchableOpacity
-      className="rounded-3xl border border-border bg-white p-5"
-      style={{ shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 10, elevation: 2 }}
-      activeOpacity={0.7}
+      className="overflow-hidden rounded-2xl border border-border bg-white p-4"
+      style={{
+        shadowColor: "#0F172A",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.03,
+        shadowRadius: 3,
+        elevation: 1,
+      }}
+      activeOpacity={0.75}
       onPress={() =>
         router.push({ pathname: "/opportunity/[id]", params: { id: item.id } })
       }
     >
-      <View className="mb-3 flex-row items-center justify-between">
-        <Text className="font-inter-extrabold text-xs uppercase tracking-[0.6px] text-primary">
-          {item.department}
-        </Text>
-        <Text className="font-inter-bold text-xs text-danger">Closes: {item.deadline}</Text>
+      <View className="flex-row items-center justify-between gap-3">
+        <View className="flex-1 flex-row items-center gap-2">
+          <View className="h-1.5 w-1.5 rounded-full bg-primary" />
+          <Text
+            className="font-inter-bold text-[9px] uppercase tracking-[0.14em] text-secondary-foreground"
+            numberOfLines={1}
+          >
+            {item.category}
+          </Text>
+        </View>
+        <View className="rounded-full border border-border bg-secondary/50 px-2.5 py-1">
+          <Text className="font-inter-bold text-[9px] uppercase tracking-[0.06em] text-secondary-foreground">
+            {daysLeftLabel(item)}
+          </Text>
+        </View>
       </View>
 
-      <Text className="font-inter-extrabold mb-[18px] text-lg leading-6 text-primary-foreground">
-        {item.title}
+      <Text className="font-inter-bold mt-2.5 text-[16px] leading-6 text-primary-foreground">
+        {item.name}
       </Text>
 
-      <View className="flex-row items-center gap-2">
-        <View className="rounded-[10px] bg-background px-3 py-1.5">
-          <Text className="font-inter-bold text-xs text-slate-600">{item.budget}</Text>
+      <View className="mt-3.5 flex-row items-center justify-between border-t border-border/70 pt-3">
+        <View className="flex-1 flex-row items-center gap-3">
+          <View className="flex-row items-center gap-1">
+            <MapPin size={12} color="#94A3B8" />
+            <Text
+              className="font-inter-medium text-[11px] text-secondary-foreground"
+              numberOfLines={1}
+            >
+              {item.location}
+            </Text>
+          </View>
+          <Text className="font-inter-extrabold text-[13px] text-primary">
+            {formatPeso(item.budget)}
+          </Text>
         </View>
-        <View className="rounded-[10px] bg-background px-3 py-1.5">
-          <Text className="font-inter-bold text-xs text-slate-600">{item.category}</Text>
-        </View>
-
-        <View className="flex-1" />
-
-        <View className="h-8 w-8 items-center justify-center rounded-[10px] bg-background">
-          <ChevronRight size={18} color="#0138A8" />
+        <View className="h-7 w-7 items-center justify-center rounded-lg border border-border bg-secondary">
+          <ChevronRight size={15} color="#0138A8" />
         </View>
       </View>
     </TouchableOpacity>
+    </Animated.View>
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-primary" edges={["top"]}>
-      {/* HERO HEADER */}
-      <View className="bg-primary px-6 pb-[50px] pt-3">
-        <Text className="font-inter-extrabold text-[32px] tracking-tight text-white">
-          Find Contracts
-        </Text>
-        <Text className="font-inter-medium mt-1.5 text-[15px] text-secondary-foreground">
-          Browse open bidding opportunities
-        </Text>
-      </View>
+    <View className="flex-1 bg-background">
+      <SafeAreaView className="bg-white" edges={["top"]} />
 
-      {/* MAIN BODY CONTENT */}
-      <View className="flex-1 rounded-t-[30px] bg-background pt-6">
-        {/* Search Bar Container */}
-        <View className="mb-5 flex-row gap-3 px-6">
-          <View
-            className="h-[54px] flex-1 flex-row items-center rounded-2xl border border-border bg-white px-4"
-            style={{ shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.02, shadowRadius: 4, elevation: 1 }}
-          >
-            <Search size={20} color="#64748B" />
-            <TextInput
-              className="font-inter-medium ml-2.5 flex-1 text-[15px] text-primary-foreground"
-              placeholder="Search opportunities..."
-              placeholderTextColor="#64748B"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-          </View>
-          <TouchableOpacity
-            className="h-[54px] w-[54px] items-center justify-center rounded-2xl bg-primary"
-            style={{ shadowColor: "#0138A8", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 6, elevation: 3 }}
-            activeOpacity={0.8}
-          >
-            <Filter size={20} color="#FFFFFF" />
-          </TouchableOpacity>
+      <Animated.View entering={FadeIn.duration(350)}>
+      <ScreenHeader
+        eyebrow="Procurement Registry"
+        title="Find contracts"
+        subtitle={
+          loading
+            ? "Loading live procurements..."
+            : `${projects.length} open procurement${projects.length === 1 ? "" : "s"} from the SK portal`
+        }
+      />
+      </Animated.View>
+
+      <Animated.View entering={FadeInDown.delay(60).duration(400)}>
+      <View className="px-6 pb-4 pt-4">
+        <View className="h-12 flex-row items-center rounded-xl border border-border bg-white px-3.5">
+          <Search size={17} color="#64748B" />
+          <TextInput
+            className="font-inter-medium ml-2.5 flex-1 text-[14px] text-primary-foreground"
+            placeholder="Search project, barangay, category..."
+            placeholderTextColor="#94A3B8"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+          {searchQuery.length > 0 ? (
+            <TouchableOpacity onPress={() => setSearchQuery("")} hitSlop={10}>
+              <X size={16} color="#94A3B8" />
+            </TouchableOpacity>
+          ) : null}
         </View>
+      </View>
+      </Animated.View>
 
-        {/* Category Pills */}
-        <View className="mb-5">
+      {categories.length > 2 ? (
+        <Animated.View entering={FadeInDown.delay(100).duration(400)}>
+        <View className="mb-4">
           <FlatList
             horizontal
             showsHorizontalScrollIndicator={false}
-            data={CATEGORIES}
+            data={categories}
             keyExtractor={(item) => item}
             contentContainerStyle={{ paddingHorizontal: 24, gap: 8 }}
             renderItem={({ item }) => (
               <TouchableOpacity
-                className={`rounded-[14px] border px-[18px] py-2.5 ${
+                className={`rounded-xl border px-3.5 py-2 ${
                   activeCategory === item
                     ? "border-primary bg-primary"
                     : "border-border bg-white"
                 }`}
                 onPress={() => setActiveCategory(item)}
-                activeOpacity={0.7}
+                activeOpacity={0.75}
               >
                 <Text
-                  className={`font-inter-semibold text-sm ${
-                    activeCategory === item ? "text-white" : "text-secondary-foreground"
+                  className={`font-inter-bold text-[10px] uppercase tracking-[0.08em] ${
+                    activeCategory === item
+                      ? "text-white"
+                      : "text-secondary-foreground"
                   }`}
                 >
                   {item}
@@ -164,37 +229,69 @@ export default function OpportunitiesPage() {
             )}
           />
         </View>
+        </Animated.View>
+      ) : null}
 
-        {/* Opportunities List */}
-        {loading && !refreshing ? (
-          <View className="flex-1 items-center justify-center pt-10">
-            <ActivityIndicator size="large" color="#003366" />
+      {error ? (
+        <View className="mx-6 rounded-2xl border border-danger/25 bg-danger/[0.06] p-4">
+          <View className="flex-row items-start gap-2.5">
+            <RefreshCw size={15} color="#DC2626" style={{ marginTop: 2 }} />
+            <Text className="font-inter-semibold flex-1 text-[12px] leading-5 text-danger">
+              {error}
+            </Text>
           </View>
-        ) : (
-          <FlatList
-            data={filteredData}
-            keyExtractor={(item) => item.id}
-            renderItem={renderItem}
-            contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 40, gap: 16 }}
-            showsVerticalScrollIndicator={false}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={onRefresh}
-                tintColor="#003366"
-                colors={["#003366"]}
-              />
-            }
-            ListEmptyComponent={
-              <View className="items-center py-[60px]">
-                <Text className="font-inter-medium text-[15px] text-secondary-foreground">
-                  No opportunities found.
-                </Text>
+          <TouchableOpacity
+            className="mt-3 self-start rounded-lg border border-danger/20 bg-white px-3.5 py-2"
+            onPress={() => {
+              setError("");
+              setLoading(true);
+              fetchOpportunities();
+            }}
+            activeOpacity={0.8}
+          >
+            <Text className="font-inter-bold text-[10px] uppercase tracking-[0.1em] text-danger">
+              Try again
+            </Text>
+          </TouchableOpacity>
+        </View>
+      ) : loading && !refreshing ? (
+        <View className="gap-3 px-6">
+          {[0, 1, 2, 3].map((item) => (
+            <ProjectCardSkeleton key={item} />
+          ))}
+        </View>
+      ) : (
+        <FlatList
+          data={filteredData}
+          keyExtractor={(item) => item.id}
+          renderItem={renderItem}
+          contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 40, gap: 12 }}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#0138A8"
+              colors={["#0138A8"]}
+            />
+          }
+          ListEmptyComponent={
+            <View className="items-center px-6 py-[60px]">
+              <View className="mb-3 h-12 w-12 items-center justify-center rounded-2xl border border-border bg-white">
+                <Inbox size={21} color="#64748B" />
               </View>
-            }
-          />
-        )}
-      </View>
-    </SafeAreaView>
+              <Text className="font-inter-bold text-[13px] text-primary-foreground">
+                No matching procurements
+              </Text>
+              <Text className="font-inter mt-1 text-center text-[11px] leading-4 text-secondary-foreground">
+                {projects.length === 0
+                  ? "No procurements are open for bidding right now."
+                  : "Try a different keyword or category."}
+              </Text>
+            </View>
+          }
+        />
+      )}
+    </View>
   );
 }

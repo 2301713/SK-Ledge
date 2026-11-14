@@ -10,6 +10,7 @@ import {
 } from "@expo-google-fonts/inter";
 import { supabase } from "@/lib/supabase";
 import { useFonts } from "expo-font";
+import { StatusBar } from "expo-status-bar";
 import { Stack, usePathname, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 
@@ -66,6 +67,7 @@ export default function RootLayout() {
 
   return (
     <>
+      <StatusBar style="dark" />
       <Stack screenOptions={{ headerShown: false }}>
         {/* Public Auth Screens */}
         <Stack.Screen name="index" />

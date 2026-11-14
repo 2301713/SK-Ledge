@@ -16,13 +16,27 @@ export default function PrimaryButton({
     <TouchableOpacity
       accessibilityRole="button"
       accessibilityLabel="Primary action"
-      activeOpacity={0.8}
+      activeOpacity={0.85}
       disabled={disabled}
       onPress={onPress}
-      className={`items-center justify-center rounded-2xl bg-tertiary py-4 ${className}`}
-      style={{ shadowColor: "#FBD219", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 10, elevation: 5 }}
+      className={`h-14 flex-row items-center justify-center gap-2 rounded-xl bg-primary px-5 ${
+        disabled ? "opacity-60" : ""
+      } ${className}`}
+      style={{
+        shadowColor: "#0138A8",
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.18,
+        shadowRadius: 14,
+        elevation: 4,
+      }}
     >
-      <Text className="font-inter-extrabold text-lg text-primary-foreground">{children}</Text>
+      {typeof children === "string" || typeof children === "number" ? (
+        <Text className="font-inter-black text-[12px] uppercase tracking-[0.16em] text-white">
+          {children}
+        </Text>
+      ) : (
+        children
+      )}
     </TouchableOpacity>
   );
 }

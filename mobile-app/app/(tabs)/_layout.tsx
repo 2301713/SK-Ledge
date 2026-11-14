@@ -1,7 +1,6 @@
-import { IconSymbol } from "@/components/ui/icon-symbol";
-import { Tabs } from "expo-router";
-import { ClipboardList } from "lucide-react-native";
 import { Colors } from "@/constants/theme";
+import { Tabs } from "expo-router";
+import { Briefcase, ClipboardList, Home, User } from "lucide-react-native";
 
 export default function TabLayout() {
   return (
@@ -9,25 +8,32 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: Colors.primary,
-        tabBarInactiveTintColor: Colors.secondaryForeground,
+        tabBarInactiveTintColor: "#94A3B8",
         tabBarStyle: {
           backgroundColor: Colors.white,
           borderTopColor: Colors.border,
+          borderTopWidth: 1,
+          elevation: 0,
           shadowColor: "#0F172A",
-          shadowOffset: { width: 0, height: 8 },
-          shadowOpacity: 0.08,
-          shadowRadius: 24,
-          elevation: 8,
+          shadowOffset: { width: 0, height: -4 },
+          shadowOpacity: 0.04,
+          shadowRadius: 12,
+        },
+        tabBarLabelStyle: {
+          fontFamily: "Inter_700Bold",
+          fontSize: 9,
+          letterSpacing: 0.7,
+          textTransform: "uppercase",
+          marginTop: 1,
         },
       }}
     >
-      {/* Your Tab Screens stay exactly the same */}
       <Tabs.Screen
         name="home"
         options={{
           title: "Home",
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="house.fill" color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <Home size={21} color={color} strokeWidth={focused ? 2.4 : 2} />
           ),
         }}
       />
@@ -35,8 +41,8 @@ export default function TabLayout() {
         name="opportunities"
         options={{
           title: "Opportunities",
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="briefcase.fill" color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <Briefcase size={21} color={color} strokeWidth={focused ? 2.4 : 2} />
           ),
         }}
       />
@@ -44,15 +50,21 @@ export default function TabLayout() {
         name="my-bids"
         options={{
           title: "My Bids",
-          tabBarIcon: ({ color }) => <ClipboardList size={24} color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            <ClipboardList
+              size={21}
+              color={color}
+              strokeWidth={focused ? 2.4 : 2}
+            />
+          ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: "Profile",
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="person.circle.fill" color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <User size={21} color={color} strokeWidth={focused ? 2.4 : 2} />
           ),
         }}
       />
