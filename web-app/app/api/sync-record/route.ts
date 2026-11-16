@@ -24,7 +24,7 @@ type RecordType = (typeof RECORD_TYPES)[number];
 const ROLE_PERMISSIONS: Record<RecordType, readonly string[]> = {
   allocation: ["SK_Chairperson", "SK_Treasurer"],
   expense: ["SK_Chairperson", "SK_Treasurer"],
-  award: ["SK_Chairperson", "SK_Treasurer", "BMO"],
+  award: ["SK_Chairperson", "SK_Treasurer"],
 };
 
 const EVENT_RECORD_TYPES: Record<RecordType, string> = {

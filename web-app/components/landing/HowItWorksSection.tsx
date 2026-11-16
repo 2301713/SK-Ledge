@@ -18,7 +18,7 @@ const STEPS = [
     icon: ShieldCheck,
     title: "Approve & Audit",
     description:
-      "Role-based approval workflows let SK, COA, and BMO officials review every transaction before it is finalized.",
+      "Role-based approval workflows let SK and COA officials review every transaction before it is finalized.",
   },
   {
     icon: BarChart3,

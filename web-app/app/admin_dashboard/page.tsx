@@ -60,7 +60,6 @@ interface LatestUser {
 const ROLE_ABBREV: Record<string, string> = {
   Admin: "AD",
   COA: "COA",
-  BMO: "BMO",
   SK_Chairperson: "SKC",
   SK_Treasurer: "SKT",
   SK_Federation: "SKF",

@@ -336,7 +336,6 @@ export default function CompleteProfilePage() {
                 >
                   <option value="SK_Chairperson">SK Chairperson</option>
                   <option value="SK_Treasurer">SK Treasurer</option>
-                  <option value="BMO">BMO</option>
                   <option value="SK_Federation">SK Federation</option>
                   <option value="COA">COA</option>
                   <option value="Vendor">Vendor / Supplier</option>

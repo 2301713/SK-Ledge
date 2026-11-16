@@ -138,8 +138,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL("/sk_dashboard", request.url));
     case "COA":
       return NextResponse.redirect(new URL("/coa_dashboard", request.url));
-    case "BMO":
-      return NextResponse.redirect(new URL("/bmo_dashboard", request.url));
     case "SK_Federation":
       return NextResponse.redirect(new URL("/skfed_dashboard", request.url));
     case "Vendor":
@@ -147,6 +145,6 @@ export async function GET(request: NextRequest) {
     case "Admin":
       return NextResponse.redirect(new URL("/admin_dashboard", request.url));
     default:
-      return NextResponse.redirect(new URL("/dashboard", request.url));
+      return NextResponse.redirect(new URL("/unauthorized", request.url));
   }
 }

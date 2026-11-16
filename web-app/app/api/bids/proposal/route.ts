@@ -17,7 +17,6 @@ const REVIEWER_ROLES = new Set([
   "SK_Chairperson",
   "SK_Treasurer",
   "COA",
-  "BMO",
   "SK_Federation",
   "Admin",
 ]);

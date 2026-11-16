@@ -174,6 +174,18 @@ export async function completeGoogleCode(
   return exchangeCode(code);
 }
 
+type AuthSessionResult = Awaited<
+  ReturnType<typeof WebBrowser.openAuthSessionAsync>
+>;
+
+/**
+ * Development-only hint for the most common local failure: Supabase rejected
+ * the redirect URL, fell back to the (unreachable) Site URL, and the browser
+ * never handed control back to the app.
+ */
+const redirectHint = (redirectTo: string) =>
+  `Google sign-in closed before the app received a session. If the browser showed "Safari can't open the page" or another error instead of returning here, add this exact URL under Supabase \u2192 Authentication \u2192 URL Configuration \u2192 Redirect URLs:\n\n${redirectTo}`;
+
 export async function signInWithGoogle(): Promise<VendorAuthOutcome> {
   const redirectTo = getGoogleRedirectUrl();
 
@@ -192,11 +204,34 @@ export async function signInWithGoogle(): Promise<VendorAuthOutcome> {
   if (error) throw error;
   if (!data?.url) throw new Error("Google sign-in could not be started.");
 
-  const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+  let result: AuthSessionResult;
+  try {
+    result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+  } catch (err) {
+    if (__DEV__) console.warn("[auth] OAuth browser session failed", err);
+    return { status: "error", message: redirectHint(redirectTo) };
+  }
 
-  if (result.type !== "success" || !result.url) {
+  if (__DEV__) {
+    console.log(
+      "[auth] OAuth session result:",
+      result.type,
+      "redirectTo:",
+      redirectTo,
+    );
+  }
+
+  if (result.type === "success" && result.url) {
+    return completeGoogleRedirect(result.url);
+  }
+
+  // A deliberate Cancel (or a locked session) stays silent in every build.
+  // Any other dismissal means the browser never handed control back, which
+  // during local testing is almost always a redirect URL that is missing from
+  // Supabase's allowlist.
+  if (result.type === "cancel" || result.type === "locked" || !__DEV__) {
     return { status: "cancelled" };
   }
 
-  return completeGoogleRedirect(result.url);
+  return { status: "error", message: redirectHint(redirectTo) };
 }
