@@ -1,19 +1,30 @@
+import { canonicalizeBarangay } from "@/lib/batangasBarangays";
+import BarangayPicker from "@/components/ui/BarangayPicker";
+import FormField from "@/components/ui/FormField";
+import PrimaryButton from "@/components/ui/PrimaryButton";
 import ScreenHeader from "@/components/ui/ScreenHeader";
 import { ProfileDetailsSkeleton } from "@/components/ui/Skeletons";
 import StatusBadge from "@/components/ui/StatusBadge";
 import {
+  deactivateVendorAccount,
   fetchMyProfile,
   getErrorMessage,
+  updateVendorProfile,
   type VendorProfile,
 } from "@/lib/projects";
+import { unregisterPushToken } from "@/lib/push-notifications";
 import { supabase } from "@/lib/supabase";
 import {
   Building2,
   LogOut,
   Mail,
   MapPin,
+  Pencil,
+  Phone,
   ShieldCheck,
+  Trash2,
 } from "lucide-react-native";
+import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import {
@@ -55,12 +66,25 @@ const DetailRow = ({
 );
 
 export default function Profile() {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [profile, setProfile] = useState<VendorProfile | null>(null);
   const [email, setEmail] = useState("");
+  const [nameDraft, setNameDraft] = useState("");
+  const [contactDraft, setContactDraft] = useState("");
+  const [barangayDraft, setBarangayDraft] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<{
+    name?: string;
+    contact?: string;
+    barangay?: string;
+  }>({});
 
   const loadProfile = useCallback(async () => {
     try {
@@ -121,6 +145,7 @@ export default function Profile() {
         style: "destructive",
         onPress: async () => {
           setSigningOut(true);
+          await unregisterPushToken();
           const { error: signOutError } = await supabase.auth.signOut();
           setSigningOut(false);
           if (signOutError) {
@@ -129,6 +154,121 @@ export default function Profile() {
         },
       },
     ]);
+  };
+
+  const startEditing = () => {
+    setNameDraft(profile?.full_name ?? "");
+    setContactDraft(profile?.contact_number ?? "");
+    setBarangayDraft(
+      profile?.barangay && profile.barangay !== "N/A"
+        ? (canonicalizeBarangay(profile.barangay) ?? profile.barangay)
+        : "",
+    );
+    setFieldErrors({});
+    setError("");
+    setSuccess("");
+    setEditing(true);
+  };
+
+  const cancelEditing = () => {
+    setEditing(false);
+    setFieldErrors({});
+    setError("");
+  };
+
+  const validateDraft = () => {
+    const next: typeof fieldErrors = {};
+    const name = nameDraft.trim();
+    const contact = contactDraft.trim();
+    const barangay = barangayDraft.trim();
+
+    if (name.length < 2) {
+      next.name = "Enter your registered company or vendor name.";
+    } else if (name.length > 120) {
+      next.name = "Use 120 characters or fewer.";
+    }
+
+    if (contact) {
+      const digits = contact.replace(/[^0-9]/g, "");
+      let normalized = digits;
+
+      if (/^639[0-9]{9}$/.test(digits)) {
+        normalized = `0${digits.slice(2)}`;
+      } else if (/^9[0-9]{9}$/.test(digits)) {
+        normalized = `0${digits}`;
+      }
+
+      if (!/^09[0-9]{9}$/.test(normalized)) {
+        next.contact = "Enter a valid PH mobile number, e.g. 0917 123 4567.";
+      }
+    }
+
+    if (barangay.length > 80) {
+      next.barangay = "Use 80 characters or fewer.";
+    }
+
+    setFieldErrors(next);
+    return Object.keys(next).length === 0;
+  };
+
+  const handleSave = async () => {
+    setError("");
+    setSuccess("");
+
+    if (!validateDraft()) return;
+
+    setSaving(true);
+
+    try {
+      const updated = await updateVendorProfile({
+        fullName: nameDraft.trim(),
+        contactNumber: contactDraft.trim(),
+        barangay: barangayDraft.trim(),
+      });
+
+      setProfile((prev) => (prev ? { ...prev, ...updated } : prev));
+      setEditing(false);
+      setSuccess("Profile updated.");
+    } catch (err) {
+      setError(getErrorMessage(err, "Could not update your profile."));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      "Delete your account?",
+      "Your vendor account will be disabled and you will be signed out. Your bids and procurement records are kept on file for audit. Contact the SK Federation or system administrator if you need access restored.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete account",
+          style: "destructive",
+          onPress: async () => {
+            setError("");
+            setSuccess("");
+            setDeleting(true);
+
+            try {
+              await unregisterPushToken();
+              await deactivateVendorAccount();
+              await supabase.auth.signOut();
+              router.replace("/");
+            } catch (err) {
+              setError(
+                getErrorMessage(
+                  err,
+                  "Could not delete your account. Please try again.",
+                ),
+              );
+            } finally {
+              setDeleting(false);
+            }
+          },
+        },
+      ],
+    );
   };
 
   const companyName =
@@ -163,6 +303,7 @@ export default function Profile() {
       <ScrollView
         contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -180,6 +321,15 @@ export default function Profile() {
             <View className="mb-5 rounded-xl border border-danger/25 bg-danger/[0.06] p-4">
               <Text className="font-inter-semibold text-[12px] leading-5 text-danger">
                 {error}
+              </Text>
+            </View>
+          ) : null}
+
+          {success ? (
+            <View className="mb-5 flex-row items-start gap-3 rounded-xl border border-success/25 bg-success/[0.07] p-4">
+              <ShieldCheck size={18} color="#10B981" style={{ marginTop: 1 }} />
+              <Text className="font-inter-semibold flex-1 text-[12px] leading-5 text-primary-foreground">
+                {success}
               </Text>
             </View>
           ) : null}
@@ -204,30 +354,104 @@ export default function Profile() {
                   </View>
                 </View>
 
-                <DetailRow
-                  icon={Building2}
-                  label="Registered name"
-                  value={companyName}
-                />
-                <DetailRow
-                  icon={Mail}
-                  label="Email"
-                  value={profile?.email || email || "Not set"}
-                />
-                <DetailRow
-                  icon={MapPin}
-                  label="Barangay"
-                  value={
-                    profile?.barangay && profile.barangay !== "N/A"
-                      ? profile.barangay
-                      : "Not assigned"
-                  }
-                />
-                <DetailRow
-                  icon={ShieldCheck}
-                  label="Account type"
-                  value={profile?.role_type || "Vendor"}
-                />
+                {editing ? (
+                  <View className="gap-4 pt-1">
+                    <FormField
+                      label="Company / Vendor Name"
+                      icon={Building2}
+                      value={nameDraft}
+                      onChangeText={setNameDraft}
+                      placeholder="Acme Trading Corp."
+                      error={fieldErrors.name}
+                      autoCapitalize="words"
+                      editable={!saving}
+                    />
+                    <FormField
+                      label="Contact Number"
+                      icon={Phone}
+                      value={contactDraft}
+                      onChangeText={setContactDraft}
+                      placeholder="0917 123 4567"
+                      keyboardType="phone-pad"
+                      error={fieldErrors.contact}
+                      autoCapitalize="none"
+                      editable={!saving}
+                    />
+                    <BarangayPicker
+                      value={barangayDraft}
+                      onChange={setBarangayDraft}
+                      error={fieldErrors.barangay}
+                      disabled={saving}
+                    />
+                    <Text className="font-inter text-[10px] leading-4 text-secondary-foreground/80">
+                      Choose “Not assigned” if you do not have a barangay yet. A
+                      contact number is optional but helps the SK reach you
+                      about your bids.
+                    </Text>
+
+                    <PrimaryButton onPress={handleSave} disabled={saving}>
+                      {saving ? (
+                        <ActivityIndicator color="#FFFFFF" />
+                      ) : (
+                        "Save changes"
+                      )}
+                    </PrimaryButton>
+
+                    <TouchableOpacity
+                      className="items-center py-1"
+                      onPress={cancelEditing}
+                      disabled={saving}
+                      activeOpacity={0.7}
+                    >
+                      <Text className="font-inter-bold text-[10px] uppercase tracking-[0.14em] text-secondary-foreground">
+                        Cancel
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <>
+                    <DetailRow
+                      icon={Building2}
+                      label="Registered name"
+                      value={companyName}
+                    />
+                    <DetailRow
+                      icon={Mail}
+                      label="Email"
+                      value={profile?.email || email || "Not set"}
+                    />
+                    <DetailRow
+                      icon={Phone}
+                      label="Contact number"
+                      value={profile?.contact_number || "Not set"}
+                    />
+                    <DetailRow
+                      icon={MapPin}
+                      label="Barangay"
+                      value={
+                        profile?.barangay && profile.barangay !== "N/A"
+                          ? profile.barangay
+                          : "Not assigned"
+                      }
+                    />
+                    <DetailRow
+                      icon={ShieldCheck}
+                      label="Account type"
+                      value={profile?.role_type || "Vendor"}
+                    />
+
+                    <TouchableOpacity
+                      className="mt-3 flex-row items-center justify-center gap-2 rounded-lg border border-primary/20 bg-secondary/40 py-2.5"
+                      onPress={startEditing}
+                      activeOpacity={0.75}
+                    >
+                      <Pencil size={13} color="#0138A8" />
+                      <Text className="font-inter-bold text-[10px] uppercase tracking-[0.14em] text-primary">
+                        Edit profile
+                      </Text>
+                    </TouchableOpacity>
+                  </>
+                )}
               </View>
 
               {/* VERIFICATION */}
@@ -283,6 +507,33 @@ export default function Profile() {
                   </>
                 )}
               </TouchableOpacity>
+
+              {/* ACCOUNT REMOVAL */}
+              <View className="mt-4 rounded-xl border border-border bg-white p-4">
+                <Text className="font-inter-bold text-[10px] uppercase tracking-[0.16em] text-secondary-foreground">
+                  Delete account
+                </Text>
+                <Text className="font-inter mt-1 text-[11px] leading-[17px] text-secondary-foreground">
+                  Deleting your account disables vendor sign-in and stops push
+                  notifications. Your bids and procurement records stay on file
+                  for audit.
+                </Text>
+                <TouchableOpacity
+                  className="mt-3 flex-row items-center justify-center gap-2 rounded-lg border border-danger/20 py-2.5"
+                  onPress={handleDeleteAccount}
+                  disabled={deleting || signingOut}
+                  activeOpacity={0.75}
+                >
+                  {deleting ? (
+                    <ActivityIndicator color="#DC2626" />
+                  ) : (
+                    <Trash2 size={14} color="#DC2626" />
+                  )}
+                  <Text className="font-inter-bold text-[10px] uppercase tracking-[0.12em] text-danger">
+                    Delete my account
+                  </Text>
+                </TouchableOpacity>
+              </View>
 
               <Text className="font-inter-semibold mt-6 text-center text-[9px] uppercase tracking-[0.18em] text-secondary-foreground/60">
                 SK-Ledge · Vendor Portal · v1.0.0

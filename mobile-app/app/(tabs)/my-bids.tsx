@@ -3,6 +3,7 @@ import { BidCardSkeleton } from "@/components/ui/Skeletons";
 import StatusBadge from "@/components/ui/StatusBadge";
 import {
   BID_TABS,
+  BIDS_PAGE_SIZE,
   bidStatusGroup,
   bidStatusLabel,
   canWithdrawBid,
@@ -15,8 +16,14 @@ import {
   type BidTab,
 } from "@/lib/projects";
 import { supabase } from "@/lib/supabase";
-import { ClipboardList, RefreshCw, Undo2 } from "lucide-react-native";
-import React, { useCallback, useEffect, useState } from "react";
+import { useRouter } from "expo-router";
+import {
+  ChevronRight,
+  ClipboardList,
+  RefreshCw,
+  Undo2,
+} from "lucide-react-native";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import {
   ActivityIndicator,
@@ -34,27 +41,53 @@ export default function MyBidsPage() {
   const [bids, setBids] = useState<BidItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState("");
   const [signedOut, setSignedOut] = useState(false);
   const [withdrawingId, setWithdrawingId] = useState<string | null>(null);
+  const router = useRouter();
 
-  const fetchBids = useCallback(async () => {
-    try {
-      const { data: authData } = await supabase.auth.getUser();
-      if (!authData.user) {
-        setSignedOut(true);
-        setBids([]);
-        return;
+  const bidsRef = useRef<BidItem[]>([]);
+
+  useEffect(() => {
+    bidsRef.current = bids;
+  }, [bids]);
+
+  const loadBids = useCallback(
+    async (offset: number, limit: number, append: boolean) => {
+      try {
+        const { data: authData } = await supabase.auth.getUser();
+        if (!authData.user) {
+          setSignedOut(true);
+          setBids([]);
+          setHasMore(false);
+          return;
+        }
+        setSignedOut(false);
+
+        const rows = await fetchMyBids(authData.user.id, { limit, offset });
+        setBids((current) => {
+          // Drop a stale append if a refresh replaced the list meanwhile.
+          if (append && current.length !== offset) return current;
+          return append ? [...current, ...rows] : rows;
+        });
+
+        if (limit === BIDS_PAGE_SIZE) {
+          setHasMore(rows.length === BIDS_PAGE_SIZE);
+        }
+      } catch (err) {
+        if (!append) {
+          setError(getErrorMessage(err, "Could not load your bids."));
+        }
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+        setLoadingMore(false);
       }
-      setSignedOut(false);
-      setBids(await fetchMyBids(authData.user.id));
-    } catch (err) {
-      setError(getErrorMessage(err, "Could not load your bids."));
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
+    },
+    [],
+  );
 
   useEffect(() => {
     let active = true;
@@ -66,21 +99,26 @@ export default function MyBidsPage() {
         if (!data.user) {
           setSignedOut(true);
           setBids([]);
+          setHasMore(false);
           return;
         }
         setSignedOut(false);
-        return fetchMyBids(data.user.id).then((rows) => {
-          if (active) setBids(rows);
-        });
+        return fetchMyBids(data.user.id, { limit: BIDS_PAGE_SIZE }).then(
+          (rows) => {
+            if (!active) return;
+            setBids(rows);
+            setHasMore(rows.length === BIDS_PAGE_SIZE);
+          },
+        );
       })
       .catch((err) => {
-        if (active) setError(getErrorMessage(err, "Could not load your bids."));
+        if (!active) return;
+        setError(getErrorMessage(err, "Could not load your bids."));
       })
       .finally(() => {
-        if (active) {
-          setLoading(false);
-          setRefreshing(false);
-        }
+        if (!active) return;
+        setLoading(false);
+        setRefreshing(false);
       });
 
     return () => {
@@ -110,7 +148,11 @@ export default function MyBidsPage() {
             filter: `user_id=eq.${user.id}`,
           },
           () => {
-            fetchBids();
+            loadBids(
+              0,
+              Math.max(BIDS_PAGE_SIZE, bidsRef.current.length),
+              false,
+            );
           },
         )
         .subscribe();
@@ -122,12 +164,19 @@ export default function MyBidsPage() {
       cancelled = true;
       if (channel) supabase.removeChannel(channel);
     };
-  }, [fetchBids]);
+  }, [loadBids]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    fetchBids();
-  }, [fetchBids]);
+    setHasMore(true);
+    loadBids(0, BIDS_PAGE_SIZE, false);
+  }, [loadBids]);
+
+  const loadMore = () => {
+    if (loading || loadingMore || refreshing || !hasMore) return;
+    setLoadingMore(true);
+    loadBids(bids.length, BIDS_PAGE_SIZE, true);
+  };
 
   const confirmWithdraw = (bid: BidItem) => {
     Alert.alert(
@@ -184,17 +233,31 @@ export default function MyBidsPage() {
         elevation: 1,
       }}
     >
+      <TouchableOpacity
+        activeOpacity={0.75}
+        onPress={() =>
+          router.push({ pathname: "/bid/[id]", params: { id: item.id } })
+        }
+      >
       <View className="flex-row items-start justify-between gap-3 px-4 pt-4">
         <View className="flex-1">
           <Text
-            className="font-inter-bold text-[9px] uppercase tracking-[0.14em] text-secondary-foreground"
+            className="font-inter-bold text-[9px] uppercase tracking-[0.14em] text-primary"
             numberOfLines={1}
           >
-            {item.department || "SK Procurement"}
+            {item.vendor_name || "Your company"}
           </Text>
           <Text className="font-inter-bold mt-1.5 text-[15px] leading-[21px] text-primary-foreground">
             {item.contract_title || "Procurement proposal"}
           </Text>
+          {item.department ? (
+            <Text
+              className="font-inter mt-1 text-[11px] text-secondary-foreground"
+              numberOfLines={1}
+            >
+              {item.department}
+            </Text>
+          ) : null}
         </View>
         <StatusBadge status={bidStatusLabel(item.status)} />
       </View>
@@ -216,7 +279,9 @@ export default function MyBidsPage() {
             {formatPeso(item.amount_php)}
           </Text>
         </View>
+        <ChevronRight size={16} color="#94A3B8" />
       </View>
+      </TouchableOpacity>
 
       {canWithdrawBid(item.status) ? (
         <View className="border-t border-border/70 px-4 py-2.5">
@@ -254,7 +319,7 @@ export default function MyBidsPage() {
         subtitle={
           loading
             ? "Loading your proposal history..."
-            : `${bids.length} proposal${bids.length === 1 ? "" : "s"} on record`
+            : `${bids.length}${hasMore ? "+" : ""} proposal${bids.length === 1 && !hasMore ? "" : "s"} on record`
         }
       />
       </Animated.View>
@@ -298,7 +363,8 @@ export default function MyBidsPage() {
               onPress={() => {
                 setError("");
                 setLoading(true);
-                fetchBids();
+                setHasMore(true);
+                loadBids(0, BIDS_PAGE_SIZE, false);
               }}
               activeOpacity={0.8}
             >
@@ -320,6 +386,15 @@ export default function MyBidsPage() {
             renderItem={renderItem}
             contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 40, gap: 12 }}
             showsVerticalScrollIndicator={false}
+            onEndReached={loadMore}
+            onEndReachedThreshold={0.4}
+            ListFooterComponent={
+              loadingMore ? (
+                <View className="items-center py-4">
+                  <ActivityIndicator color="#0138A8" />
+                </View>
+              ) : undefined
+            }
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}

@@ -2,6 +2,7 @@ import DotGrid from "@/components/ui/DotGrid";
 import FormField from "@/components/ui/FormField";
 import PrimaryButton from "@/components/ui/PrimaryButton";
 import { getErrorMessage } from "@/lib/projects";
+import { registerPushToken } from "@/lib/push-notifications";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "expo-router";
 import {
@@ -125,6 +126,12 @@ export default function CompleteVendorProfileScreen() {
 
         if (updateError) throw updateError;
       }
+
+      // Register before signing out so the applicant can be notified when the
+      // SK Federation approves or rejects this application.
+      await registerPushToken().catch(() => {
+        // Push opt-in is best-effort; the application still succeeds.
+      });
 
       await supabase.auth.signOut();
       router.replace({

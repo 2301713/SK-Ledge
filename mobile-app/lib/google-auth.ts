@@ -11,7 +11,17 @@ export type VendorAuthOutcome =
   | { status: "cancelled" }
   | { status: "error"; message: string };
 
-export const getGoogleRedirectUrl = () => Linking.createURL(CALLBACK_PATH);
+/**
+ * The URL Supabase must send the browser back to. Expo Go derives this from
+ * the dev-server host (exp://<lan-ip>:8081/--/auth/callback), so it changes
+ * between machines and networks. Set EXPO_PUBLIC_AUTH_REDIRECT_URL to pin a
+ * single allowlisted URL instead.
+ */
+export const getGoogleRedirectUrl = () =>
+  process.env.EXPO_PUBLIC_AUTH_REDIRECT_URL?.trim() ||
+  Linking.createURL(CALLBACK_PATH);
+
+const isWebUrl = (value: string) => /^https?:\/\//i.test(value);
 
 /**
  * Mobile access is vendor-only. A missing profile means the Google account has
@@ -27,6 +37,14 @@ export function evaluateVendorProfile(
       status: "error",
       message:
         "This account is not a mobile vendor account. Please use the web portal instead.",
+    };
+  }
+
+  if (profile.account_status === false) {
+    return {
+      status: "error",
+      message:
+        "Your vendor account has been disabled. Please contact the SK Federation for assistance.",
     };
   }
 
@@ -106,6 +124,16 @@ function readError(value: string) {
 export async function completeGoogleRedirect(
   url: string,
 ): Promise<VendorAuthOutcome> {
+  // Supabase silently falls back to the project's Site URL when redirect_to
+  // is not on the allowlist, which strands the browser on the web app (often
+  // http://localhost:3000) instead of returning to the app.
+  if (isWebUrl(url) && !isWebUrl(getGoogleRedirectUrl())) {
+    return {
+      status: "error",
+      message: `Google returned to the web app instead of this app. Add ${getGoogleRedirectUrl()} under Supabase → Authentication → URL Configuration → Redirect URLs, then try again.`,
+    };
+  }
+
   const [withoutHash, hash = ""] = url.split("#");
   const queryIndex = withoutHash.indexOf("?");
   const query = queryIndex === -1 ? "" : withoutHash.slice(queryIndex + 1);
@@ -133,7 +161,7 @@ export async function completeGoogleRedirect(
   if (!code) {
     return {
       status: "error",
-      message: "Google did not return an authorization code. Please try again.",
+      message: `Google did not return an authorization code. Confirm that ${getGoogleRedirectUrl()} is listed under Supabase → Authentication → URL Configuration → Redirect URLs.`,
     };
   }
 

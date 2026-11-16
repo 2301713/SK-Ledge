@@ -6,13 +6,16 @@ import {
   fetchMyBidsCounts,
   fetchMyProfile,
   fetchOpenProjects,
+  fetchUnreadNotificationCount,
   formatPeso,
   getErrorMessage,
   type Project,
 } from "@/lib/projects";
+import { registerPushToken } from "@/lib/push-notifications";
 import { supabase } from "@/lib/supabase";
 import { useFocusEffect, useRouter } from "expo-router";
 import {
+  Bell,
   Briefcase,
   ChevronRight,
   CircleDollarSign,
@@ -41,6 +44,7 @@ export default function HomePage() {
   const [totalBids, setTotalBids] = useState(0);
   const [pendingBids, setPendingBids] = useState(0);
   const [wonBids, setWonBids] = useState(0);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [opportunities, setOpportunities] = useState<Project[]>([]);
 
   const loadDashboard = useCallback(async () => {
@@ -60,15 +64,23 @@ export default function HomePage() {
           "Vendor",
       );
 
-      const [counts, projects] = await Promise.all([
+      if ((profile?.approval_status ?? "").toLowerCase() === "approved") {
+        registerPushToken().catch(() => {
+          // Push setup is optional and must never block the dashboard.
+        });
+      }
+
+      const [counts, projects, unread] = await Promise.all([
         fetchMyBidsCounts(user.id),
-        fetchOpenProjects(),
+        fetchOpenProjects({ limit: 3 }),
+        fetchUnreadNotificationCount().catch(() => 0),
       ]);
 
       setTotalBids(counts.total);
       setPendingBids(counts.pending);
       setWonBids(counts.won);
-      setOpportunities(projects.slice(0, 3));
+      setUnreadCount(unread);
+      setOpportunities(projects);
     } catch (err) {
       setError(getErrorMessage(err, "Could not load your dashboard."));
     } finally {
@@ -123,11 +135,28 @@ export default function HomePage() {
         title={companyName}
         subtitle="Your procurement activity at a glance."
         right={
-          <View className="h-11 w-11 items-center justify-center rounded-full bg-primary">
-            <Text className="font-inter-black text-[18px] text-white">
-              {companyName.charAt(0).toUpperCase()}
-            </Text>
-            <View className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white bg-success" />
+          <View className="flex-row items-center gap-2.5">
+            <TouchableOpacity
+              onPress={() => router.push("/notifications")}
+              className="h-10 w-10 items-center justify-center rounded-xl border border-border bg-white"
+              accessibilityLabel="Notifications"
+              activeOpacity={0.75}
+            >
+              <Bell size={18} color="#0138A8" />
+              {unreadCount > 0 ? (
+                <View className="absolute -right-1 -top-1 h-4 min-w-[16px] items-center justify-center rounded-full bg-danger px-1">
+                  <Text className="font-inter-bold text-[9px] text-white">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </Text>
+                </View>
+              ) : null}
+            </TouchableOpacity>
+            <View className="h-11 w-11 items-center justify-center rounded-full bg-primary">
+              <Text className="font-inter-black text-[18px] text-white">
+                {companyName.charAt(0).toUpperCase()}
+              </Text>
+              <View className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white bg-success" />
+            </View>
           </View>
         }
       />

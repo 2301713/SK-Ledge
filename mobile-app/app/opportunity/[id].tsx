@@ -257,6 +257,13 @@ export default function OpportunityDetailsPage() {
               value={formatDate(opportunity.createdAt)}
             />
           ) : null}
+          {isAwarded ? (
+            <InfoRow
+              icon={Trophy}
+              label="Awarded vendor"
+              value={opportunity.winningBidder || "Not recorded"}
+            />
+          ) : null}
         </View>
 
         <View className="mb-8">
@@ -273,9 +280,7 @@ export default function OpportunityDetailsPage() {
           <View className="mb-4 flex-row items-center gap-3 rounded-2xl border border-success/30 bg-success/[0.08] p-4">
             <Trophy size={20} color="#16A34A" />
             <Text className="font-inter-semibold flex-1 text-[13px] text-[#166534]">
-              {opportunity.winningBidder
-                ? `Awarded to ${opportunity.winningBidder} after evaluation.`
-                : "This procurement has been awarded after evaluation."}
+              This procurement has been awarded after evaluation.
             </Text>
           </View>
         ) : null}

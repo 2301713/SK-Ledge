@@ -31,21 +31,23 @@ import StatCard from '@/components/dashboard/ui/StatCard';
 import StatusBadge from '@/components/dashboard/ui/StatusBadge';
 import ProposalPreviewModal from '@/components/bidding/ProposalPreviewModal';
 
-interface Vendor {
-  company_name: string;
-}
-
-interface Bid {
-  id: number;
-  project_id: number;
-  vendor_id: string;
+interface BidRow {
+  id: string;
+  project_id: string;
+  user_id?: string | null;
+  vendor_id: string | null;
+  vendor_name?: string | null;
   amount_php: number;
   timeline: string;
-  notes?: string;
-  proposal_url?: string;
+  notes?: string | null;
+  proposal_url?: string | null;
+  proposal_path?: string | null;
   status: 'pending' | 'recommended' | 'won' | 'lost';
   created_at: string;
-  vendors: Vendor;
+}
+
+interface Bid extends BidRow {
+  vendor_name: string;
 }
 
 interface Project {
@@ -98,14 +100,23 @@ export default function BidsPage({ params }: { params: Promise<{ projectId: stri
 
     const { data: bidsData } = await supabase
       .from('bids')
-      .select(`
-        *,
-        vendors ( company_name )
-      `)
+      .select('*')
       .eq('project_id', projectId)
       .order('amount_php', { ascending: true });
 
-    if (bidsData) setBids(bidsData as unknown as Bid[]);
+    if (!bidsData) return;
+
+    // The vendor name is snapshotted on the bid at submission, so this page
+    // does not depend on reading vendor profiles (which are barangay-scoped
+    // for SK_Chairperson/SK_Treasurer).
+    const bidRows = bidsData as unknown as BidRow[];
+
+    setBids(
+      bidRows.map((bid) => ({
+        ...bid,
+        vendor_name: bid.vendor_name?.trim() || 'Unknown Vendor',
+      })),
+    );
   }, [projectId]);
 
   useEffect(() => {
@@ -159,7 +170,7 @@ export default function BidsPage({ params }: { params: Promise<{ projectId: stri
     checkAuthAndLoad();
   }, [loadBids, router]);
 
-  const handleStatusUpdate = async (bidId: number, newStatus: string) => {
+  const handleStatusUpdate = async (bidId: string, newStatus: string) => {
     if (newStatus === 'recommended') {
       await supabase
         .from('bids')
@@ -186,7 +197,7 @@ export default function BidsPage({ params }: { params: Promise<{ projectId: stri
       args: [
         project?.location || 'Barangay',
         BigInt(Math.round(Number(bid.amount_php) * 100)),
-        `Award: ${project?.name} to ${bid.vendors.company_name}`,
+        `Award: ${project?.name} to ${bid.vendor_name}`,
         'Award',
       ],
     });
@@ -203,7 +214,7 @@ export default function BidsPage({ params }: { params: Promise<{ projectId: stri
         .from('projects')
         .update({
           winning_bid_id: winningBid.id,
-          winning_bidder_name: winningBid.vendors.company_name,
+          winning_bidder_name: winningBid.vendor_name,
           award_tx_hash: txHash,
           status: 'Awarded',
         })
@@ -227,7 +238,7 @@ export default function BidsPage({ params }: { params: Promise<{ projectId: stri
         official_address: address ?? '',
         barangay: project.location || 'Barangay',
         amount: Math.round(Number(winningBid.amount_php) * 100),
-        purpose: `Award: ${project?.name} to ${winningBid.vendors.company_name}`,
+        purpose: `Award: ${project?.name} to ${winningBid.vendor_name}`,
         project_id: String(project.id),
       }).catch((err) => console.error('Failed to sync award record:', err));
 
@@ -238,6 +249,46 @@ export default function BidsPage({ params }: { params: Promise<{ projectId: stri
     finalizeAwardInDb();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bids, isTxConfirmed, loadBids, project, selectedBidId, txHash]);
+
+  const resolveProposalPath = (bid: Bid) => {
+    if (bid.proposal_path) return bid.proposal_path;
+    if (!bid.proposal_url) return null;
+    return bid.proposal_url.match(/\/proposals\/([^?]+)/)?.[1] ?? null;
+  };
+
+  const openProposal = async (bid: Bid) => {
+    const path = resolveProposalPath(bid);
+    if (!path) {
+      alert('No proposal document is attached to this bid.');
+      return;
+    }
+
+    setOpeningProposalId(bid.id);
+    try {
+      // Proposals are private; officials receive a short-lived signed URL.
+      const { data, error } = await supabase.storage
+        .from('proposals')
+        .createSignedUrl(path, 120);
+
+      if (error || !data?.signedUrl) {
+        throw error ?? new Error('Could not create a link to this proposal.');
+      }
+
+      const link = document.createElement('a');
+      link.href = data.signedUrl;
+      link.target = '_blank';
+      link.rel = 'noreferrer';
+      link.click();
+    } catch (err) {
+      alert(
+        err instanceof Error
+          ? err.message
+          : 'Could not open the proposal document.',
+      );
+    } finally {
+      setOpeningProposalId(null);
+    }
+  };
 
   const lowestBid = bids.length
     ? Math.min(...bids.map((b) => Number(b.amount_php)))
@@ -361,7 +412,7 @@ export default function BidsPage({ params }: { params: Promise<{ projectId: stri
                             <Building2 className="h-5 w-5 text-secondary-foreground" />
                           </div>
                           <h3 className="text-lg font-bold tracking-tight text-primary-foreground">
-                            {bid.vendors?.company_name || 'Unknown Vendor'}
+                            {bid.vendor_name}
                           </h3>
                           {bid.status === 'won' && (
                             <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-success">
@@ -398,22 +449,21 @@ export default function BidsPage({ params }: { params: Promise<{ projectId: stri
                           </p>
                         )}
 
-                        {bid.proposal_url && (
+                        {resolveProposalPath(bid) && (
                           <button
                             type="button"
-                            onClick={() => {
-                              const url = bid.proposal_url;
-                              if (!url) return;
-                              setProposalPreview({
-                                url,
-                                vendorName:
-                                  bid.vendors?.company_name || 'Vendor',
-                              });
-                            }}
-                            className="mt-3 inline-flex items-center gap-1.5 text-sm font-bold text-primary hover:underline"
+                            onClick={() => openProposal(bid)}
+                            disabled={openingProposalId === bid.id}
+                            className="mt-3 inline-flex items-center gap-1.5 text-sm font-bold text-primary hover:underline disabled:opacity-50"
                           >
-                            <FileText className="h-4 w-4" />
-                            Preview Proposal Document
+                            {openingProposalId === bid.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <FileText className="h-4 w-4" />
+                            )}
+                            {openingProposalId === bid.id
+                              ? 'Opening...'
+                              : 'View Proposal Document'}
                           </button>
                         )}
                       </div>
