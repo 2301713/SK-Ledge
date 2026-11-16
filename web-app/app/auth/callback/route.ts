@@ -142,6 +142,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL("/bmo_dashboard", request.url));
     case "SK_Federation":
       return NextResponse.redirect(new URL("/skfed_dashboard", request.url));
+    case "Vendor":
+      return NextResponse.redirect(new URL("/open_bidding", request.url));
     case "Admin":
       return NextResponse.redirect(new URL("/admin_dashboard", request.url));
     default:

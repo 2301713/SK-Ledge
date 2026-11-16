@@ -29,6 +29,7 @@ import PageHeader from '@/components/dashboard/ui/PageHeader';
 import { Card } from '@/components/dashboard/ui/Card';
 import StatCard from '@/components/dashboard/ui/StatCard';
 import StatusBadge from '@/components/dashboard/ui/StatusBadge';
+import ProposalPreviewModal from '@/components/bidding/ProposalPreviewModal';
 
 interface BidRow {
   id: string;
@@ -72,8 +73,11 @@ export default function BidsPage({ params }: { params: Promise<{ projectId: stri
   const [project, setProject] = useState<Project | null>(null);
   const [bids, setBids] = useState<Bid[]>([]);
   const [userRole, setUserRole] = useState<string>('');
-  const [selectedBidId, setSelectedBidId] = useState<string | null>(null);
-  const [openingProposalId, setOpeningProposalId] = useState<string | null>(null);
+  const [selectedBidId, setSelectedBidId] = useState<number | null>(null);
+  const [proposalPreview, setProposalPreview] = useState<{
+    url: string;
+    vendorName: string;
+  } | null>(null);
 
   const { data: isAuthorized } = useReadContract({
     address: CONTRACT_ADDRESS,
@@ -569,6 +573,14 @@ export default function BidsPage({ params }: { params: Promise<{ projectId: stri
           </Card>
         )}
       </main>
+
+      {proposalPreview && (
+        <ProposalPreviewModal
+          proposalUrl={proposalPreview.url}
+          vendorName={proposalPreview.vendorName}
+          onClose={() => setProposalPreview(null)}
+        />
+      )}
     </div>
   );
 }

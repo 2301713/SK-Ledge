@@ -1,7 +1,7 @@
 "use client";
 
 import LogoLoader from "@/components/LogoLoader";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import SideBar from "@/components/dashboard/SideBar";
 import TopBar from "@/components/dashboard/ui/TopBar";
@@ -11,22 +11,62 @@ import DonutGauge from "@/components/dashboard/ui/DonutGauge";
 import { Card, CardHeader } from "@/components/dashboard/ui/Card";
 import { supabase } from "@/lib/supabase";
 import { UserAccount } from "@/lib/useAuthStore";
+import { useRecordsSync } from "@/lib/useRecordsSync";
+import { canonicalizeBarangay } from "@/lib/batangasBarangays";
 import { BRAND, SUCCESS, PENDING, DANGER } from "@/components/dashboard/ui/chartColors";
 import {
   FileDown,
   FilePieChart,
   Users2,
   ShieldCheck,
-  CheckCircle2,
-  XCircle,
-  ExternalLink,
   TrendingUp,
 } from "lucide-react";
+
+interface ReportProject {
+  id: string;
+  name: string;
+  category: string;
+  budget: number;
+  status: string;
+  barangay: string;
+}
+
+interface ReportOfficial {
+  id: string;
+  full_name: string;
+  role_type: string;
+  barangay: string;
+}
+
+interface CategorySegment {
+  label: string;
+  amount: number;
+  value: number;
+  color: string;
+}
+
+interface ComplianceRow {
+  barangay: string;
+  projects: number;
+  awarded: number;
+  allocated: number;
+  spent: number;
+  utilization: number;
+}
+
+const CATEGORY_COLORS = [BRAND, SUCCESS, PENDING, DANGER, "#94A3B8"];
 
 export default function SKFederationDashboard() {
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [projects, setProjects] = useState<ReportProject[]>([]);
+  const [officials, setOfficials] = useState<ReportOfficial[]>([]);
   const router = useRouter();
+
+  const { records } = useRecordsSync({
+    enabled: Boolean(currentUser),
+    limit: 500,
+  });
 
   // 1. AUTHENTICATION & ROLE PROTECTION
   useEffect(() => {
@@ -81,6 +121,183 @@ export default function SKFederationDashboard() {
     fetchUserProfile();
   }, [router]);
 
+  useEffect(() => {
+    if (!currentUser) return;
+
+    let active = true;
+    const fetchReportData = async () => {
+      const [projectsResult, officialsResult] = await Promise.all([
+        supabase
+          .from("projects")
+          .select("id, name, category, budget, status, barangay"),
+        supabase
+          .from("profiles")
+          .select("id, full_name, role_type, barangay")
+          .in("role_type", ["SK_Chairperson", "SK_Treasurer"]),
+      ]);
+
+      if (!active) return;
+
+      if (projectsResult.error) {
+        console.error(
+          "Error fetching report projects:",
+          projectsResult.error.message,
+        );
+      } else {
+        setProjects(
+          (projectsResult.data ?? []).map((project) => ({
+            id: String(project.id),
+            name: project.name || "Unnamed project",
+            category: project.category || "Uncategorized",
+            budget: Number(project.budget) || 0,
+            status: (project.status as string) || "Proposed",
+            barangay:
+              canonicalizeBarangay(project.barangay ?? "") ??
+              project.barangay ??
+              "Unassigned",
+          })),
+        );
+      }
+
+      if (officialsResult.error) {
+        console.error(
+          "Error fetching SK officials:",
+          officialsResult.error.message,
+        );
+      } else {
+        setOfficials(
+          (officialsResult.data ?? []).map((official) => ({
+            id: String(official.id),
+            full_name:
+              official.full_name || official.role_type || "SK Official",
+            role_type: official.role_type || "",
+            barangay:
+              canonicalizeBarangay(official.barangay ?? "") ??
+              official.barangay ??
+              "Unassigned",
+          })),
+        );
+      }
+    };
+
+    fetchReportData();
+    return () => {
+      active = false;
+    };
+  }, [currentUser]);
+
+  const reportSummary = useMemo(() => {
+    const completedProjects = projects.filter(
+      (project) => project.status === "Completed",
+    ).length;
+    const totalFund = projects.reduce(
+      (sum, project) => sum + project.budget,
+      0,
+    );
+
+    const categoryTotals = new Map<string, number>();
+    for (const project of projects) {
+      categoryTotals.set(
+        project.category,
+        (categoryTotals.get(project.category) ?? 0) + project.budget,
+      );
+    }
+
+    const ranked = Array.from(categoryTotals.entries())
+      .filter(([, amount]) => amount > 0)
+      .sort((a, b) => b[1] - a[1]);
+
+    const top = ranked.slice(0, 4);
+    const otherTotal = ranked.slice(4).reduce((sum, [, amount]) => sum + amount, 0);
+
+    const segments: CategorySegment[] = top.map(([label, amount], index) => ({
+      label,
+      amount,
+      value: amount,
+      color: CATEGORY_COLORS[index] ?? CATEGORY_COLORS[CATEGORY_COLORS.length - 1],
+    }));
+
+    if (otherTotal > 0) {
+      segments.push({
+        label: "Other Programs",
+        amount: otherTotal,
+        value: otherTotal,
+        color: CATEGORY_COLORS[4],
+      });
+    }
+
+    return {
+      completedProjects,
+      totalFund,
+      segments,
+      officialsCount: officials.length,
+    };
+  }, [projects, officials]);
+
+  const complianceMatrix = useMemo<ComplianceRow[]>(() => {
+    const rows = new Map<string, ComplianceRow>();
+    const ensureRow = (barangay: string) => {
+      let row = rows.get(barangay);
+      if (!row) {
+        row = {
+          barangay,
+          projects: 0,
+          awarded: 0,
+          allocated: 0,
+          spent: 0,
+          utilization: 0,
+        };
+        rows.set(barangay, row);
+      }
+      return row;
+    };
+
+    for (const project of projects) {
+      const row = ensureRow(project.barangay);
+      row.projects += 1;
+      if (project.status === "Awarded" || project.status === "Completed") {
+        row.awarded += 1;
+      }
+    }
+
+    for (const record of records) {
+      const barangay =
+        canonicalizeBarangay(record.barangay ?? "") ??
+        record.barangay ??
+        "Unassigned";
+      const row = ensureRow(barangay);
+      const amount = Number(record.amount);
+      const pesos = (Number.isFinite(amount) ? amount : 0) / 100;
+
+      if (record.record_type === "allocation") {
+        row.allocated += pesos;
+      } else if (record.record_type === "expense") {
+        row.spent += pesos;
+      }
+    }
+
+    return Array.from(rows.values())
+      .map((row) => ({
+        ...row,
+        utilization:
+          row.allocated > 0
+            ? Math.round((row.spent / row.allocated) * 100)
+            : 0,
+      }))
+      .sort((a, b) => b.allocated - a.allocated || b.projects - a.projects);
+  }, [projects, records]);
+
+  const formatCompact = (amount: number) =>
+    amount >= 1_000_000
+      ? `₱${(amount / 1_000_000).toFixed(1)}M`
+      : `₱${Math.round(amount).toLocaleString("en-PH")}`;
+
+  const formatPeso = (amount: number) =>
+    `₱${amount.toLocaleString("en-PH", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+
   // LOADING STATE
   if (isLoading) return <LogoLoader />;
 
@@ -118,22 +335,22 @@ export default function SKFederationDashboard() {
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           <StatCard
             label="Projects Completed"
-            value="248"
+            value={reportSummary.completedProjects}
             icon={TrendingUp}
             variant="brand"
             trend="Across the federation"
           />
           <StatCard
-            label="Youth Beneficiaries"
-            value="14.2k"
+            label="SK Officials Onboarded"
+            value={reportSummary.officialsCount}
             icon={Users2}
-            trend="City-wide outreach"
+            trend="Chairpersons and treasurers"
           />
           <StatCard
             label="Total Fund"
-            value="₱16.6M"
+            value={formatCompact(reportSummary.totalFund)}
             icon={FilePieChart}
-            trend="FY 2026 allocation"
+            trend="Across all registered projects"
           />
         </div>
 
@@ -152,46 +369,47 @@ export default function SKFederationDashboard() {
 
           <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-[auto_1fr]">
             <DonutGauge
-              centerValue="16.6M"
+              centerValue={formatCompact(reportSummary.totalFund)}
               centerLabel="Total Fund"
-              segments={[
-                { label: "Sports & Dev", value: 40, color: BRAND },
-                { label: "Education", value: 30, color: SUCCESS },
-                { label: "Health & Env", value: 20, color: PENDING },
-                { label: "Governance", value: 10, color: DANGER },
-              ]}
+              segments={reportSummary.segments}
             />
 
             <div className="space-y-3">
-              {[
-                { color: BRAND, label: "Sports & Development", pct: "40%", budget: "₱6.64M" },
-                { color: SUCCESS, label: "Education / Scholarships", pct: "30%", budget: "₱4.98M" },
-                { color: PENDING, label: "Health & Environment", pct: "20%", budget: "₱3.32M" },
-                { color: DANGER, label: "Governance & Admin", pct: "10%", budget: "₱1.66M" },
-              ].map((item) => (
-                <div
-                  key={item.label}
-                  className="flex items-center justify-between rounded-2xl border border-border bg-secondary/40 px-4 py-3"
-                >
-                  <div className="flex items-center gap-3">
-                    <span
-                      className="h-3 w-3 rounded-full"
-                      style={{ backgroundColor: item.color }}
-                    />
-                    <span className="text-sm font-medium text-primary-foreground">
-                      {item.label}
-                    </span>
+              {reportSummary.segments.length === 0 && (
+                <p className="rounded-2xl border border-dashed border-border bg-secondary/40 p-6 text-center text-xs font-medium text-secondary-foreground">
+                  No project budgets have been registered yet.
+                </p>
+              )}
+              {reportSummary.segments.map((item) => {
+                const share =
+                  reportSummary.totalFund > 0
+                    ? (item.amount / reportSummary.totalFund) * 100
+                    : 0;
+                return (
+                  <div
+                    key={item.label}
+                    className="flex items-center justify-between rounded-2xl border border-border bg-secondary/40 px-4 py-3"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span
+                        className="h-3 w-3 rounded-full"
+                        style={{ backgroundColor: item.color }}
+                      />
+                      <span className="text-sm font-medium text-primary-foreground">
+                        {item.label}
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-sm font-bold text-primary-foreground">
+                        {share.toFixed(0)}%
+                      </span>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
+                        {formatCompact(item.amount)}
+                      </p>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <span className="text-sm font-bold text-primary-foreground">
-                      {item.pct}
-                    </span>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
-                      {item.budget}
-                    </p>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </Card>
@@ -215,47 +433,61 @@ export default function SKFederationDashboard() {
               <thead>
                 <tr className="border-b border-border text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
                   <th className="p-4">Barangay Name</th>
-                  <th className="p-4 text-center">Submitted CBYDP</th>
-                  <th className="p-4 text-center">Submitted ABYIP</th>
-                  <th className="p-4 text-center">On-time Liquidation</th>
-                  <th className="p-4">Impact Score</th>
-                  <th className="p-4 text-right">Action</th>
+                  <th className="p-4 text-center">Projects</th>
+                  <th className="p-4 text-center">Awarded</th>
+                  <th className="p-4 text-right">Allocated</th>
+                  <th className="p-4 text-right">Spent</th>
+                  <th className="p-4">Utilization</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border text-sm">
-                <tr className="transition-colors hover:bg-secondary/50">
-                  <td className="p-4 font-bold text-primary-foreground">
-                    Barangay San Jose
-                  </td>
-                  <td className="p-4 text-center">
-                    <CheckCircle2 className="mx-auto text-success" size={20} />
-                  </td>
-                  <td className="p-4 text-center">
-                    <CheckCircle2 className="mx-auto text-success" size={20} />
-                  </td>
-                  <td className="p-4 text-center">
-                    <XCircle className="mx-auto text-danger/60" size={20} />
-                  </td>
-                  <td className="p-4">
-                    <div className="flex items-center gap-2">
-                      <div className="h-1.5 w-full max-w-24 overflow-hidden rounded-full bg-border">
-                        <div
-                          className="h-full rounded-full bg-primary"
-                          style={{ width: "65%" }}
-                        />
+                {complianceMatrix.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={6}
+                      className="p-8 text-center text-xs font-medium text-secondary-foreground"
+                    >
+                      No barangay ledger records yet.
+                    </td>
+                  </tr>
+                )}
+                {complianceMatrix.map((row) => (
+                  <tr
+                    key={row.barangay}
+                    className="transition-colors hover:bg-secondary/50"
+                  >
+                    <td className="p-4 font-bold text-primary-foreground">
+                      Barangay {row.barangay}
+                    </td>
+                    <td className="p-4 text-center text-primary-foreground">
+                      {row.projects}
+                    </td>
+                    <td className="p-4 text-center text-primary-foreground">
+                      {row.awarded}
+                    </td>
+                    <td className="p-4 text-right text-primary-foreground">
+                      {formatPeso(row.allocated)}
+                    </td>
+                    <td className="p-4 text-right text-primary-foreground">
+                      {formatPeso(row.spent)}
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-2">
+                        <div className="h-1.5 w-full max-w-24 overflow-hidden rounded-full bg-border">
+                          <div
+                            className={`h-full rounded-full ${
+                              row.utilization >= 100 ? "bg-danger" : "bg-primary"
+                            }`}
+                            style={{ width: `${Math.min(row.utilization, 100)}%` }}
+                          />
+                        </div>
+                        <span className="text-xs font-bold text-primary-foreground">
+                          {row.utilization}%
+                        </span>
                       </div>
-                      <span className="text-xs font-bold text-primary-foreground">
-                        65%
-                      </span>
-                    </div>
-                  </td>
-                  <td className="p-4 text-right">
-                    <button className="inline-flex items-center gap-1 rounded-xl px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-primary transition hover:bg-primary hover:text-white">
-                      <ExternalLink size={14} />
-                      Drill-Down
-                    </button>
-                  </td>
-                </tr>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>

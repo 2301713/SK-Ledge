@@ -1,7 +1,7 @@
 "use client";
 
 import LogoLoader from "@/components/LogoLoader";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import SideBar from "@/components/dashboard/SideBar";
 import TopBar from "@/components/dashboard/ui/TopBar";
@@ -22,6 +22,34 @@ import { useReadContract } from "wagmi";
 import { CONTRACT_ADDRESS, SK_LEDGE_ABI } from "@/lib/contractConfig";
 import AllocateFundsForm from "@/components/AllocateFundsForm";
 import { canonicalizeBarangay } from "@/lib/batangasBarangays";
+import { useRecordsSync } from "@/lib/useRecordsSync";
+
+interface AbiypProject {
+  id: string;
+  name: string;
+  category: string;
+  budget: number;
+  status: string;
+  year: number | null;
+}
+
+interface CategoryBudget {
+  id: string;
+  category: string;
+  allocation: number;
+  spent: number;
+  percentage: number;
+  status: string;
+}
+
+const CURRENT_YEAR = new Date().getFullYear();
+
+const statusForUtilization = (percentage: number) => {
+  if (percentage >= 90) return "Near Limit";
+  if (percentage >= 50) return "In Progress";
+  if (percentage > 0) return "On Track";
+  return "Pending";
+};
 
 const STATUS_PILL: Record<string, string> = {
   "On Track": "bg-success/10 text-success",
@@ -34,7 +62,14 @@ export default function ABYIPPage() {
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedYear, setSelectedYear] = useState<string>("2024");
+  const [selectedYear, setSelectedYear] = useState<string>(String(CURRENT_YEAR));
+  const [projects, setProjects] = useState<AbiypProject[]>([]);
+
+  const { records: expenseRecords } = useRecordsSync({
+    type: "expense",
+    enabled: Boolean(currentUser),
+    limit: 500,
+  });
 
   // On-chain reads using Wagmi
   const barangay = currentUser?.barangay
@@ -66,57 +101,74 @@ export default function ABYIPPage() {
       ? Math.round((onChainAllocated / onChainCeiling) * 100)
       : 0;
 
-  // Mock ABYIP budget ceiling data for breakdown table & charts
-  const [budgetCeilings] = useState([
-    {
-      id: "1",
-      category: "Infrastructure",
-      allocation: 500000,
-      spent: 320000,
-      percentage: 64,
-      status: "In Progress",
-    },
-    {
-      id: "2",
-      category: "Health & Wellness",
-      allocation: 250000,
-      spent: 185000,
-      percentage: 74,
-      status: "On Track",
-    },
-    {
-      id: "3",
-      category: "Education & Skills",
-      allocation: 300000,
-      spent: 98000,
-      percentage: 33,
-      status: "Pending",
-    },
-    {
-      id: "4",
-      category: "Environmental Programs",
-      allocation: 180000,
-      spent: 152000,
-      percentage: 84,
-      status: "Near Limit",
-    },
-    {
-      id: "5",
-      category: "Community Services",
-      allocation: 220000,
-      spent: 110000,
-      percentage: 50,
-      status: "On Track",
-    },
-    {
-      id: "6",
-      category: "Youth Development",
-      allocation: 280000,
-      spent: 245000,
-      percentage: 88,
-      status: "Near Limit",
-    },
-  ]);
+  const budgetCeilings = useMemo<CategoryBudget[]>(() => {
+    const year = Number(selectedYear);
+    const categories = new Map<string, { allocation: number; spent: number }>();
+    const ensureCategory = (category: string) => {
+      let entry = categories.get(category);
+      if (!entry) {
+        entry = { allocation: 0, spent: 0 };
+        categories.set(category, entry);
+      }
+      return entry;
+    };
+
+    const projectsThisYear = projects.filter(
+      (project) => project.year === year,
+    );
+
+    for (const project of projectsThisYear) {
+      ensureCategory(project.category).allocation += project.budget;
+    }
+
+    const categoryByProject = new Map<string, string>();
+    for (const project of projects) {
+      categoryByProject.set(project.id, project.category);
+    }
+
+    for (const record of expenseRecords) {
+      if (!record.created_at) continue;
+      if (new Date(record.created_at).getFullYear() !== year) continue;
+
+      const projectId =
+        typeof record.project_id === "string" ? record.project_id : null;
+      // Expenses store their own category; fall back to the linked project's
+      // category, then to an explicit bucket for unsorted spending.
+      const storedCategory =
+        typeof record.category === "string" && record.category.trim().length > 0
+          ? record.category.trim()
+          : null;
+      const category =
+        storedCategory ??
+        (projectId ? categoryByProject.get(projectId) : undefined) ??
+        "Uncategorized";
+      const amount = Number(record.amount);
+      ensureCategory(category).spent +=
+        (Number.isFinite(amount) ? amount : 0) / 100;
+    }
+
+    return Array.from(categories.entries())
+      .map(([category, entry]) => {
+        const percentage =
+          entry.allocation > 0
+            ? Math.round((entry.spent / entry.allocation) * 100)
+            : entry.spent > 0
+              ? 100
+              : 0;
+
+        return {
+          id: category,
+          category,
+          allocation: entry.allocation,
+          spent: entry.spent,
+          percentage,
+          status: statusForUtilization(percentage),
+        };
+      })
+      .sort(
+        (a, b) => b.allocation - a.allocation || b.spent - a.spent,
+      );
+  }, [projects, expenseRecords, selectedYear]);
 
   const totalAllocation = budgetCeilings.reduce(
     (sum, item) => sum + item.allocation,
@@ -196,6 +248,46 @@ export default function ABYIPPage() {
     fetchUserProfile();
   }, [router]);
 
+  useEffect(() => {
+    if (!currentUser) return;
+
+    let active = true;
+    const fetchProjects = async () => {
+      const { data, error } = await supabase
+        .from("projects")
+        .select("id, name, category, budget, status, created_at, dateProposed")
+        .eq("barangay", currentUser.barangay);
+
+      if (!active) return;
+
+      if (error) {
+        console.error("Error fetching ABYIP projects:", error.message);
+        return;
+      }
+
+      setProjects(
+        (data ?? []).map((project) => {
+          const proposedAt = project.dateProposed || project.created_at;
+          const year = proposedAt ? new Date(proposedAt).getFullYear() : null;
+
+          return {
+            id: String(project.id),
+            name: project.name || "Unnamed project",
+            category: project.category || "Uncategorized",
+            budget: Number(project.budget) || 0,
+            status: (project.status as string) || "Proposed",
+            year: Number.isFinite(year) ? year : null,
+          };
+        }),
+      );
+    };
+
+    fetchProjects();
+    return () => {
+      active = false;
+    };
+  }, [currentUser]);
+
   const getProgressColor = (percentage: number) => {
     if (percentage < 50) return "bg-success";
     if (percentage < 75) return "bg-ongoing";
@@ -244,10 +336,14 @@ export default function ABYIPPage() {
                 onChange={(e) => setSelectedYear(e.target.value)}
                 className="cursor-pointer bg-transparent text-sm font-bold text-primary-foreground outline-none"
               >
-                <option value="2022">2022</option>
-                <option value="2023">2023</option>
-                <option value="2024">2024</option>
-                <option value="2025">2025</option>
+                {Array.from(
+                  { length: 5 },
+                  (_, index) => CURRENT_YEAR - index,
+                ).map((year) => (
+                  <option key={year} value={String(year)}>
+                    {year}
+                  </option>
+                ))}
               </select>
             </label>
           }
@@ -392,6 +488,11 @@ export default function ABYIPPage() {
           />
 
           <div className="space-y-3">
+            {budgetCeilings.length === 0 && (
+              <p className="rounded-2xl border border-dashed border-border bg-secondary/40 p-6 text-center text-xs font-medium text-secondary-foreground">
+                No projects or expenses recorded for {selectedYear} yet.
+              </p>
+            )}
             {budgetCeilings.map((item) => (
               <div
                 key={item.id}
@@ -415,13 +516,13 @@ export default function ABYIPPage() {
                     <span>
                       Allocation:{" "}
                       <span className="font-bold text-primary-foreground">
-                        ₱{item.allocation.toLocaleString()}
+                        {formatPeso(item.allocation)}
                       </span>
                     </span>
                     <span>
                       Spent:{" "}
                       <span className="font-bold text-primary-foreground">
-                        ₱{item.spent.toLocaleString()}
+                        {formatPeso(item.spent)}
                       </span>
                     </span>
                   </div>
@@ -429,7 +530,7 @@ export default function ABYIPPage() {
                   <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-secondary">
                     <div
                       className={`h-full ${getProgressColor(item.percentage)} transition-all`}
-                      style={{ width: `${item.percentage}%` }}
+                      style={{ width: `${Math.min(item.percentage, 100)}%` }}
                     />
                   </div>
                 </div>
@@ -439,7 +540,7 @@ export default function ABYIPPage() {
                     {item.percentage}%
                   </p>
                   <p className="mt-1 text-[10px] text-secondary-foreground">
-                    ₱{(item.allocation - item.spent).toLocaleString()} left
+                    {formatPeso(Math.max(item.allocation - item.spent, 0))} left
                   </p>
                 </div>
               </div>
@@ -458,7 +559,9 @@ export default function ABYIPPage() {
           <div className="grid gap-4 sm:grid-cols-2">
             {budgetCeilings.map((item) => {
               const allocationPercentage =
-                (item.allocation / totalAllocation) * 100;
+                totalAllocation > 0
+                  ? (item.allocation / totalAllocation) * 100
+                  : 0;
               return (
                 <div key={item.id} className="rounded-2xl bg-secondary/40 p-4">
                   <div className="mb-2 flex items-center justify-between">
