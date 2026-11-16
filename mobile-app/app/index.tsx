@@ -1,6 +1,6 @@
 import DotGrid from "@/components/ui/DotGrid";
 import GoogleButton from "@/components/ui/GoogleButton";
-import { signInWithGoogle } from "@/lib/google-auth";
+import { getGoogleRedirectUrl, signInWithGoogle } from "@/lib/google-auth";
 import { getErrorMessage } from "@/lib/projects";
 import { useRouter } from "expo-router";
 import {
@@ -9,7 +9,7 @@ import {
   Lock,
   ShieldCheck,
 } from "lucide-react-native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import {
   Image,
@@ -25,6 +25,13 @@ export default function IndexPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState("");
+  const redirectUrl = getGoogleRedirectUrl();
+
+  useEffect(() => {
+    if (__DEV__) {
+      console.log("[auth] OAuth redirect URL:", redirectUrl);
+    }
+  }, [redirectUrl]);
 
   const handleGoogleSignIn = async () => {
     setFormError("");
@@ -151,6 +158,24 @@ export default function IndexPage() {
               <View className="mt-5">
                 <GoogleButton onPress={handleGoogleSignIn} loading={loading} />
               </View>
+
+              {__DEV__ ? (
+                <View className="mt-4 rounded-xl border border-dashed border-border bg-secondary/40 p-3">
+                  <Text className="font-inter-bold text-[9px] uppercase tracking-[0.14em] text-secondary-foreground">
+                    Dev only · OAuth redirect URL
+                  </Text>
+                  <Text
+                    selectable
+                    className="font-inter-medium mt-1 text-[10px] leading-4 text-primary"
+                  >
+                    {redirectUrl}
+                  </Text>
+                  <Text className="font-inter mt-1 text-[9px] leading-4 text-secondary-foreground">
+                    Add this exact URL to Supabase → Authentication → URL
+                    Configuration → Redirect URLs.
+                  </Text>
+                </View>
+              ) : null}
 
               <View className="mt-4 flex-row items-center justify-center gap-1.5">
                 <Lock size={11} color="#94A3B8" />

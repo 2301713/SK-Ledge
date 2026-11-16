@@ -13,7 +13,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/lib/useAuthStore";
 import { useToast } from "@/lib/useToast";
 import { canonicalizeBarangay } from "@/lib/batangasBarangays";
-import { Check, Loader2, X } from "lucide-react";
+import { Check, Loader2, RotateCcw, X } from "lucide-react";
 
 interface AccountRow {
   id: string;
@@ -23,6 +23,7 @@ interface AccountRow {
   role_type: string;
   barangay: string;
   approval_status: string;
+  account_status?: boolean | null;
   avatar_url?: string | null;
 }
 
@@ -100,7 +101,7 @@ export default function AccountsPage() {
         const { data: accountRows, error: accountsError } = await supabase
           .from("profiles")
           .select(
-            "id, username, full_name, role_type, barangay, email, approval_status, avatar_url",
+            "id, username, full_name, role_type, barangay, email, approval_status, account_status, avatar_url",
           )
           .order("full_name", { ascending: true });
 
@@ -165,10 +166,34 @@ export default function AccountsPage() {
   const pendingAccounts = useMemo(
     () =>
       accounts.filter(
-        (account) => normalizeStatus(account.approval_status) === "pending",
+        (account) =>
+          normalizeStatus(account.approval_status) === "pending" &&
+          account.account_status !== false,
       ),
     [accounts],
   );
+
+  const disabledVendors = useMemo(() => {
+    const query = search.trim().toLowerCase();
+
+    return accounts.filter((account) => {
+      if (account.role_type !== "Vendor" || account.account_status !== false) {
+        return false;
+      }
+
+      if (!query) return true;
+
+      return [
+        account.full_name,
+        account.username,
+        account.email,
+        account.barangay,
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(query);
+    });
+  }, [accounts, search]);
 
   const accountTypeCounts = useMemo(
     () => ({
@@ -181,6 +206,37 @@ export default function AccountsPage() {
     }),
     [pendingAccounts],
   );
+
+  const handleRestore = async (id: string) => {
+    setBusyId(id);
+
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ account_status: true })
+        .eq("id", id)
+        .eq("role_type", "Vendor");
+
+      if (error) throw error;
+
+      setAccounts((prev) =>
+        prev.map((account) =>
+          account.id === id ? { ...account, account_status: true } : account,
+        ),
+      );
+
+      toast.success(
+        "Vendor account restored. They can sign in again if their application is approved.",
+      );
+    } catch (error: unknown) {
+      console.error("Failed to restore vendor account:", error);
+      toast.error(
+        `Failed to restore account: ${(error as Error).message || "Database permission denied."}`,
+      );
+    } finally {
+      setBusyId(null);
+    }
+  };
 
   const filteredAccounts = useMemo(() => {
     const typeFiltered = pendingAccounts.filter((account) => {
@@ -380,6 +436,105 @@ export default function AccountsPage() {
                       </tr>
                     );
                   })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+
+        <Card>
+          <CardHeader
+            eyebrow="Recovery"
+            title="Deactivated vendor accounts"
+            subtitle="Vendors who deleted their account from the mobile app. Restoring re-enables sign-in; their bids and procurement records were never removed."
+          />
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border text-left">
+                  <th className="px-3 py-3 text-[11px] font-bold uppercase tracking-[0.16em] text-secondary-foreground">
+                    Vendor
+                  </th>
+                  <th className="px-3 py-3 text-[11px] font-bold uppercase tracking-[0.16em] text-secondary-foreground">
+                    Barangay
+                  </th>
+                  <th className="px-3 py-3 text-[11px] font-bold uppercase tracking-[0.16em] text-secondary-foreground">
+                    Application
+                  </th>
+                  <th className="px-3 py-3 text-right text-[11px] font-bold uppercase tracking-[0.16em] text-secondary-foreground">
+                    Action
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {disabledVendors.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={4}
+                      className="px-3 py-10 text-center text-sm text-secondary-foreground"
+                    >
+                      No deactivated vendor accounts.
+                    </td>
+                  </tr>
+                ) : (
+                  disabledVendors.map((account) => (
+                    <tr
+                      key={account.id}
+                      className="transition hover:bg-secondary/40"
+                    >
+                      <td className="px-3 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary text-xs font-bold text-white">
+                            {account.avatar_url ? (
+                              <Image
+                                src={account.avatar_url}
+                                alt={account.full_name}
+                                width={36}
+                                height={36}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              (account.full_name || "?").charAt(0).toUpperCase()
+                            )}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-primary-foreground">
+                              {account.full_name}
+                            </p>
+                            <p className="text-xs text-secondary-foreground">
+                              {account.email}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-3 py-4 text-primary-foreground">
+                        {account.barangay || "N/A"}
+                      </td>
+                      <td className="px-3 py-4">
+                        <StatusBadge
+                          status={normalizeStatus(account.approval_status)}
+                          showDot
+                        />
+                      </td>
+                      <td className="px-3 py-4">
+                        <div className="flex justify-end">
+                          <button
+                            onClick={() => handleRestore(account.id)}
+                            disabled={busyId === account.id}
+                            className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-xs font-bold text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {busyId === account.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <RotateCcw className="h-4 w-4" />
+                            )}
+                            Restore
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
                 )}
               </tbody>
             </table>

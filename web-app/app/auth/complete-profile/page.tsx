@@ -154,13 +154,13 @@ export default function CompleteProfilePage() {
       if (insertError) {
         // If insert fails due to duplicate, try update instead
         if (insertError.code === "23505") {
+          // Role and approval status are server-controlled after registration;
+          // rewriting them here is rejected by the profiles guard trigger.
           const { error: updateProfileError } = await supabase
             .from("profiles")
             .update({
               username: formData.username,
-              role_type: formData.role_type,
               barangay: canonicalBarangay ?? "N/A",
-              approval_status: "pending",
               avatar_url: user.user_metadata?.avatar_url || null,
             })
             .eq("id", user.id);
@@ -307,7 +307,6 @@ export default function CompleteProfilePage() {
                   <option value="BMO">BMO</option>
                   <option value="SK_Federation">SK Federation</option>
                   <option value="COA">COA</option>
-                  <option value="Admin">Admin</option>
                 </select>
               </div>
             </div>

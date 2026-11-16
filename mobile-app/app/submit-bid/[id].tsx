@@ -182,27 +182,19 @@ export default function SubmitBidPage() {
       if (uploadError) throw uploadError;
       uploadedPath = storagePath;
 
-      const { data: publicUrlData } = supabase.storage
-        .from("proposals")
-        .getPublicUrl(storagePath);
+      // The bucket is private: the server stores the object path and officials
+      // receive short-lived signed URLs when they open the proposal.
+      // The server owns vendor identity, project snapshot, status, deadline,
+      // budget, and duplicate checks; the form validation is only for UX.
+      const { error: bidError } = await supabase.rpc("submit_bid", {
+        p_project_id: project.id,
+        p_amount_php: Number(amount.replace(/,/g, "")),
+        p_timeline: timeline.trim(),
+        p_notes: notes.trim() || null,
+        p_proposal_path: storagePath,
+      });
 
-      const { error: insertError } = await supabase.from("bids").insert([
-        {
-          project_id: project.id,
-          user_id: userId,
-          vendor_id: userId,
-          contract_title: project.name,
-          department: project.location,
-          amount_php: Number(amount.replace(/,/g, "")),
-          timeline: timeline.trim(),
-          notes: notes.trim() || null,
-          proposal_url: publicUrlData.publicUrl,
-          status: "pending",
-          submitted_on: new Date().toISOString(),
-        },
-      ]);
-
-      if (insertError) throw insertError;
+      if (bidError) throw bidError;
 
       setSubmitted(true);
     } catch (err) {

@@ -2,12 +2,15 @@ import ScreenHeader from "@/components/ui/ScreenHeader";
 import { ProjectCardSkeleton } from "@/components/ui/Skeletons";
 import {
   daysLeftLabel,
-  fetchOpenProjects,
+  fetchMyProfile,
+  fetchOpenProjectsPage,
   formatPeso,
   getErrorMessage,
+  PROJECTS_PAGE_SIZE,
   uniqueCategories,
   type Project,
 } from "@/lib/projects";
+import { supabase } from "@/lib/supabase";
 import { useRouter } from "expo-router";
 import {
   ChevronRight,
@@ -20,6 +23,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import {
+  ActivityIndicator,
   FlatList,
   RefreshControl,
   Text,
@@ -33,28 +37,47 @@ export default function OpportunitiesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
   const [projects, setProjects] = useState<Project[]>([]);
+  const [companyName, setCompanyName] = useState("");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState("");
   const router = useRouter();
 
-  const fetchOpportunities = useCallback(async () => {
+  const loadProjects = useCallback(async (offset: number, append: boolean) => {
     try {
-      setProjects(await fetchOpenProjects());
+      const { projects: page, hasMore: more } = await fetchOpenProjectsPage({
+        limit: PROJECTS_PAGE_SIZE,
+        offset,
+      });
+
+      setProjects((current) => {
+        // A refresh can land while a "load more" is in flight; drop the stale
+        // append rather than duplicating rows.
+        if (append && current.length !== offset) return current;
+        return append ? [...current, ...page] : page;
+      });
+      setHasMore(more);
     } catch (err) {
-      setError(getErrorMessage(err, "Could not load opportunities."));
+      if (!append) {
+        setError(getErrorMessage(err, "Could not load opportunities."));
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
+      setLoadingMore(false);
     }
   }, []);
 
   useEffect(() => {
     let active = true;
 
-    fetchOpenProjects()
-      .then((data) => {
-        if (active) setProjects(data);
+    fetchOpenProjectsPage({ limit: PROJECTS_PAGE_SIZE })
+      .then(({ projects: page, hasMore: more }) => {
+        if (!active) return;
+        setProjects(page);
+        setHasMore(more);
       })
       .catch((err) => {
         if (active) {
@@ -73,9 +96,42 @@ export default function OpportunitiesPage() {
     };
   }, []);
 
+  useEffect(() => {
+    let active = true;
+
+    supabase.auth
+      .getUser()
+      .then(({ data: { user } }) => {
+        if (!user) return null;
+        return fetchMyProfile(user.id);
+      })
+      .then((profile) => {
+        if (!active || !profile) return;
+        setCompanyName(
+          profile.full_name?.trim() ||
+            profile.email?.split("@")[0] ||
+            "",
+        );
+      })
+      .catch(() => {
+        // The header name is optional; the procurement list still works.
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const onRefresh = () => {
     setRefreshing(true);
-    fetchOpportunities();
+    setHasMore(true);
+    loadProjects(0, false);
+  };
+
+  const loadMore = () => {
+    if (loading || loadingMore || refreshing || !hasMore) return;
+    setLoadingMore(true);
+    loadProjects(projects.length, true);
   };
 
   const categories = useMemo(
@@ -172,7 +228,7 @@ export default function OpportunitiesPage() {
         subtitle={
           loading
             ? "Loading live procurements..."
-            : `${projects.length} open procurement${projects.length === 1 ? "" : "s"} from the SK portal`
+            : `${companyName ? `${companyName} · ` : ""}${projects.length}${hasMore ? "+" : ""} open procurement${projects.length === 1 && !hasMore ? "" : "s"} from the SK portal`
         }
       />
       </Animated.View>
@@ -245,7 +301,8 @@ export default function OpportunitiesPage() {
             onPress={() => {
               setError("");
               setLoading(true);
-              fetchOpportunities();
+              setHasMore(true);
+              loadProjects(0, false);
             }}
             activeOpacity={0.8}
           >
@@ -267,6 +324,15 @@ export default function OpportunitiesPage() {
           renderItem={renderItem}
           contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 40, gap: 12 }}
           showsVerticalScrollIndicator={false}
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.4}
+          ListFooterComponent={
+            loadingMore ? (
+              <View className="items-center py-4">
+                <ActivityIndicator color="#0138A8" />
+              </View>
+            ) : undefined
+          }
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
