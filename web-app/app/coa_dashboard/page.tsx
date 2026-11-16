@@ -1,7 +1,11 @@
 "use client";
 
 import LogoLoader from "@/components/LogoLoader";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useReadContract } from "wagmi";
+import { CONTRACT_ADDRESS, SK_LEDGE_ABI } from "@/lib/contractConfig";
+import { sumAmountCentavos } from "@/lib/records";
+import { useRecordsSync } from "@/lib/useRecordsSync";
 import SideBar from "@/components/dashboard/SideBar";
 import TopBar from "@/components/dashboard/ui/TopBar";
 import PageHeader from "@/components/dashboard/ui/PageHeader";
@@ -22,17 +26,103 @@ import {
   CircleAlert,
 } from "lucide-react";
 
+type OnChainRecord = {
+  id: bigint;
+  barangay: string;
+  amount: bigint;
+  timestamp: bigint;
+  recordType: string;
+  approved: boolean;
+};
+
+const URGENT_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+const URGENT_CUTOFF_MS = Date.now() - URGENT_AGE_MS;
+
 export default function COADashboard() {
   const { currentUser, isLoading, setCurrentUser, setIsLoading } =
     useAuthStore();
   const router = useRouter();
   const authAttemptedRef = useRef(false);
+  const [projects, setProjects] = useState<{ id: string; budget: number }[]>([]);
 
-  // For the overview chart/KPIs
-  const pendingApprovalCount = 3;
-  const pendingDisbursementCount = 2;
-  const totalRequestsYTD = 1204;
-  const urgentFlags = 5;
+  const { records, isLoading: isRecordsLoading, lastSyncedAt } = useRecordsSync({
+    enabled: Boolean(currentUser),
+    limit: 500,
+  });
+
+  const { data: onChainRecords, isLoading: isChainLoading } = useReadContract({
+    address: CONTRACT_ADDRESS,
+    abi: SK_LEDGE_ABI,
+    functionName: "getAllRecords",
+    query: { enabled: Boolean(currentUser) },
+  });
+
+  useEffect(() => {
+    if (!currentUser) return;
+
+    let active = true;
+    const fetchProjects = async () => {
+      const { data, error } = await supabase
+        .from("projects")
+        .select("id, budget");
+
+      if (!active) return;
+
+      if (error) {
+        console.error("Error fetching audit projects:", error.message);
+        return;
+      }
+
+      setProjects(
+        (data ?? []).map((project) => ({
+          id: String(project.id),
+          budget: Number(project.budget) || 0,
+        })),
+      );
+    };
+
+    fetchProjects();
+    return () => {
+      active = false;
+    };
+  }, [currentUser]);
+
+  const overview = useMemo(() => {
+    const chainRecords = (onChainRecords ?? []) as readonly OnChainRecord[];
+    const pendingRecords = chainRecords.filter((record) => !record.approved);
+    const urgentRecords = pendingRecords.filter(
+      (record) => Number(record.timestamp) * 1000 < URGENT_CUTOFF_MS,
+    );
+
+    const currentYear = new Date().getFullYear();
+    const requestsYTD = records.filter((record) => {
+      if (!record.created_at) return false;
+      return new Date(record.created_at).getFullYear() === currentYear;
+    });
+
+    const totalBudget = projects.reduce(
+      (sum, project) => sum + project.budget,
+      0,
+    );
+    const approvedAmount = sumAmountCentavos(records, "award") / 100;
+
+    return {
+      pendingApprovals: pendingRecords.length,
+      pendingDisbursements: records.filter(
+        (record) => record.record_type === "expense",
+      ).length,
+      totalRequestsYTD: requestsYTD.length,
+      urgentFlags: urgentRecords.length,
+      totalBudget,
+      approvedAmount,
+      remainingBudget: Math.max(totalBudget - approvedAmount, 0),
+    };
+  }, [onChainRecords, records, projects]);
+
+  const pendingApprovalCount = overview.pendingApprovals;
+  const pendingDisbursementCount = overview.pendingDisbursements;
+  const totalRequestsYTD = overview.totalRequestsYTD;
+  const urgentFlags = overview.urgentFlags;
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -182,7 +272,7 @@ export default function COADashboard() {
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
           <StatCard
             label="Pending Approvals"
-            value={pendingApprovalCount}
+            value={isChainLoading ? "—" : pendingApprovalCount}
             icon={CheckSquare}
             variant="brand"
             trend="Across municipal jurisdictions"
@@ -190,21 +280,28 @@ export default function COADashboard() {
           />
           <StatCard
             label="Pending Disbursements"
-            value={pendingDisbursementCount}
+            value={isRecordsLoading ? "—" : pendingDisbursementCount}
             icon={FileText}
             trend="Awaiting audit review"
           />
           <StatCard
             label="Total Requests YTD"
-            value={totalRequestsYTD.toLocaleString()}
+            value={isRecordsLoading ? "—" : totalRequestsYTD.toLocaleString()}
             icon={TrendingUp}
-            trend="Last sync: 2h ago"
+            trend={
+              lastSyncedAt
+                ? `Last sync: ${lastSyncedAt.toLocaleTimeString("en-US", {
+                    hour: "numeric",
+                    minute: "2-digit",
+                  })}`
+                : "Awaiting first sync"
+            }
           />
           <StatCard
             label="Urgent Flags"
-            value={urgentFlags}
+            value={isChainLoading ? "—" : urgentFlags}
             icon={AlertCircle}
-            trend="Require immediate follow-up"
+            trend="Pending approvals over 7 days old"
           />
         </div>
 
@@ -217,7 +314,7 @@ export default function COADashboard() {
               subtitle="Approvals vs disbursements awaiting action"
               action={
                 <span className="rounded-lg border border-border bg-secondary/60 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
-                  Last 7d
+                  Live
                 </span>
               }
             />
@@ -241,7 +338,7 @@ export default function COADashboard() {
                   </div>
                   <div>
                     <p className="text-lg font-bold tracking-tight text-primary-foreground">
-                      {formatCurrency(120000)}
+                      {formatCurrency(overview.totalBudget)}
                     </p>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
                       Total Budget
@@ -254,7 +351,7 @@ export default function COADashboard() {
                   </div>
                   <div>
                     <p className="text-lg font-bold tracking-tight text-primary-foreground">
-                      {formatCurrency(45000)}
+                      {formatCurrency(overview.approvedAmount)}
                     </p>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
                       Approved
@@ -267,7 +364,7 @@ export default function COADashboard() {
                   </div>
                   <div>
                     <p className="text-lg font-bold tracking-tight text-primary-foreground">
-                      {formatCurrency(75000)}
+                      {formatCurrency(overview.remainingBudget)}
                     </p>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
                       Remaining

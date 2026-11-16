@@ -18,6 +18,8 @@ import {
   ShieldCheck,
   Loader2,
   Inbox,
+  Send,
+  Upload,
 } from "lucide-react";
 import PortalNav from "../../components/public_portal/PortalNav";
 import StatCard from "../../components/bidding/StatCard";
@@ -27,6 +29,7 @@ import TimelineItem from "../../components/bidding/TimelineItem";
 import RequestModal from "../../components/bidding/RequestModal";
 import { supabase } from "@/lib/supabase";
 import type { BiddingProject } from "./types";
+import { PROPOSAL_MAX_BYTES } from "@/lib/bidProposal";
 
 interface ProjectRow {
   id: string;
@@ -42,6 +45,11 @@ interface ProjectRow {
   award_tx_hash: string | null;
   created_at: string;
 }
+
+type VendorAccount = {
+  roleType: string;
+  approvalStatus: string;
+};
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -130,6 +138,20 @@ export default function BiddingPortal() {
   const [vendorEmail, setVendorEmail] = useState("");
   const [vendorNote, setVendorNote] = useState("");
   const [requestSubmitted, setRequestSubmitted] = useState(false);
+  const [vendorAccount, setVendorAccount] = useState<VendorAccount | null>(
+    null,
+  );
+  const [isVendorLookupDone, setIsVendorLookupDone] = useState(false);
+  const [bidForm, setBidForm] = useState({
+    amount: "",
+    timeline: "",
+    notes: "",
+  });
+  const [proposalFile, setProposalFile] = useState<File | null>(null);
+  const [bidStatus, setBidStatus] = useState<
+    "idle" | "submitting" | "success"
+  >("idle");
+  const [bidError, setBidError] = useState("");
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -149,6 +171,37 @@ export default function BiddingPortal() {
     };
 
     fetchProjects();
+  }, []);
+
+  useEffect(() => {
+    const loadVendorAccount = async () => {
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user) return;
+
+        const { data } = await supabase
+          .from("profiles")
+          .select("role_type, approval_status")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        if (data) {
+          setVendorAccount({
+            roleType: data.role_type,
+            approvalStatus: data.approval_status,
+          });
+        }
+      } catch (err) {
+        console.error("Failed to load vendor account:", err);
+      } finally {
+        setIsVendorLookupDone(true);
+      }
+    };
+
+    loadVendorAccount();
   }, []);
 
   // Derived: fall back to the first project when nothing valid is selected
@@ -175,6 +228,14 @@ export default function BiddingPortal() {
     [projects],
   );
 
+  const selectProject = (project: BiddingProject) => {
+    setSelectedProject(project);
+    // Reset submission feedback when the vendor switches projects.
+    setBidStatus("idle");
+    setBidError("");
+    setProposalFile(null);
+  };
+
   const handleRequestClose = () => {
     setIsRequestModalOpen(false);
     setRequestSubmitted(false);
@@ -187,6 +248,93 @@ export default function BiddingPortal() {
     setVendorCompany("");
     setVendorEmail("");
     setVendorNote("");
+  };
+
+  const handleBidSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setBidError("");
+
+    if (!activeProject) return;
+
+    const amount = Number(bidForm.amount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setBidError("Enter a valid bid amount.");
+      return;
+    }
+
+    if (amount > activeProject.abc) {
+      setBidError("Your bid cannot exceed the approved budget (ABC).");
+      return;
+    }
+
+    if (!bidForm.timeline.trim()) {
+      setBidError("Enter your delivery timeline.");
+      return;
+    }
+
+    setBidStatus("submitting");
+
+    try {
+      let proposalUrl = "";
+
+      if (proposalFile) {
+        if (proposalFile.size > PROPOSAL_MAX_BYTES) {
+          throw new Error("Proposal file must be 10 MB or smaller.");
+        }
+
+        const uploadFormData = new FormData();
+        uploadFormData.append("file", proposalFile);
+
+        const uploadResponse = await fetch("/api/bids/proposal", {
+          method: "POST",
+          body: uploadFormData,
+        });
+
+        const uploadResult = (await uploadResponse
+          .json()
+          .catch(() => null)) as {
+          data?: { url?: string };
+          error?: string;
+        } | null;
+
+        if (!uploadResponse.ok || !uploadResult?.data?.url) {
+          throw new Error(
+            uploadResult?.error || "Failed to upload the proposal document.",
+          );
+        }
+
+        proposalUrl = uploadResult.data.url;
+      }
+
+      const response = await fetch("/api/bids", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          project_id: activeProject.id,
+          amount_php: amount,
+          timeline: bidForm.timeline.trim(),
+          notes: bidForm.notes.trim(),
+          proposal_url: proposalUrl,
+        }),
+      });
+
+      const result = (await response.json().catch(() => null)) as {
+        error?: string;
+      } | null;
+
+      if (!response.ok) {
+        throw new Error(result?.error || "Failed to submit bid.");
+      }
+
+      setBidStatus("success");
+      setBidForm({ amount: "", timeline: "", notes: "" });
+      setProposalFile(null);
+    } catch (err) {
+      setBidStatus("idle");
+      setBidError(
+        err instanceof Error ? err.message : "Failed to submit bid.",
+      );
+    }
   };
 
   return (
@@ -379,7 +527,7 @@ export default function BiddingPortal() {
                         return (
                           <tr
                             key={project.id}
-                            onClick={() => setSelectedProject(project)}
+                            onClick={() => selectProject(project)}
                             className={`cursor-pointer transition-colors ${
                               isActive
                                 ? "bg-primary/[0.04]"
@@ -647,6 +795,216 @@ export default function BiddingPortal() {
                       >
                         Request Bid Package
                       </button>
+                    </div>
+
+                    {/* BID SUBMISSION */}
+                    <div className="mt-4 rounded-2xl border border-border bg-white p-5">
+                      <div className="mb-4 flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-[10px] font-black uppercase tracking-widest text-secondary-foreground">
+                            Vendor Bid
+                          </p>
+                          <h3 className="mt-1 text-lg font-black text-primary-foreground">
+                            Submit a bid
+                          </h3>
+                        </div>
+                        <span className="shrink-0 rounded-full border border-border bg-secondary/60 px-2.5 py-1 text-[9px] font-black uppercase tracking-widest text-secondary-foreground">
+                          ABC ₱
+                          {activeProject.abc.toLocaleString("en-US", {
+                            minimumFractionDigits: 2,
+                          })}
+                        </span>
+                      </div>
+
+                      {!isVendorLookupDone ? (
+                        <p className="text-xs font-semibold text-secondary-foreground">
+                          Checking vendor account...
+                        </p>
+                      ) : activeProject.status !== "Accepting Bids" ? (
+                        <p className="rounded-xl border border-border bg-secondary/40 px-3 py-3 text-xs font-semibold text-secondary-foreground">
+                          Bidding is closed for this project.
+                        </p>
+                      ) : !vendorAccount ? (
+                        <div className="space-y-3">
+                          <p className="text-xs leading-relaxed text-secondary-foreground">
+                            Sign in with an approved vendor account to submit a
+                            bid for this project.
+                          </p>
+                          <a
+                            href="/login"
+                            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-[11px] font-black uppercase tracking-widest text-white transition hover:bg-primary/90"
+                          >
+                            Sign in to bid
+                          </a>
+                        </div>
+                      ) : vendorAccount.roleType !== "Vendor" ? (
+                        <div className="space-y-3">
+                          <p className="text-xs leading-relaxed text-secondary-foreground">
+                            Only registered vendor accounts can submit bids.
+                          </p>
+                          <a
+                            href="/register"
+                            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-[11px] font-black uppercase tracking-widest text-white transition hover:bg-primary/90"
+                          >
+                            Register as a vendor
+                          </a>
+                        </div>
+                      ) : vendorAccount.approvalStatus !== "approved" ? (
+                        <p className="rounded-xl border border-pending/30 bg-pending/10 px-3 py-3 text-xs font-semibold text-pending">
+                          Your vendor account is pending administrator
+                          approval.
+                        </p>
+                      ) : bidStatus === "success" ? (
+                        <div className="flex items-start gap-2 rounded-xl border border-success/30 bg-success/10 px-3 py-3 text-xs font-semibold text-success">
+                          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+                          Bid submitted. The BAC will evaluate your proposal
+                          after the deadline.
+                        </div>
+                      ) : (
+                        <form onSubmit={handleBidSubmit} className="space-y-3">
+                          <div className="space-y-1.5">
+                            <label
+                              htmlFor="bid-amount"
+                              className="block text-[10px] font-black uppercase tracking-widest text-secondary-foreground"
+                            >
+                              Bid amount (PHP)
+                            </label>
+                            <input
+                              id="bid-amount"
+                              type="number"
+                              required
+                              min="0.01"
+                              step="0.01"
+                              max={activeProject.abc}
+                              value={bidForm.amount}
+                              onChange={(e) =>
+                                setBidForm({
+                                  ...bidForm,
+                                  amount: e.target.value,
+                                })
+                              }
+                              className="w-full rounded-xl border border-border bg-white px-3 py-2.5 text-sm font-semibold text-primary-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                              placeholder="e.g. 150000.00"
+                            />
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <label
+                              htmlFor="bid-timeline"
+                              className="block text-[10px] font-black uppercase tracking-widest text-secondary-foreground"
+                            >
+                              Delivery timeline
+                            </label>
+                            <input
+                              id="bid-timeline"
+                              type="text"
+                              required
+                              maxLength={120}
+                              value={bidForm.timeline}
+                              onChange={(e) =>
+                                setBidForm({
+                                  ...bidForm,
+                                  timeline: e.target.value,
+                                })
+                              }
+                              className="w-full rounded-xl border border-border bg-white px-3 py-2.5 text-sm font-semibold text-primary-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                              placeholder="e.g. 45 calendar days"
+                            />
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <span className="block text-[10px] font-black uppercase tracking-widest text-secondary-foreground">
+                              Proposal document (optional)
+                            </span>
+                            <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-dashed border-border bg-secondary/20 px-3 py-3 transition hover:border-primary/40 hover:bg-secondary/40">
+                              <span className="flex min-w-0 items-center gap-2 text-xs font-semibold text-secondary-foreground">
+                                <Upload className="h-4 w-4 shrink-0 text-primary" />
+                                <span className="truncate">
+                                  {proposalFile
+                                    ? proposalFile.name
+                                    : "Attach PDF, DOC, or DOCX"}
+                                </span>
+                              </span>
+                              <span className="shrink-0 rounded-lg bg-primary px-2.5 py-1 text-[9px] font-black uppercase tracking-widest text-white">
+                                Browse
+                              </span>
+                              <input
+                                type="file"
+                                accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                                className="hidden"
+                                onChange={(event) => {
+                                  const file =
+                                    event.target.files?.[0] ?? null;
+
+                                  if (
+                                    file &&
+                                    file.size > PROPOSAL_MAX_BYTES
+                                  ) {
+                                    setBidError(
+                                      "Proposal file must be 10 MB or smaller.",
+                                    );
+                                    event.target.value = "";
+                                    return;
+                                  }
+
+                                  setBidError("");
+                                  setProposalFile(file);
+                                }}
+                              />
+                            </label>
+                            <p className="text-[10px] font-medium text-secondary-foreground">
+                              PDF, DOC, or DOCX up to 10 MB.
+                            </p>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <label
+                              htmlFor="bid-notes"
+                              className="block text-[10px] font-black uppercase tracking-widest text-secondary-foreground"
+                            >
+                              Notes (optional)
+                            </label>
+                            <textarea
+                              id="bid-notes"
+                              rows={3}
+                              maxLength={1000}
+                              value={bidForm.notes}
+                              onChange={(e) =>
+                                setBidForm({
+                                  ...bidForm,
+                                  notes: e.target.value,
+                                })
+                              }
+                              className="w-full resize-none rounded-xl border border-border bg-white px-3 py-2.5 text-sm font-semibold text-primary-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                              placeholder="Scope assumptions, inclusions, or conditions"
+                            />
+                          </div>
+
+                          {bidError && (
+                            <p className="text-xs font-semibold text-danger">
+                              {bidError}
+                            </p>
+                          )}
+
+                          <button
+                            type="submit"
+                            disabled={bidStatus === "submitting"}
+                            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-[11px] font-black uppercase tracking-widest text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {bidStatus === "submitting" ? (
+                              <>
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                Submitting...
+                              </>
+                            ) : (
+                              <>
+                                <Send className="h-4 w-4" />
+                                Submit bid
+                              </>
+                            )}
+                          </button>
+                        </form>
+                      )}
                     </div>
 
                     <button className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-white py-3.5 text-[11px] font-black uppercase tracking-widest text-primary-foreground transition hover:border-primary/30 hover:bg-secondary hover:text-primary active:scale-95">

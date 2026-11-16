@@ -29,6 +29,7 @@ import PageHeader from '@/components/dashboard/ui/PageHeader';
 import { Card } from '@/components/dashboard/ui/Card';
 import StatCard from '@/components/dashboard/ui/StatCard';
 import StatusBadge from '@/components/dashboard/ui/StatusBadge';
+import ProposalPreviewModal from '@/components/bidding/ProposalPreviewModal';
 
 interface Vendor {
   company_name: string;
@@ -71,6 +72,10 @@ export default function BidsPage({ params }: { params: Promise<{ projectId: stri
   const [bids, setBids] = useState<Bid[]>([]);
   const [userRole, setUserRole] = useState<string>('');
   const [selectedBidId, setSelectedBidId] = useState<number | null>(null);
+  const [proposalPreview, setProposalPreview] = useState<{
+    url: string;
+    vendorName: string;
+  } | null>(null);
 
   const { data: isAuthorized } = useReadContract({
     address: CONTRACT_ADDRESS,
@@ -394,15 +399,22 @@ export default function BidsPage({ params }: { params: Promise<{ projectId: stri
                         )}
 
                         {bid.proposal_url && (
-                          <a
-                            href={bid.proposal_url}
-                            target="_blank"
-                            rel="noreferrer"
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const url = bid.proposal_url;
+                              if (!url) return;
+                              setProposalPreview({
+                                url,
+                                vendorName:
+                                  bid.vendors?.company_name || 'Vendor',
+                              });
+                            }}
                             className="mt-3 inline-flex items-center gap-1.5 text-sm font-bold text-primary hover:underline"
                           >
                             <FileText className="h-4 w-4" />
-                            View Proposal Document
-                          </a>
+                            Preview Proposal Document
+                          </button>
                         )}
                       </div>
 
@@ -511,6 +523,14 @@ export default function BidsPage({ params }: { params: Promise<{ projectId: stri
           </Card>
         )}
       </main>
+
+      {proposalPreview && (
+        <ProposalPreviewModal
+          proposalUrl={proposalPreview.url}
+          vendorName={proposalPreview.vendorName}
+          onClose={() => setProposalPreview(null)}
+        />
+      )}
     </div>
   );
 }

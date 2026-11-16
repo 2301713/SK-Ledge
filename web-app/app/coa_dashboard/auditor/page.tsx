@@ -1,7 +1,7 @@
 "use client";
 
 import LogoLoader from "@/components/LogoLoader";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import SideBar from "@/components/dashboard/SideBar";
 import TopBar from "@/components/dashboard/ui/TopBar";
@@ -9,8 +9,11 @@ import PageHeader from "@/components/dashboard/ui/PageHeader";
 import StatCard from "@/components/dashboard/ui/StatCard";
 import { Card, CardHeader } from "@/components/dashboard/ui/Card";
 import StatusBadge from "@/components/dashboard/ui/StatusBadge";
+import ProposalPreviewModal from "@/components/bidding/ProposalPreviewModal";
 import { supabase } from "@/lib/supabase";
 import { UserAccount } from "@/lib/useAuthStore";
+import { useRecordsSync } from "@/lib/useRecordsSync";
+import type { LedgerRecord } from "@/lib/records";
 import { VerifiedTransaction, ProjectStatus } from "../types";
 import {
   ShieldCheck,
@@ -20,75 +23,108 @@ import {
   Lock,
   Download,
   Play,
+  FileText,
+  Loader2,
 } from "lucide-react";
+
+const RECORD_TYPE_LABELS: Record<LedgerRecord["record_type"], string> = {
+  allocation: "Fund Allocation",
+  expense: "Expense",
+  award: "Contract Award",
+};
+
+interface ProjectRow {
+  id: string | number;
+  name: string | null;
+  budget: number | string | null;
+  status: string | null;
+  barangay: string | null;
+  created_at: string | null;
+  dateProposed: string | null;
+}
+
+function toAuditStatus(record: LedgerRecord): VerifiedTransaction["status"] {
+  const compliance = String(record.compliance_status ?? "")
+    .trim()
+    .toLowerCase();
+
+  if (compliance === "flagged") return "flagged";
+  if (compliance === "pending docs" || compliance === "pending")
+    return "pending";
+  if (
+    compliance === "clean" ||
+    compliance === "verified" ||
+    compliance === "approved"
+  )
+    return "verified";
+
+  return record.blockchain_tx_hash ? "verified" : "pending";
+}
+
+function shortenHash(hash: string | null | undefined): string {
+  if (!hash) return "Off-chain";
+  return hash.length > 14
+    ? `${hash.slice(0, 6)}...${hash.slice(-4)}`
+    : hash;
+}
+
+function normalizeProjectStatus(
+  status: string | null,
+): ProjectStatus["status"] {
+  const normalized = String(status ?? "")
+    .trim()
+    .toLowerCase();
+
+  if (normalized === "completed") return "completed";
+  if (
+    normalized === "on hold" ||
+    normalized === "on-hold" ||
+    normalized === "onhold"
+  )
+    return "on-hold";
+
+  return "active";
+}
+
+interface BidProposalRow {
+  id: string;
+  project_id: string;
+  contract_title: string | null;
+  amount_php: number;
+  status: string;
+  submitted_on: string | null;
+  created_at: string;
+  proposal_url: string;
+  vendors: { company_name: string | null } | null;
+}
 
 export default function AuditorPage() {
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"transactions" | "projects">(
-    "transactions",
-  );
-
-  // Mock data
-  const [transactions] = useState<VerifiedTransaction[]>([
-    {
-      id: "1",
-      amount: 25000,
-      vendor: "ABC Construction",
-      category: "Infrastructure",
-      date: "2024-01-15",
-      status: "verified",
-      blockchainHash: "0x1234...abcd",
-      receiptCount: 3,
-      projectId: "proj-001",
-    },
-    {
-      id: "2",
-      amount: 15000,
-      vendor: "Office Supplies Inc",
-      category: "Office Supplies",
-      date: "2024-01-20",
-      status: "verified",
-      blockchainHash: "0x5678...efgh",
-      receiptCount: 1,
-    },
-    {
-      id: "3",
-      amount: 50000,
-      vendor: "Tech Solutions Ltd",
-      category: "Technology",
-      date: "2024-01-25",
-      status: "flagged",
-      blockchainHash: "0x9abc...ijkl",
-      receiptCount: 2,
-      projectId: "proj-002",
-    },
-  ]);
-
-  const [projects] = useState<ProjectStatus[]>([
-    {
-      id: "proj-001",
-      name: "Barangay Road Repair",
-      budget: 100000,
-      spent: 75000,
-      status: "active",
-      lastAudit: "2024-01-20",
-      complianceScore: 95,
-    },
-    {
-      id: "proj-002",
-      name: "Community Center Upgrade",
-      budget: 200000,
-      spent: 120000,
-      status: "active",
-      lastAudit: "2024-01-18",
-      complianceScore: 88,
-    },
-  ]);
+  const [activeTab, setActiveTab] = useState<
+    "transactions" | "projects" | "proposals"
+  >("transactions");
+  const [proposals, setProposals] = useState<BidProposalRow[]>([]);
+  const [isProposalsLoading, setIsProposalsLoading] = useState(true);
+  const [proposalsError, setProposalsError] = useState("");
+  const [proposalSearch, setProposalSearch] = useState("");
+  const [proposalPreview, setProposalPreview] = useState<{
+    url: string;
+    vendorName: string;
+  } | null>(null);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+
+  const {
+    records,
+    isLoading: isLedgerLoading,
+    error: ledgerError,
+  } = useRecordsSync({ limit: 200 });
+
+  const [projectRows, setProjectRows] = useState<ProjectRow[]>([]);
+  const [isProjectsLoading, setIsProjectsLoading] = useState(true);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -152,6 +188,177 @@ export default function AuditorPage() {
     fetchUserProfile();
   }, [router]);
 
+  useEffect(() => {
+    if (!currentUser) return;
+
+    let active = true;
+
+    const loadProposals = async () => {
+      const { data, error } = await supabase
+        .from("bids")
+        .select(
+          "id, project_id, contract_title, amount_php, status, submitted_on, created_at, proposal_url, vendors(company_name)",
+        )
+        .not("proposal_url", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (!active) return;
+
+      if (error) {
+        console.error("Failed to load bid proposals:", error.message);
+        setProposalsError("Failed to load bid proposals.");
+      } else {
+        setProposals((data as unknown as BidProposalRow[]) ?? []);
+        setProposalsError("");
+      }
+
+      setIsProposalsLoading(false);
+    };
+
+    loadProposals();
+
+    return () => {
+      active = false;
+    };
+  }, [currentUser]);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadProjects = async () => {
+      const { data, error } = await supabase
+        .from("projects")
+        .select("id, name, budget, status, barangay, created_at, dateProposed")
+        .order("created_at", { ascending: false })
+        .limit(100);
+
+      if (!active) return;
+
+      if (error) {
+        console.error("Failed to load audited projects:", error.message);
+        setProjectRows([]);
+      } else {
+        setProjectRows((data as unknown as ProjectRow[]) ?? []);
+      }
+
+      setIsProjectsLoading(false);
+    };
+
+    loadProjects();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const filteredProposals = proposals.filter((bid) => {
+    const query = proposalSearch.toLowerCase();
+    const vendor = (bid.vendors?.company_name || "").toLowerCase();
+    const title = (bid.contract_title || "").toLowerCase();
+    return vendor.includes(query) || title.includes(query);
+  });
+
+  const transactions = useMemo<VerifiedTransaction[]>(() => {
+    return records.map((record) => {
+      const amountCentavos = Number(record.amount);
+
+      return {
+        id: String(
+          record.id ?? `${record.record_type}-${record.created_at ?? ""}`,
+        ),
+        amount: Number.isFinite(amountCentavos) ? amountCentavos / 100 : 0,
+        vendor:
+          record.payee ||
+          record.purpose ||
+          RECORD_TYPE_LABELS[record.record_type],
+        category: record.category || RECORD_TYPE_LABELS[record.record_type],
+        date: record.created_at ?? "",
+        status: toAuditStatus(record),
+        blockchainHash: shortenHash(record.blockchain_tx_hash),
+        receiptCount: 0,
+        projectId: record.project_id ? String(record.project_id) : undefined,
+      };
+    });
+  }, [records]);
+
+  const projects = useMemo<ProjectStatus[]>(() => {
+    const awardSpendByProject = new Map<string, number>();
+    const expensesByBarangay = new Map<
+      string,
+      { verified: number; total: number }
+    >();
+    const lastAuditByBarangay = new Map<string, string>();
+
+    for (const record of records) {
+      const createdAt = record.created_at ?? "";
+      const amount = Number(record.amount);
+      const amountPesos = Number.isFinite(amount) ? amount / 100 : 0;
+
+      if (record.record_type === "award" && record.project_id) {
+        const key = String(record.project_id);
+        awardSpendByProject.set(
+          key,
+          (awardSpendByProject.get(key) ?? 0) + amountPesos,
+        );
+      }
+
+      if (record.record_type === "expense" && record.barangay) {
+        const entry = expensesByBarangay.get(record.barangay) ?? {
+          verified: 0,
+          total: 0,
+        };
+        entry.total += 1;
+        if (toAuditStatus(record) === "verified") {
+          entry.verified += 1;
+        }
+        expensesByBarangay.set(record.barangay, entry);
+      }
+
+      if (record.barangay && createdAt) {
+        const previous = lastAuditByBarangay.get(record.barangay);
+        if (!previous || Date.parse(createdAt) > Date.parse(previous)) {
+          lastAuditByBarangay.set(record.barangay, createdAt);
+        }
+      }
+    }
+
+    return projectRows.map((row) => {
+      const auditDate = row.barangay
+        ? lastAuditByBarangay.get(row.barangay)
+        : undefined;
+      const expenseStats = row.barangay
+        ? expensesByBarangay.get(row.barangay)
+        : undefined;
+
+      return {
+        id: String(row.id),
+        name: row.name ?? `Project ${row.id}`,
+        budget: Number(row.budget) || 0,
+        spent: awardSpendByProject.get(String(row.id)) ?? 0,
+        status: normalizeProjectStatus(row.status),
+        lastAudit: auditDate
+          ? new Date(auditDate).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            })
+          : "No audit yet",
+        complianceScore:
+          expenseStats && expenseStats.total > 0
+            ? Math.round((expenseStats.verified / expenseStats.total) * 100)
+            : null,
+      };
+    });
+  }, [projectRows, records]);
+
+  const verifiedCount = transactions.filter(
+    (tx) => tx.status === "verified",
+  ).length;
+  const flaggedCount = transactions.filter(
+    (tx) => tx.status === "flagged",
+  ).length;
+
   const filteredTransactions = transactions.filter((tx) => {
     const matchesSearch =
       tx.vendor.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -195,20 +402,20 @@ export default function AuditorPage() {
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           <StatCard
             label="Verified"
-            value="2,150"
+            value={String(verifiedCount)}
             icon={BadgeCheck}
             variant="brand"
             trend="Completed review cycles"
           />
           <StatCard
             label="Flagged"
-            value="18"
+            value={String(flaggedCount)}
             icon={ShieldCheck}
             trend="Require follow-up"
           />
           <StatCard
             label="Projects"
-            value="12"
+            value={String(projects.length)}
             icon={MapPin}
             trend="Active reviews"
           />
@@ -234,20 +441,24 @@ export default function AuditorPage() {
                 <p className="text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
                   Verified
                 </p>
-                <p className="mt-2 text-2xl font-bold text-success">2,150</p>
+                <p className="mt-2 text-2xl font-bold text-success">
+                  {verifiedCount}
+                </p>
               </div>
               <div className="rounded-2xl border border-border bg-secondary/40 p-4">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
                   Flagged
                 </p>
-                <p className="mt-2 text-2xl font-bold text-danger">18</p>
+                <p className="mt-2 text-2xl font-bold text-danger">
+                  {flaggedCount}
+                </p>
               </div>
               <div className="rounded-2xl border border-border bg-secondary/40 p-4">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
                   Projects
                 </p>
                 <p className="mt-2 text-2xl font-bold text-primary-foreground">
-                  12
+                  {projects.length}
                 </p>
               </div>
             </div>
@@ -295,6 +506,7 @@ export default function AuditorPage() {
               [
                 ["transactions", "Transactions"],
                 ["projects", "Projects"],
+                ["proposals", "Bid Proposals"],
               ] as const
             ).map(([key, label]) => (
               <button
@@ -355,6 +567,18 @@ export default function AuditorPage() {
               }
             />
 
+            {isLedgerLoading ? (
+              <div className="flex flex-col items-center justify-center p-12 text-center">
+                <Loader2 className="mb-3 h-8 w-8 animate-spin text-tertiary" />
+                <p className="text-sm font-bold text-secondary-foreground">
+                  Fetching ledger records...
+                </p>
+              </div>
+            ) : ledgerError ? (
+              <div className="p-10 text-center text-sm font-bold text-danger">
+                {ledgerError}
+              </div>
+            ) : (
             <div className="space-y-3">
               {filteredTransactions.map((tx) => (
                 <div
@@ -386,10 +610,13 @@ export default function AuditorPage() {
 
               {filteredTransactions.length === 0 && (
                 <div className="p-10 text-center text-sm font-bold text-secondary-foreground">
-                  No transactions match your filters.
+                  {records.length === 0
+                    ? "No ledger records yet. Entries appear here once SK records sync on-chain."
+                    : "No transactions match your filters."}
                 </div>
               )}
             </div>
+            )}
           </Card>
         )}
 
@@ -407,11 +634,24 @@ export default function AuditorPage() {
               }
             />
 
+            {isProjectsLoading ? (
+              <div className="flex flex-col items-center justify-center p-12 text-center">
+                <Loader2 className="mb-3 h-8 w-8 animate-spin text-tertiary" />
+                <p className="text-sm font-bold text-secondary-foreground">
+                  Loading projects...
+                </p>
+              </div>
+            ) : projects.length === 0 ? (
+              <div className="p-10 text-center text-sm font-bold text-secondary-foreground">
+                No projects found for audit review.
+              </div>
+            ) : (
             <div className="grid gap-4 md:grid-cols-2">
               {projects.map((project) => {
-                const utilization = Math.round(
-                  (project.spent / project.budget) * 100,
-                );
+                const utilization =
+                  project.budget > 0
+                    ? Math.round((project.spent / project.budget) * 100)
+                    : 0;
                 return (
                   <div
                     key={project.id}
@@ -428,7 +668,9 @@ export default function AuditorPage() {
                         </p>
                       </div>
                       <span className="inline-flex items-center rounded-full bg-information/10 px-3 py-1 text-xs font-bold text-information">
-                        {project.complianceScore}%
+                        {project.complianceScore === null
+                          ? "No records"
+                          : `${project.complianceScore}%`}
                       </span>
                     </div>
 
@@ -471,9 +713,126 @@ export default function AuditorPage() {
                 );
               })}
             </div>
+            )}
+          </Card>
+        )}
+
+        {activeTab === "proposals" && (
+          <Card>
+            <CardHeader
+              eyebrow="Procurement Audit"
+              title="Bid Proposals"
+              subtitle="Vendor submissions with inline proposal document review"
+              action={
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-secondary-foreground" />
+                  <input
+                    type="text"
+                    placeholder="Search vendor or project..."
+                    value={proposalSearch}
+                    onChange={(e) => setProposalSearch(e.target.value)}
+                    className="w-64 rounded-xl border border-border bg-white py-2 pl-9 pr-3 text-sm text-primary-foreground outline-none transition placeholder:text-secondary-foreground focus:border-primary focus:ring-2 focus:ring-primary/10"
+                  />
+                </div>
+              }
+            />
+
+            <div className="overflow-x-auto">
+              {isProposalsLoading ? (
+                <div className="flex flex-col items-center justify-center p-12 text-center">
+                  <Loader2 className="mb-3 h-8 w-8 animate-spin text-tertiary" />
+                  <p className="text-sm font-bold text-secondary-foreground">
+                    Fetching bid proposals...
+                  </p>
+                </div>
+              ) : proposalsError ? (
+                <div className="p-10 text-center text-sm font-bold text-danger">
+                  {proposalsError}
+                </div>
+              ) : filteredProposals.length === 0 ? (
+                <div className="flex flex-col items-center justify-center border-t border-border p-12 text-center">
+                  <FileText className="mb-3 h-10 w-10 text-secondary-foreground/30" />
+                  <p className="text-sm font-bold text-secondary-foreground">
+                    No bid proposals found.
+                  </p>
+                  <p className="mt-1 text-xs text-secondary-foreground">
+                    Proposals appear here once vendors submit bids with an
+                    attached document.
+                  </p>
+                </div>
+              ) : (
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="border-b border-border text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
+                      <th className="px-4 py-3">Vendor</th>
+                      <th className="px-4 py-3">Project / Contract</th>
+                      <th className="px-4 py-3 text-right">Bid Amount</th>
+                      <th className="px-4 py-3">Submitted</th>
+                      <th className="px-4 py-3">Status</th>
+                      <th className="px-4 py-3 text-right">Document</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {filteredProposals.map((bid) => (
+                      <tr
+                        key={bid.id}
+                        className="transition-colors hover:bg-secondary/50"
+                      >
+                        <td className="px-4 py-4 text-sm font-bold text-primary-foreground">
+                          {bid.vendors?.company_name || "Unknown Vendor"}
+                        </td>
+                        <td className="px-4 py-4 text-sm text-secondary-foreground">
+                          {bid.contract_title ||
+                            `Project ${String(bid.project_id).slice(0, 8)}`}
+                        </td>
+                        <td className="px-4 py-4 text-right text-sm font-bold tabular-nums text-primary-foreground">
+                          {formatCurrency(Number(bid.amount_php))}
+                        </td>
+                        <td className="px-4 py-4 text-xs text-secondary-foreground">
+                          {new Date(
+                            bid.submitted_on || bid.created_at,
+                          ).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                        </td>
+                        <td className="px-4 py-4">
+                          <StatusBadge status={bid.status} />
+                        </td>
+                        <td className="px-4 py-4 text-right">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setProposalPreview({
+                                url: bid.proposal_url,
+                                vendorName:
+                                  bid.vendors?.company_name || "Vendor",
+                              })
+                            }
+                            className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-white shadow-sm transition hover:bg-primary/90"
+                          >
+                            <FileText className="h-3.5 w-3.5" />
+                            Preview
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
           </Card>
         )}
       </main>
+
+      {proposalPreview && (
+        <ProposalPreviewModal
+          proposalUrl={proposalPreview.url}
+          vendorName={proposalPreview.vendorName}
+          onClose={() => setProposalPreview(null)}
+        />
+      )}
     </div>
   );
 }
