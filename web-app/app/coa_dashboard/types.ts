@@ -68,5 +68,7 @@ export interface ProjectStatus {
   spent: number;
   status: "active" | "completed" | "on-hold";
   lastAudit: string;
-  complianceScore: number;
+  /** Share of verified expense records for the project's barangay. Null when
+   * there are no expense records to score yet. */
+  complianceScore: number | null;
 }

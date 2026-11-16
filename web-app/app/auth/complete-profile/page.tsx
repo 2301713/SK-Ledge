@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/lib/useToast";
 import {
+  Building2,
   CircleAlert,
   Loader2,
   ShieldCheck,
@@ -38,6 +39,7 @@ export default function CompleteProfilePage() {
     role_type: "SK_Chairperson",
     barangay: "",
   });
+  const [companyName, setCompanyName] = useState("");
 
   useEffect(() => {
     let isMounted = true;
@@ -88,6 +90,7 @@ export default function CompleteProfilePage() {
   const isSKRole =
     formData.role_type === "SK_Chairperson" ||
     formData.role_type === "SK_Treasurer";
+  const isVendorRole = formData.role_type === "Vendor";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -107,6 +110,10 @@ export default function CompleteProfilePage() {
       // Validate required fields
       if (!formData.username.trim()) {
         throw new Error("Username is required");
+      }
+
+      if (isVendorRole && companyName.trim().length < 2) {
+        throw new Error("Vendor company name is required");
       }
 
       if (isSKRole && !formData.barangay.trim()) {
@@ -136,6 +143,31 @@ export default function CompleteProfilePage() {
       });
 
       if (updateError) throw updateError;
+
+      if (isVendorRole) {
+        const response = await fetch("/api/vendors", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            company_name: companyName.trim(),
+            username: formData.username.trim(),
+          }),
+        });
+
+        const result = (await response.json().catch(() => null)) as
+          | { error?: string }
+          | null;
+
+        if (!response.ok) {
+          throw new Error(result?.error || "Failed to register vendor account.");
+        }
+
+        toast.success(
+          "Vendor registration submitted! Pending admin approval. Redirecting...",
+        );
+        setTimeout(() => router.replace("/login"), 1500);
+        return;
+      }
 
       // Insert profile into profiles table for approvals system
       const { error: insertError } = await supabase.from("profiles").insert([
@@ -307,10 +339,33 @@ export default function CompleteProfilePage() {
                   <option value="BMO">BMO</option>
                   <option value="SK_Federation">SK Federation</option>
                   <option value="COA">COA</option>
+                  <option value="Vendor">Vendor / Supplier</option>
                   <option value="Admin">Admin</option>
                 </select>
               </div>
             </div>
+
+            {/* COMPANY NAME (VENDORS) */}
+            {isVendorRole && (
+              <div className="space-y-2">
+                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                  Vendor Company
+                </label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-300 group-focus-within:text-primary transition-colors">
+                    <Building2 className="w-5 h-5" />
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
+                    className="w-full bg-slate-50 border-2 border-transparent rounded-2xl pl-12 pr-4 py-4 text-sm font-medium text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none placeholder:text-slate-300"
+                    placeholder="e.g. ABC Construction Supply"
+                  />
+                </div>
+              </div>
+            )}
 
             {/* BARANGAY */}
             {isSKRole && (
