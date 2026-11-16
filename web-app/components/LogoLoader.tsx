@@ -16,7 +16,7 @@ export default function LogoLoader() {
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute -right-32 bottom-1/4 h-72 w-72 rounded-full bg-tertiary/[0.12] blur-3xl"
+        className="pointer-events-none absolute -right-32 bottom-1/4 h-72 w-72 rounded-full bg-tertiary/12 blur-3xl"
       />
 
       <div
@@ -64,7 +64,7 @@ export default function LogoLoader() {
         {/* PROGRESS SWEEP */}
         <div className="mt-8 w-full">
           <div className="h-1.5 w-full overflow-hidden rounded-full bg-border/70">
-            <div className="h-full w-1/3 animate-sweep rounded-full motion-reduce:animate-none" />
+            <div className="h-full w-1/3 animate-sweep rounded-full motion-reduce:animate-none bg-primary" />
           </div>
           <div className="mt-3 flex items-center justify-between text-[10px] font-semibold uppercase tracking-[0.16em] text-secondary-foreground/80">
             <span>Verifying access</span>

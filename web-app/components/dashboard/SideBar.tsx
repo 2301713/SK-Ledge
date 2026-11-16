@@ -16,14 +16,11 @@ import {
   TrendingUp,
   CheckSquare,
   FileText,
-  PieChart,
-  TextSearch,
   Globe,
   Receipt,
   FileBarChart,
   ShieldCheck,
   LogOut,
-  Activity,
   ChartPie,
   Sliders,
   X,
@@ -176,27 +173,6 @@ const ROLE_LINKS: Record<
       id: "id_19",
       label: "Account",
       href: "/coa_dashboard/account",
-      icon: UserCircle,
-    },
-  ],
-  BMO: [
-    { id: "id_20", label: "Overview", href: "/bmo_dashboard", icon: PieChart },
-    {
-      id: "id_21",
-      label: "Budget Review",
-      href: "/bmo_dashboard/review",
-      icon: TextSearch,
-    },
-    {
-      id: "id_22",
-      label: "Bidding",
-      href: "/bmo_dashboard/bidding",
-      icon: Activity,
-    },
-    {
-      id: "id_23",
-      label: "Account",
-      href: "/bmo_dashboard/account",
       icon: UserCircle,
     },
   ],
@@ -399,7 +375,7 @@ export default function Sidebar({
             className="relative flex h-full w-full max-w-md flex-col overflow-hidden border-l border-border bg-white shadow-[-24px_0_60px_-24px_rgba(1,56,168,0.35)] animate-slidein"
           >
             {/* BRAND ACCENT */}
-            <div className="h-1 w-full bg-gradient-to-r from-primary via-primary to-tertiary" />
+            <div className="h-1 w-full bg-primary" />
 
             {/* HEADER */}
             <header className="flex items-center justify-between gap-4 border-b border-border px-6 py-5">

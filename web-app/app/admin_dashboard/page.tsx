@@ -7,6 +7,7 @@ import SideBar from "@/components/dashboard/SideBar";
 import TopBar from "@/components/dashboard/ui/TopBar";
 import PageHeader from "@/components/dashboard/ui/PageHeader";
 import StatCard from "@/components/dashboard/ui/StatCard";
+import LogoLoader from "@/components/LogoLoader";
 import { Card, CardHeader } from "@/components/dashboard/ui/Card";
 import AccountsBarChart from "@/components/dashboard/ui/AccountsBarChart";
 import DonutGauge from "@/components/dashboard/ui/DonutGauge";
@@ -267,20 +268,7 @@ export default function AdminDashboardPage() {
     URL.revokeObjectURL(url);
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-tertiary shadow-xl">
-            <span className="text-xl font-black">SK</span>
-          </div>
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-secondary-foreground">
-            Loading admin console...
-          </p>
-        </div>
-      </div>
-    );
-  }
+  if (isLoading) return <LogoLoader />;
 
   return (
     <div className="flex min-h-screen gap-4 bg-background p-4">

@@ -34,12 +34,17 @@ export default function RootLayout() {
   useEffect(() => {
     const handleRouting = (session: any) => {
       // Clean, straightforward string matching. No tuple type errors!
-      const isAuthScreen = pathname === "/" || pathname === "/register";
+      // OAuth screens manage their own navigation: the callback still needs a
+      // session while it verifies the vendor role, and a new Google account
+      // must be allowed to finish its application while signed in.
+      const isAuthFlowScreen = pathname.startsWith("/auth/");
+      const isAuthScreen =
+        pathname === "/" || pathname === "/register" || isAuthFlowScreen;
 
       if (!session && !isAuthScreen) {
         // User is NOT logged in, but trying to access private screens -> Kick to Login
         router.replace("/");
-      } else if (session && isAuthScreen) {
+      } else if (session && isAuthScreen && !isAuthFlowScreen) {
         // User IS logged in, but sitting on Login/Register -> Push to Dashboard
         router.replace("/(tabs)/home");
       }

@@ -1,6 +1,5 @@
 "use client";
 
-import LogoLoader from "@/components/LogoLoader";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -186,7 +185,20 @@ export default function CompleteProfilePage() {
     }
   };
 
-  if (!isSessionReady && !hasCheckedAuth) return <LogoLoader />;
+  if (!isSessionReady && !hasCheckedAuth) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-tertiary shadow-xl">
+            <span className="text-xl font-black">SK</span>
+          </div>
+          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-secondary-foreground">
+            Loading profile...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (!isSessionReady && hasCheckedAuth) {
     return (

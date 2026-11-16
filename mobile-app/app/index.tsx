@@ -1,23 +1,18 @@
 import DotGrid from "@/components/ui/DotGrid";
-import FormField from "@/components/ui/FormField";
-import PrimaryButton from "@/components/ui/PrimaryButton";
-import { fetchMyProfile, getErrorMessage } from "@/lib/projects";
-import { supabase } from "@/lib/supabase";
+import GoogleButton from "@/components/ui/GoogleButton";
+import { signInWithGoogle } from "@/lib/google-auth";
+import { getErrorMessage } from "@/lib/projects";
 import { useRouter } from "expo-router";
 import {
   ChevronRight,
   CircleAlert,
   Lock,
-  Mail,
   ShieldCheck,
 } from "lucide-react-native";
 import React, { useState } from "react";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import {
-  ActivityIndicator,
   Image,
-  KeyboardAvoidingView,
-  Platform,
   ScrollView,
   StatusBar,
   Text,
@@ -26,90 +21,33 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 export default function IndexPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState("");
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  const validate = () => {
-    const errors: Record<string, string> = {};
-    if (!email.trim()) {
-      errors.email = "Enter your registered email address.";
-    } else if (!EMAIL_PATTERN.test(email.trim())) {
-      errors.email = "Enter a valid email address.";
-    }
-    if (!password) {
-      errors.password = "Enter your password.";
-    }
-    setFieldErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  const handleSignIn = async () => {
+  const handleGoogleSignIn = async () => {
     setFormError("");
-    if (!validate()) return;
-
     setLoading(true);
 
     try {
-      const { data: authData, error: authError } =
-        await supabase.auth.signInWithPassword({
-          email: email.trim().toLowerCase(),
-          password,
-        });
+      const outcome = await signInWithGoogle();
 
-      if (authError) {
-        throw new Error(authError.message || "Invalid email or password.");
+      if (outcome.status === "cancelled") return;
+      if (outcome.status === "approved") {
+        router.replace("/(tabs)/home");
+        return;
       }
-
-      if (!authData.user) {
-        throw new Error("Sign in did not return an account. Please try again.");
-      }
-
-      const profile = await fetchMyProfile(authData.user.id);
-
-      if (!profile) {
-        await supabase.auth.signOut();
-        setFormError(
-          "Your vendor profile is not linked to this account. Contact the SK Federation for assistance.",
-        );
+      if (outcome.status === "incomplete") {
+        router.replace("/auth/complete-profile");
         return;
       }
 
-      if ((profile.role_type ?? "").toLowerCase() !== "vendor") {
-        await supabase.auth.signOut();
-        setFormError(
-          "This account is not a mobile vendor account. Please use the web portal instead.",
-        );
-        return;
-      }
-
-      const status = (profile.approval_status ?? "pending").toLowerCase();
-      if (status === "pending") {
-        await supabase.auth.signOut();
-        setFormError(
-          "Your vendor application is still under review by the SK Federation. You can sign in once it is approved.",
-        );
-        return;
-      }
-
-      if (status === "rejected") {
-        await supabase.auth.signOut();
-        setFormError(
-          "Your vendor application was not approved. Contact the SK Federation for more information.",
-        );
-        return;
-      }
-
-      router.replace("/(tabs)/home");
+      setFormError(outcome.message);
     } catch (err) {
-      setFormError(getErrorMessage(err, "Invalid login credentials."));
+      setFormError(
+        getErrorMessage(err, "Google sign-in failed. Please try again."),
+      );
     } finally {
       setLoading(false);
     }
@@ -118,21 +56,16 @@ export default function IndexPage() {
   return (
     <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
       <StatusBar barStyle="dark-content" />
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      <ScrollView
         className="flex-1"
+        contentContainerStyle={{ flexGrow: 1 }}
+        showsVerticalScrollIndicator={false}
       >
-        <ScrollView
-          className="flex-1"
-          contentContainerStyle={{ flexGrow: 1 }}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          {/* BRAND HEADER */}
-          <View className="relative overflow-hidden border-b border-border bg-white px-6 pb-7 pt-3">
-            <DotGrid color="#0138A8" opacity={0.06} rows={8} />
+        {/* BRAND HEADER */}
+        <View className="relative overflow-hidden border-b border-border bg-white px-6 pb-7 pt-3">
+          <DotGrid color="#0138A8" opacity={0.06} rows={8} />
 
-            <Animated.View entering={FadeIn.duration(400)}>
+          <Animated.View entering={FadeIn.duration(400)}>
             <View className="flex-row items-center justify-between">
               <View className="flex-row items-center gap-2.5">
                 <View className="h-10 w-10 items-center justify-center rounded-xl border border-border bg-white">
@@ -171,25 +104,25 @@ export default function IndexPage() {
                 Welcome back
               </Text>
               <Text className="font-inter mt-1.5 max-w-[310px] text-[13px] leading-5 text-secondary-foreground">
-                Sign in with the vendor account approved by your SK Federation to
-                open your procurement workspace.
+                Sign in with the Google account linked to your approved vendor
+                registration to open your procurement workspace.
               </Text>
             </View>
-            </Animated.View>
-          </View>
+          </Animated.View>
+        </View>
 
-          {/* FORM */}
-          <View className="flex-1 bg-background px-6 pb-10 pt-6">
-            {formError ? (
-              <View className="mb-5 flex-row items-start gap-3 rounded-xl border border-danger/25 bg-danger/[0.07] p-4">
-                <CircleAlert size={18} color="#DC2626" style={{ marginTop: 1 }} />
-                <Text className="font-inter-medium flex-1 text-[12px] leading-5 text-danger">
-                  {formError}
-                </Text>
-              </View>
-            ) : null}
+        {/* SIGN IN */}
+        <View className="flex-1 bg-background px-6 pb-10 pt-6">
+          {formError ? (
+            <View className="mb-5 flex-row items-start gap-3 rounded-xl border border-danger/25 bg-danger/[0.07] p-4">
+              <CircleAlert size={18} color="#DC2626" style={{ marginTop: 1 }} />
+              <Text className="font-inter-medium flex-1 text-[12px] leading-5 text-danger">
+                {formError}
+              </Text>
+            </View>
+          ) : null}
 
-            <Animated.View entering={FadeInDown.delay(120).duration(450)}>
+          <Animated.View entering={FadeInDown.delay(120).duration(450)}>
             <View
               className="rounded-3xl border border-border bg-white p-5"
               style={{
@@ -207,63 +140,29 @@ export default function IndexPage() {
                 </Text>
               </View>
 
-              <View className="gap-4">
-                <FormField
-                  label="Email Address"
-                  icon={Mail}
-                  value={email}
-                  onChangeText={(value) => {
-                    setEmail(value);
-                    setFieldErrors((prev) => ({ ...prev, email: "" }));
-                    setFormError("");
-                  }}
-                  placeholder="vendor@company.com"
-                  error={fieldErrors.email}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  editable={!loading}
-                />
+              <Text className="font-inter-bold text-[16px] tracking-tight text-primary-foreground">
+                Continue with your Google account
+              </Text>
+              <Text className="font-inter mt-1.5 text-[12px] leading-5 text-secondary-foreground">
+                SK-Ledge mobile uses Google sign-in only. Password login is not
+                available in the app.
+              </Text>
 
-                <FormField
-                  label="Password"
-                  icon={Lock}
-                  value={password}
-                  onChangeText={(value) => {
-                    setPassword(value);
-                    setFieldErrors((prev) => ({ ...prev, password: "" }));
-                    setFormError("");
-                  }}
-                  placeholder="••••••••"
-                  error={fieldErrors.password}
-                  secure
-                  showSecure={showPassword}
-                  onToggleSecure={() => setShowPassword((value) => !value)}
-                  editable={!loading}
-                />
-              </View>
-
-              <View className="mt-6">
-                <PrimaryButton onPress={handleSignIn} disabled={loading}>
-                  {loading ? (
-                    <ActivityIndicator color="#FFFFFF" />
-                  ) : (
-                    "Access Portal"
-                  )}
-                </PrimaryButton>
+              <View className="mt-5">
+                <GoogleButton onPress={handleGoogleSignIn} loading={loading} />
               </View>
 
               <View className="mt-4 flex-row items-center justify-center gap-1.5">
                 <Lock size={11} color="#94A3B8" />
                 <Text className="font-inter-semibold text-[9px] uppercase tracking-[0.14em] text-secondary-foreground/70">
-                  Authorized vendors only · Secure session
+                  Approved vendors only · Secure Google OAuth
                 </Text>
               </View>
             </View>
-            </Animated.View>
+          </Animated.View>
 
-            {/* REGISTER PROMPT */}
-            <Animated.View entering={FadeInDown.delay(200).duration(450)}>
+          {/* REGISTER PROMPT */}
+          <Animated.View entering={FadeInDown.delay(200).duration(450)}>
             <View className="mt-4 rounded-2xl border border-border bg-secondary/40 p-4">
               <View className="flex-row items-center justify-between gap-3">
                 <View className="flex-1">
@@ -287,14 +186,13 @@ export default function IndexPage() {
                 </TouchableOpacity>
               </View>
             </View>
-            </Animated.View>
+          </Animated.View>
 
-            <Text className="font-inter-semibold mt-7 text-center text-[9px] uppercase tracking-[0.18em] text-secondary-foreground/60">
-              © {new Date().getFullYear()} SK-Ledge · Batangas Province
-            </Text>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+          <Text className="font-inter-semibold mt-7 text-center text-[9px] uppercase tracking-[0.18em] text-secondary-foreground/60">
+            © {new Date().getFullYear()} SK-Ledge · Batangas Province
+          </Text>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
