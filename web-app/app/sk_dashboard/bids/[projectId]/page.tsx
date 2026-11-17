@@ -73,7 +73,8 @@ export default function BidsPage({ params }: { params: Promise<{ projectId: stri
   const [project, setProject] = useState<Project | null>(null);
   const [bids, setBids] = useState<Bid[]>([]);
   const [userRole, setUserRole] = useState<string>('');
-  const [selectedBidId, setSelectedBidId] = useState<number | null>(null);
+  const [selectedBidId, setSelectedBidId] = useState<string | null>(null);
+  const [openingProposalId, setOpeningProposalId] = useState<string | null>(null);
   const [proposalPreview, setProposalPreview] = useState<{
     url: string;
     vendorName: string;
