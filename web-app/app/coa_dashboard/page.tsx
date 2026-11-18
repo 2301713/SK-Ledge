@@ -9,6 +9,7 @@ import { useRecordsSync } from "@/lib/useRecordsSync";
 import SideBar from "@/components/dashboard/SideBar";
 import TopBar from "@/components/dashboard/ui/TopBar";
 import PageHeader from "@/components/dashboard/ui/PageHeader";
+import SyncLedgerButton from "@/components/SyncLedgerButton";
 import StatCard from "@/components/dashboard/ui/StatCard";
 import AccountsBarChart from "@/components/dashboard/ui/AccountsBarChart";
 import { Card, CardHeader } from "@/components/dashboard/ui/Card";
@@ -264,6 +265,7 @@ export default function COADashboard() {
                 <FileText className="h-4 w-4" />
                 Review Disbursements
               </button>
+              <SyncLedgerButton />
             </>
           }
         />

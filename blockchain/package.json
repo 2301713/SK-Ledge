@@ -7,6 +7,8 @@
     "test": "hardhat test",
     "export-abi": "hardhat compile && hardhat run scripts/export-abi.ts",
     "verify-deployment": "hardhat run scripts/verify-deployment.ts --network sepolia",
+    "approve-record": "hardhat run scripts/approve-record.ts --network sepolia",
+    "set-approval-threshold": "hardhat run scripts/set-approval-threshold.ts --network sepolia",
     "setup-sepolia": "hardhat run scripts/setupRolesAndCeilings.ts --network sepolia",
     "register-barangays": "hardhat run scripts/registerCanonicalBarangays.ts --network sepolia"
   },

@@ -80,13 +80,6 @@ export default function ApprovalsPage() {
     functionName: "getAllRecords",
   });
 
-  // Read contract owner
-  const { data: contractOwner } = useReadContract({
-    address: CONTRACT_ADDRESS as `0x${string}`,
-    abi: SK_LEDGE_ABI,
-    functionName: "owner",
-  });
-
   const { data: isApprover } = useReadContract({
     address: CONTRACT_ADDRESS as `0x${string}`,
     abi: SK_LEDGE_ABI,
@@ -189,16 +182,12 @@ export default function ApprovalsPage() {
   const pendingCount = barangayRecords.filter((r) => !r.approved).length;
   const approvedCount = barangayRecords.filter((r) => r.approved).length;
 
-  // Check if current user is contract owner
-  const isOwner =
-    address && contractOwner
-      ? address.toLowerCase() === (contractOwner as string).toLowerCase()
-      : false;
-  const canApprove = isOwner || isApprover === true;
+  // Only wallets on the contract's auditor allowlist can confirm records.
+  const canApprove = isApprover === true;
 
   const isWrongNetwork = chainId !== sepolia.id;
 
-  const handleApproval = (recordId: number, approve: boolean) => {
+  const handleConfirm = (recordId: number) => {
     if (!isConnected) return;
     if (chainId !== sepolia.id) {
       switchChain({ chainId: sepolia.id });
@@ -209,8 +198,8 @@ export default function ApprovalsPage() {
     writeContract({
       address: CONTRACT_ADDRESS as `0x${string}`,
       abi: SK_LEDGE_ABI,
-      functionName: "setRecordApproval",
-      args: [BigInt(recordId), approve],
+      functionName: "confirmRecord",
+      args: [BigInt(recordId)],
     });
   };
 
@@ -220,7 +209,7 @@ export default function ApprovalsPage() {
       refetch();
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setActionLoading(null);
-      toast.success("Approval recorded on-chain.");
+      toast.success("Record confirmed on-chain.");
     }
   }, [isTxSuccess, refetch, toast]);
 
@@ -411,48 +400,30 @@ export default function ApprovalsPage() {
                           </td>
                           <td className="px-4 py-4 text-right">
                             {canApprove ? (
-                              <div className="flex items-center justify-end gap-2">
-                                {record.approved ? (
-                                  <button
-                                    onClick={() =>
-                                      handleApproval(Number(record.id), false)
-                                    }
-                                    disabled={
-                                      actionLoading === Number(record.id) ||
-                                      isWritePending ||
-                                      isTxConfirming
-                                    }
-                                    className="inline-flex items-center gap-1 rounded-xl border border-border bg-secondary px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest text-secondary-foreground transition-colors hover:bg-secondary/80 disabled:opacity-50"
-                                  >
-                                    {actionLoading === Number(record.id) ? (
-                                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                    ) : (
-                                      "Reject"
-                                    )}
-                                  </button>
-                                ) : (
-                                  <button
-                                    onClick={() =>
-                                      handleApproval(Number(record.id), true)
-                                    }
-                                    disabled={
-                                      actionLoading === Number(record.id) ||
-                                      isWritePending ||
-                                      isTxConfirming
-                                    }
-                                    className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest text-white shadow-sm transition-colors hover:bg-primary/90 disabled:opacity-50"
-                                  >
-                                    {actionLoading === Number(record.id) ? (
-                                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                    ) : (
-                                      "Approve"
-                                    )}
-                                  </button>
-                                )}
-                              </div>
+                              record.approved ? (
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
+                                  Confirmed
+                                </span>
+                              ) : (
+                                <button
+                                  onClick={() => handleConfirm(Number(record.id))}
+                                  disabled={
+                                    actionLoading === Number(record.id) ||
+                                    isWritePending ||
+                                    isTxConfirming
+                                  }
+                                  className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest text-white shadow-sm transition-colors hover:bg-primary/90 disabled:opacity-50"
+                                >
+                                  {actionLoading === Number(record.id) ? (
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                  ) : (
+                                    "Confirm"
+                                  )}
+                                </button>
+                              )
                             ) : (
                               <span className="text-[10px] italic text-secondary-foreground">
-                                Owner or approver only
+                                COA auditor only
                               </span>
                             )}
                           </td>

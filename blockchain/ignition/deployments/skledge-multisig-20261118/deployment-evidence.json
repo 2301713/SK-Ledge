@@ -1,0 +1,64 @@
+{
+  "deploymentId": "skledge-multisig-20261118",
+  "purpose": "Redeploy to gain the multi-signature approval functions, which the previous non-upgradeable deployment lacked.",
+  "network": "sepolia",
+  "chainId": 11155111,
+  "contractAddress": "0x499DF4123cD90Cc661e7EC0dA0B4332C0acd45c2",
+  "replacesContractAddress": "0xc5Abc80b9657b0DF207DB9f21960edc18F806d84",
+  "deploymentTransaction": "0x7c13617fd6e8007915a7e3fb27307bffec1aa7baa017cc6e292cd22bfdffaa9d",
+  "deploymentBlock": 12161007,
+  "deploymentTimestamp": 1794999360,
+  "deploymentDateUtc": "2026-11-18T10:56:00Z",
+  "deployer": "0x48055a56f677E8DAa706544f1ebbD3d2F858D1B2",
+  "owner": "0x48055a56f677E8DAa706544f1ebbD3d2F858D1B2",
+  "source": {
+    "file": "blockchain/contracts/SkLedge.sol",
+    "repoHead": "3073942ddf55e7c336fec91ebdf1e612e6a49065"
+  },
+  "compiler": {
+    "version": "v0.8.28+commit.7893614a",
+    "optimizer": "enabled",
+    "runs": 200
+  },
+  "fingerprints": {
+    "runtimeBytecodeLengthBytes": 19926,
+    "runtimeBytecodeSha256Bytes": "84d7eefe782998656f70996c7a237f1317b21b26398f395c810bf22b0f66f457"
+  },
+  "etherscan": {
+    "url": "https://sepolia.etherscan.io/address/0x499DF4123cD90Cc661e7EC0dA0B4332C0acd45c2",
+    "verified": true,
+    "contractName": "SkLedge"
+  },
+  "onChainState": {
+    "approvalThreshold": 1,
+    "nextRecordId": 1,
+    "canonicalBarangayCount": 851,
+    "pendingOwner": "0x0000000000000000000000000000000000000000"
+  },
+  "barangayRegistration": {
+    "completedAtUtc": "2026-11-18T11:26:00Z",
+    "identitiesRegistered": 851,
+    "batches": 43,
+    "batchSize": 20,
+    "finalBatchTransaction": "0xed29d519021639285b6ef56ea5f8ddd877be453b8a237bdf35f10f01ff1d3435",
+    "finalBatchBlock": 12161125,
+    "verified": true
+  },
+  "multiSigSelectorsPresent": {
+    "approveRecord(uint256)": true,
+    "revokeApproval(uint256)": true,
+    "setApprovalThreshold(uint256)": true,
+    "approvalThreshold()": true,
+    "approvalCount(uint256)": true,
+    "approvals(uint256,address)": true
+  },
+  "env": {
+    "blockchainDotEnv": "0x499DF4123cD90Cc661e7EC0dA0B4332C0acd45c2",
+    "webAppDotEnv": "0x499DF4123cD90Cc661e7EC0dA0B4332C0acd45c2",
+    "productionHosting": "not-applicable-no-hosted-deployment"
+  },
+  "requiredFollowUp": [
+    "Re-authorize officials and approvers, and set allocation ceilings via npm run setup-sepolia.",
+    "Optionally raise approvalThreshold above the default of 1 with npm run set-approval-threshold."
+  ]
+}

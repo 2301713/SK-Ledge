@@ -5,6 +5,11 @@ const STATUS_MAP: Record<
   approved: { pill: "bg-success/10 text-success", dot: "bg-success", label: "Approved" },
   completed: { pill: "bg-success/10 text-success", dot: "bg-success", label: "Completed" },
   rejected: { pill: "bg-danger/10 text-danger", dot: "bg-danger", label: "Rejected" },
+  voided: {
+    pill: "bg-secondary text-secondary-foreground",
+    dot: "bg-secondary-foreground",
+    label: "Voided",
+  },
   pending: { pill: "bg-pending/10 text-pending", dot: "bg-pending", label: "Pending" },
   "in progress": {
     pill: "bg-ongoing/10 text-ongoing",

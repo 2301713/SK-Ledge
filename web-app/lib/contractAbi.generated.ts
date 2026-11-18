@@ -82,31 +82,6 @@ export const SK_LEDGE_ABI = [
     "inputs": [
       {
         "indexed": true,
-        "internalType": "uint256",
-        "name": "id",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "bool",
-        "name": "approved",
-        "type": "bool"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "approvedBy",
-        "type": "address"
-      }
-    ],
-    "name": "ApprovalChanged",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
         "internalType": "address",
         "name": "approver",
         "type": "address"
@@ -119,25 +94,6 @@ export const SK_LEDGE_ABI = [
       }
     ],
     "name": "ApproverAuthorizationChanged",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "string",
-        "name": "barangay",
-        "type": "string"
-      },
-      {
-        "indexed": false,
-        "internalType": "bool",
-        "name": "locked",
-        "type": "bool"
-      }
-    ],
-    "name": "BarangayLocked",
     "type": "event"
   },
   {
@@ -309,42 +265,17 @@ export const SK_LEDGE_ABI = [
       {
         "indexed": true,
         "internalType": "uint256",
-        "name": "predecessorId",
-        "type": "uint256"
-      },
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "correctionId",
-        "type": "uint256"
-      }
-    ],
-    "name": "RecordCorrectionActivated",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "predecessorId",
-        "type": "uint256"
-      },
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "correctionId",
+        "name": "id",
         "type": "uint256"
       },
       {
         "indexed": true,
         "internalType": "address",
-        "name": "official",
+        "name": "auditor",
         "type": "address"
       }
     ],
-    "name": "RecordCorrectionSubmitted",
+    "name": "RecordConfirmed",
     "type": "event"
   },
   {
@@ -502,6 +433,19 @@ export const SK_LEDGE_ABI = [
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_id",
+        "type": "uint256"
+      }
+    ],
+    "name": "confirmRecord",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -717,25 +661,6 @@ export const SK_LEDGE_ABI = [
       }
     ],
     "name": "isAuthorizedOfficial",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "string",
-        "name": "_barangay",
-        "type": "string"
-      }
-    ],
-    "name": "isBarangayLocked",
     "outputs": [
       {
         "internalType": "bool",
@@ -998,52 +923,6 @@ export const SK_LEDGE_ABI = [
       }
     ],
     "name": "setOfficialBarangayAuthorization",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_id",
-        "type": "uint256"
-      },
-      {
-        "internalType": "bool",
-        "name": "_approved",
-        "type": "bool"
-      }
-    ],
-    "name": "setRecordApproval",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_predecessorId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_amount",
-        "type": "uint256"
-      },
-      {
-        "internalType": "string",
-        "name": "_purpose",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "_recordType",
-        "type": "string"
-      }
-    ],
-    "name": "submitCorrection",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

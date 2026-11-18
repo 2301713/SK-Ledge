@@ -83,6 +83,33 @@ record writes but does not remove barangay assignments; reauthorization restores
 the assignments that remain in place. No wallet, including the owner, receives
 barangay access implicitly.
 
+## Multi-signature approvals
+
+Records use an approval threshold that defaults to `1`, preserving the original
+single-approver behavior. The owner can set it from `1` to `10`:
+
+```bash
+APPROVAL_THRESHOLD=2 npx hardhat run scripts/set-approval-threshold.ts --network sepolia
+```
+
+Authorized officials approve records from their own wallets:
+
+```bash
+RECORD_ID=1 SIGNER_PRIVATE_KEY=0x... npx hardhat run scripts/approve-record.ts --network sepolia
+```
+
+Each official can approve a record once. When `approvalCount` reaches the
+threshold, the record is approved, the named approver is recorded, and the
+barangay is locked. Revoking an approval drops the record below the threshold
+and unapproves it. `setRecordApproval` remains the owner/approver override and
+does not change `approvalCount`.
+
+Threshold changes apply to subsequent approval and revocation calls; existing
+owner overrides are preserved. The contract is not upgradeable, so an already
+deployed contract must be redeployed to gain the multi-signature functions, then
+reconfigured with `register-barangays`, official/approver authorization, and
+ceilings.
+
 ## Export the frontend ABI
 
 Run `npm run export-abi` to compile the contract and update

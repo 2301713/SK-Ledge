@@ -421,6 +421,7 @@ export async function POST(req: NextRequest) {
 
     let recordAddedEventCount = 0;
     let matchingRecordEventFound = false;
+    let matchingRecordId: number | null = null;
     for (const log of receipt.logs) {
       if (log.address.toLowerCase() !== expectedContract.toLowerCase()) {
         continue;
@@ -451,6 +452,7 @@ export async function POST(req: NextRequest) {
         args.recordType === EVENT_RECORD_TYPES[type]
       ) {
         matchingRecordEventFound = true;
+        matchingRecordId = Number(args.id);
       }
     }
 
@@ -470,6 +472,7 @@ export async function POST(req: NextRequest) {
       amount,
       purpose,
       created_at: new Date().toISOString(),
+      blockchain_record_id: matchingRecordId,
     };
 
     if (projectId) {

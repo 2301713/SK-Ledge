@@ -1,0 +1,3 @@
+-- This migration was applied directly to the hosted project before this
+-- repository tracked migrations. It is intentionally empty: it exists only so
+-- the remote migration history and the local migration directory agree.

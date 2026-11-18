@@ -22,6 +22,7 @@ import {
   canonicalizeBarangay,
   isCanonicalBarangay,
 } from "@/lib/batangasBarangays";
+import LogoLoader from "@/components/LogoLoader";
 
 export default function CompleteProfilePage() {
   const router = useRouter();
@@ -154,12 +155,14 @@ export default function CompleteProfilePage() {
           }),
         });
 
-        const result = (await response.json().catch(() => null)) as
-          | { error?: string }
-          | null;
+        const result = (await response.json().catch(() => null)) as {
+          error?: string;
+        } | null;
 
         if (!response.ok) {
-          throw new Error(result?.error || "Failed to register vendor account.");
+          throw new Error(
+            result?.error || "Failed to register vendor account.",
+          );
         }
 
         toast.success(
@@ -218,18 +221,7 @@ export default function CompleteProfilePage() {
   };
 
   if (!isSessionReady && !hasCheckedAuth) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-tertiary shadow-xl">
-            <span className="text-xl font-black">SK</span>
-          </div>
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-secondary-foreground">
-            Loading profile...
-          </p>
-        </div>
-      </div>
-    );
+    <LogoLoader />;
   }
 
   if (!isSessionReady && hasCheckedAuth) {

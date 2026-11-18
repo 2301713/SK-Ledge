@@ -6,6 +6,7 @@ import Link from "next/link";
 import SideBar from "@/components/dashboard/SideBar";
 import TopBar from "@/components/dashboard/ui/TopBar";
 import PageHeader from "@/components/dashboard/ui/PageHeader";
+import SyncLedgerButton from "@/components/SyncLedgerButton";
 import StatCard from "@/components/dashboard/ui/StatCard";
 import LogoLoader from "@/components/LogoLoader";
 import { Card, CardHeader } from "@/components/dashboard/ui/Card";
@@ -307,6 +308,7 @@ export default function AdminDashboardPage() {
                 <Download className="h-4 w-4" />
                 Export Data
               </button>
+              <SyncLedgerButton />
             </>
           }
         />

@@ -64,12 +64,6 @@ const ROLE_LINKS: Record<
       icon: Sliders,
     },
     {
-      id: "id_29",
-      label: "Approvals",
-      href: "/sk_dashboard/approvals",
-      icon: CheckSquare,
-    },
-    {
       id: "id_4",
       label: "Expenses",
       href: "/sk_dashboard/expenses",
