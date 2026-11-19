@@ -1,0 +1,61 @@
+{
+  "deploymentId": "skledge-coa-confirm-20261118",
+  "network": "sepolia",
+  "chainId": 11155111,
+  "contractAddress": "0xAFDF26a80aE1D87bc26d5902287108587A8eD4D6",
+  "deploymentTransaction": "0x98e563b1ce1b507350082b85a1dd3fa88805775dda4118ca366a42941b5c1eb3",
+  "deploymentBlock": 12162272,
+  "deploymentTimestamp": 1795014912,
+  "deploymentDateUtc": "2026-11-18T15:15:12.000Z",
+  "deploymentDatePht": "2026-11-18T23:15:12.000+08:00",
+  "deployer": "0x48055a56f677E8DAa706544f1ebbD3d2F858D1B2",
+  "owner": "0x48055a56f677E8DAa706544f1ebbD3d2F858D1B2",
+  "source": {
+    "file": "blockchain/contracts/SkLedge.sol",
+    "repoHead": "2f0f8e76158d874c14e7453f2012d756f6d5d7a5",
+    "contractSourceDirty": false,
+    "generatedAt": "2026-11-19T12:07:50.177Z"
+  },
+  "compiler": {
+    "version": "0.8.28+commit.7893614a",
+    "optimizer": true,
+    "runs": 200,
+    "evmVersion": "cancun"
+  },
+  "fingerprints": {
+    "abiSha256": "d88d3b52741421dedae05ed46c0057ba8d372e021095ca60ff98b2d2653cef74",
+    "creationBytecodeSha256": "0c08089fc4c3f530fdfdf498e987f5d7b665665c68ae94f13c69feccfe29b975",
+    "deploymentTransactionInputSha256": "37b0f734cbf5368f27c233811b8933459b3dbb958ff72471609c277502521bb3",
+    "artifactRuntimeBytecodeSha256": "d4907c94a8a449fae84a6f9b75c3922bc89261d0ab4e27f1a06181132b9c89db",
+    "onChainRuntimeBytecodeSha256": "abebf5d3accb2b76bf9d333e4446b96fc3887620b4d5c0400f11f0d6dfde1042",
+    "runtimeBytecodeLength": 14354,
+    "hashingNotes": "ABI hash is sha256 of JSON.stringify(artifact.abi); bytecode hashes are sha256 of the raw hex bytes."
+  },
+  "etherscan": {
+    "url": "https://sepolia.etherscan.io/address/0xAFDF26a80aE1D87bc26d5902287108587A8eD4D6",
+    "verified": false,
+    "contractName": "",
+    "compilerVersion": "",
+    "optimizationUsed": null,
+    "runs": "",
+    "evmVersion": "Default",
+    "proxy": false
+  },
+  "onChainBytecodeMatch": true,
+  "metadataMatches": false,
+  "creationBytecodeMatchesTransaction": true,
+  "env": {
+    "blockchainDotEnv": "0xAFDF26a80aE1D87bc26d5902287108587A8eD4D6",
+    "webAppDotEnv": "0xAFDF26a80aE1D87bc26d5902287108587A8eD4D6"
+  },
+  "verification": {
+    "owner": "0x48055a56f677E8DAa706544f1ebbD3d2F858D1B2",
+    "nextRecordId": "1",
+    "canonicalBarangayCount": "851",
+    "totalRecords": 0,
+    "isDeployerAuthorized": true
+  },
+  "warnings": [
+    "Runtime bytecode matches functionally; only the embedded Solidity metadata hash differs (build-environment dependent)."
+  ]
+}

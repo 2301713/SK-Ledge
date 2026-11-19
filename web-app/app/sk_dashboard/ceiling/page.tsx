@@ -219,7 +219,7 @@ export default function CeilingPage() {
         <PageHeader
           eyebrow="SK Officials"
           title="Allocation Ceilings"
-          subtitle="Set maximum funding thresholds per barangay directly on the ledger for full governance transparency."
+          subtitle="Set the maximum funding threshold for your barangay directly on the ledger."
         />
 
         {/* STAT ROW */}
@@ -256,7 +256,7 @@ export default function CeilingPage() {
           <CardHeader
             eyebrow="Configuration"
             title="Set Ceiling"
-            subtitle="Configure maximum funding limits for each barangay."
+            subtitle="Configure the maximum funding limit for your barangay."
           />
 
           <div className="mb-5 flex items-start gap-3 rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
@@ -288,7 +288,7 @@ export default function CeilingPage() {
             </div>
           </div>
 
-          <SetCeilingForm />
+          <SetCeilingForm barangay={currentUser?.barangay ?? null} />
         </Card>
 
         {/* ON-CHAIN DATA TABLE */}

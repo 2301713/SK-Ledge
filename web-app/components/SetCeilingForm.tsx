@@ -4,14 +4,27 @@ import { useState } from "react";
 import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { CONTRACT_ADDRESS, SK_LEDGE_ABI } from "@/lib/contractConfig";
 import { Settings, Loader2, CheckCircle2, AlertTriangle } from "lucide-react";
-import { BATANGAS_BARANGAY_IDENTITIES } from "@/lib/batangasBarangays";
+import {
+  BATANGAS_BARANGAY_IDENTITIES,
+  canonicalizeBarangay,
+} from "@/lib/batangasBarangays";
 
 const inputClass =
   "w-full rounded-xl border border-border bg-white py-3 pl-10 pr-3 text-sm font-bold text-primary-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20";
 
-export default function SetCeilingForm() {
-  const [barangay, setBarangay] = useState("");
+interface SetCeilingFormProps {
+  /** The signed-in SK Chairperson's assigned barangay. */
+  barangay: string | null;
+}
+
+export default function SetCeilingForm({ barangay }: SetCeilingFormProps) {
   const [ceiling, setCeiling] = useState("");
+  const canonicalBarangay = barangay ? canonicalizeBarangay(barangay) : null;
+  const identity = canonicalBarangay
+    ? BATANGAS_BARANGAY_IDENTITIES.find(
+        (item) => item.canonical === canonicalBarangay,
+      )
+    : undefined;
 
   const { data: hash, writeContract, isPending, error } = useWriteContract();
 
@@ -22,12 +35,7 @@ export default function SetCeilingForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!barangay || !ceiling) return;
-
-    const canonicalBarangay = BATANGAS_BARANGAY_IDENTITIES.find(
-      (identity) => identity.canonical === barangay,
-    )?.canonical;
-    if (!canonicalBarangay) return;
+    if (!canonicalBarangay || !ceiling) return;
 
     writeContract({
       address: CONTRACT_ADDRESS,
@@ -37,6 +45,18 @@ export default function SetCeilingForm() {
       gas: BigInt(500000),
     });
   };
+
+  if (!canonicalBarangay) {
+    return (
+      <div className="flex items-start gap-2 rounded-xl border border-danger/30 bg-danger/10 p-3.5 text-xs font-medium text-danger">
+        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+        <span>
+          Your profile has no valid barangay assigned, so a ceiling cannot be
+          set. Ask an admin to assign your barangay first.
+        </span>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
@@ -50,24 +70,24 @@ export default function SetCeilingForm() {
               <Settings className="h-5 w-5 text-secondary-foreground" />
             </div>
             <select
-              value={barangay}
-              onChange={(e) => setBarangay(e.target.value)}
-              required
-              className={inputClass}
+              value={canonicalBarangay}
+              disabled
+              aria-describedby="ceiling-barangay-note"
+              className={`${inputClass} cursor-not-allowed bg-secondary/60 text-secondary-foreground`}
             >
-              <option value="" disabled>
-                Select a barangay
+              <option value={canonicalBarangay}>
+                {identity
+                  ? `${identity.barangay}, ${identity.municipality}`
+                  : canonicalBarangay}
               </option>
-              {BATANGAS_BARANGAY_IDENTITIES.map((identity) => (
-                <option
-                  key={identity.canonical}
-                  value={identity.canonical}
-                >
-                  {identity.barangay}, {identity.municipality}
-                </option>
-              ))}
             </select>
           </div>
+          <p
+            id="ceiling-barangay-note"
+            className="text-[10px] font-medium text-secondary-foreground"
+          >
+            Locked to your assigned barangay.
+          </p>
         </div>
 
         <div className="space-y-2">

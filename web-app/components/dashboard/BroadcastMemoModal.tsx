@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Priority, Audience, BroadcastMemoModalProps } from "./types";
 import { useFormStore } from "@/lib/useFormStore";
 import { useToast } from "@/lib/useToast";
@@ -12,6 +12,8 @@ export default function BroadcastMemoModal({
   onSubmitSuccess,
 }: BroadcastMemoModalProps) {
   const toast = useToast();
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const {
     broadcastMemo: { title, content, priority, audience },
     setBroadcastMemoTitle,
@@ -40,16 +42,37 @@ export default function BroadcastMemoModal({
     }
   };
 
-  const submitBroadcast = () => {
-    if (!title || !content) return;
+  const submitBroadcast = async () => {
+    if (!title.trim() || !content.trim() || isPublishing) return;
 
-    // Logic for handling the broadcast data would go here
-    // (e.g., Supabase insert)
+    setIsPublishing(true);
+    setError(null);
 
-    toast.success("Broadcast memo sent successfully!");
-    onSubmitSuccess();
-    resetBroadcastMemoForm();
-    onClose();
+    try {
+      const response = await fetch("/api/memos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ subject: title, body: content, priority, audience }),
+      });
+      const payload = (await response.json().catch(() => null)) as {
+        error?: string;
+      } | null;
+
+      if (!response.ok) {
+        throw new Error(payload?.error || "Failed to publish the memo.");
+      }
+
+      toast.success("Memo published to the federation log.");
+      onSubmitSuccess();
+      resetBroadcastMemoForm();
+      onClose();
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to publish the memo.",
+      );
+    } finally {
+      setIsPublishing(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -122,15 +145,28 @@ export default function BroadcastMemoModal({
               value={title}
               onChange={handleChange}
               placeholder="Subject Heading"
+              maxLength={200}
               className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-xl text-lg font-black text-slate-900 outline-none focus:border-indigo-500 transition-all"
             />
-            <textarea
-              name="content"
-              value={content}
-              onChange={handleChange}
-              placeholder="Message Payload"
-              className="w-full px-5 py-5 bg-white border-2 border-slate-100 rounded-xl text-sm font-medium text-slate-800 min-h-40 outline-none focus:border-indigo-500 transition-all resize-none"
-            />
+            <div>
+              <textarea
+                name="content"
+                value={content}
+                onChange={handleChange}
+                placeholder="Message Payload"
+                maxLength={5000}
+                className="w-full px-5 py-5 bg-white border-2 border-slate-100 rounded-xl text-sm font-medium text-slate-800 min-h-40 outline-none focus:border-indigo-500 transition-all resize-none"
+              />
+              <p className="mt-1 text-right text-[10px] font-semibold text-slate-400">
+                {content.length}/5000
+              </p>
+            </div>
+
+            {error ? (
+              <p className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-semibold text-rose-600">
+                {error}
+              </p>
+            ) : null}
           </div>
         </div>
 
@@ -144,10 +180,11 @@ export default function BroadcastMemoModal({
           </button>
           <button
             onClick={submitBroadcast}
-            disabled={!title || !content}
+            disabled={!title.trim() || !content.trim() || isPublishing}
             className="flex-1 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-300 text-white py-4 rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-3 shadow-lg shadow-indigo-600/20"
           >
-            <Send size={16} /> Authorize & Broadcast
+            <Send size={16} />
+            {isPublishing ? "Publishing…" : "Publish Memo"}
           </button>
         </div>
       </div>

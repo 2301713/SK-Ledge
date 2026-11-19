@@ -1,7 +1,7 @@
 "use client";
 
 import LogoLoader from "@/components/LogoLoader";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import SideBar from "@/components/dashboard/SideBar";
 import TopBar from "@/components/dashboard/ui/TopBar";
 import PageHeader from "@/components/dashboard/ui/PageHeader";
@@ -12,6 +12,13 @@ import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/useAuthStore";
 import { useRecordsSync } from "@/lib/useRecordsSync";
+import { useToast } from "@/lib/useToast";
+import AuditReviewModal from "@/components/coa/AuditReviewModal";
+import {
+  AUDIT_COMPLIANCE_LABELS,
+  AUDIT_STATUS_LABELS,
+  type ExpenseAudit,
+} from "@/lib/audits";
 import {
   Download,
   Eye,
@@ -27,12 +34,16 @@ import {
 
 export interface DisbursementItem {
   id: string;
+  recordId: string | null;
   payee: string;
   category: string;
   amount: number;
   dateSubmitted: string;
   compliance: "Clean" | "Flagged" | "Pending Docs";
   brgy: string;
+  purpose: string;
+  txHash: string | null;
+  audit: ExpenseAudit | null;
 }
 
 type StatusFilter = "all" | "Clean" | "Flagged" | "Pending Docs";
@@ -49,8 +60,12 @@ const mapCompliance = (
 export default function DisbursementsPage() {
   const { currentUser, isLoading, setCurrentUser, setIsLoading } =
     useAuthStore();
+  const toast = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [audits, setAudits] = useState<Record<string, ExpenseAudit>>({});
+  const [selectedExpense, setSelectedExpense] =
+    useState<DisbursementItem | null>(null);
   const router = useRouter();
   const authAttemptedRef = useRef(false);
 
@@ -131,6 +146,37 @@ export default function DisbursementsPage() {
     limit: 500,
   });
 
+  const loadAudits = useCallback(async () => {
+    try {
+      const { data, error: auditsError } = await supabase
+        .from("expense_audits")
+        .select("id, expense_id, reviewed_by, status, findings, created_at")
+        .order("created_at", { ascending: false })
+        .limit(500);
+
+      if (auditsError) {
+        throw new Error(auditsError.message);
+      }
+
+      const latestByExpense: Record<string, ExpenseAudit> = {};
+      for (const audit of (data ?? []) as ExpenseAudit[]) {
+        if (!latestByExpense[audit.expense_id]) {
+          latestByExpense[audit.expense_id] = audit;
+        }
+      }
+
+      setAudits(latestByExpense);
+    } catch (err) {
+      console.error("Failed to load expense audits:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (currentUser) {
+      void loadAudits();
+    }
+  }, [currentUser, loadAudits]);
+
   const disbursements = useMemo<DisbursementItem[]>(() => {
     return records.map((item): DisbursementItem => {
       const rawAmount =
@@ -155,21 +201,33 @@ export default function DisbursementsPage() {
         item.reference_number ||
         (item.id ? `DV-${item.id.slice(0, 8).toUpperCase()}` : "DV-N/A");
 
+      const recordId = typeof item.id === "string" ? item.id : null;
+      const latestAudit = recordId ? audits[recordId] ?? null : null;
+
       return {
         id: dvRef,
+        recordId,
         payee: item.payee || item.purpose || "N/A",
         category: item.category || "General MOOE",
         amount: pesoAmount,
         dateSubmitted,
-        compliance: mapCompliance(
-          typeof item.compliance_status === "string"
-            ? item.compliance_status
-            : undefined,
-        ),
+        compliance: latestAudit
+          ? AUDIT_COMPLIANCE_LABELS[latestAudit.status]
+          : mapCompliance(
+              typeof item.compliance_status === "string"
+                ? item.compliance_status
+                : undefined,
+            ),
         brgy: item.barangay || "Unassigned Brgy",
+        purpose: item.purpose || "No purpose recorded",
+        txHash:
+          typeof item.blockchain_tx_hash === "string"
+            ? item.blockchain_tx_hash
+            : null,
+        audit: latestAudit,
       };
     });
-  }, [records]);
+  }, [records, audits]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-PH", {
@@ -345,7 +403,7 @@ export default function DisbursementsPage() {
                   <tbody className="divide-y divide-border">
                     {filtered.map((item) => (
                       <tr
-                        key={item.id}
+                        key={item.recordId ?? item.id}
                         className="transition-colors hover:bg-secondary/50"
                       >
                         <td className="px-4 py-4 align-middle">
@@ -387,12 +445,24 @@ export default function DisbursementsPage() {
 
                         <td className="px-4 py-4 align-middle text-center">
                           <StatusBadge status={item.compliance} />
+                          {item.audit ? (
+                            <p className="mt-1 text-[10px] font-medium text-secondary-foreground">
+                              Reviewed{" "}
+                              {new Date(item.audit.created_at).toLocaleDateString(
+                                "en-PH",
+                                { month: "short", day: "numeric" },
+                              )}
+                            </p>
+                          ) : null}
                         </td>
 
                         <td className="px-4 py-4 align-middle text-right">
                           <div className="flex items-center justify-end gap-2">
                             <button
-                              className="rounded-xl p-2 text-secondary-foreground transition hover:bg-success/10 hover:text-success"
+                              type="button"
+                              onClick={() => setSelectedExpense(item)}
+                              disabled={!item.recordId}
+                              className="rounded-xl p-2 text-secondary-foreground transition hover:bg-success/10 hover:text-success disabled:cursor-not-allowed disabled:opacity-40"
                               title="Review Vouchers"
                             >
                               <Eye className="h-4 w-4" />
@@ -400,8 +470,15 @@ export default function DisbursementsPage() {
                             <button className="rounded-xl p-2 text-secondary-foreground transition hover:bg-secondary">
                               <MoreHorizontal className="h-4 w-4" />
                             </button>
-                            <button className="rounded-xl bg-primary px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-white shadow-sm transition hover:bg-primary/90">
-                              Audit
+                            <button
+                              type="button"
+                              onClick={() => setSelectedExpense(item)}
+                              disabled={!item.recordId}
+                              className="rounded-xl bg-primary px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-white shadow-sm transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40"
+                            >
+                              {item.audit
+                                ? `Re-audit · ${AUDIT_STATUS_LABELS[item.audit.status]}`
+                                : "Audit"}
                             </button>
                           </div>
                         </td>
@@ -423,6 +500,26 @@ export default function DisbursementsPage() {
           </div>
         </Card>
       </main>
+
+      {selectedExpense?.recordId ? (
+        <AuditReviewModal
+          expenseId={selectedExpense.recordId}
+          reference={selectedExpense.id}
+          payee={selectedExpense.payee}
+          category={selectedExpense.category}
+          amount={formatCurrency(selectedExpense.amount)}
+          barangay={selectedExpense.brgy}
+          purpose={selectedExpense.purpose}
+          txHash={selectedExpense.txHash}
+          latestAudit={selectedExpense.audit}
+          onClose={() => setSelectedExpense(null)}
+          onSaved={(audit) => {
+            setAudits((prev) => ({ ...prev, [audit.expense_id]: audit }));
+            setSelectedExpense(null);
+            toast.success("Audit review recorded.");
+          }}
+        />
+      ) : null}
     </div>
   );
 }

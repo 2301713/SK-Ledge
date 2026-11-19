@@ -10,6 +10,18 @@ import { Card, CardHeader } from "@/components/dashboard/ui/Card";
 import { supabase } from "@/lib/supabase";
 import { UserAccount } from "@/lib/useAuthStore";
 import { useToast } from "@/lib/useToast";
+import type { LedgerRecord } from "@/lib/records";
+import {
+  buildReport,
+  formatPercent,
+  formatPesos,
+  reportFileName,
+  reportToCsv,
+  type GeneratedReport,
+  type ReceiptLookup,
+  type ReportKind,
+  type ReportMeta,
+} from "@/lib/reports";
 import {
   Download,
   Calendar,
@@ -48,6 +60,53 @@ const REPORT_TEMPLATES: ReportTemplate[] = [
 const inputClass =
   "w-full rounded-xl border border-border bg-white py-3 pl-10 pr-3 text-sm font-bold text-primary-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20";
 
+const RECEIPT_QUERY_CHUNK = 200;
+
+async function fetchReceiptsByExpense(
+  expenseIds: string[],
+): Promise<ReceiptLookup> {
+  const lookup: ReceiptLookup = {};
+
+  for (let index = 0; index < expenseIds.length; index += RECEIPT_QUERY_CHUNK) {
+    const chunk = expenseIds.slice(index, index + RECEIPT_QUERY_CHUNK);
+    const { data, error } = await supabase
+      .from("documents")
+      .select("expense_id, file_name, sha256")
+      .in("expense_id", chunk);
+
+    if (error) {
+      throw new Error(`Failed to load receipt records: ${error.message}`);
+    }
+
+    for (const document of data ?? []) {
+      const expenseId = document.expense_id as string | null;
+      if (!expenseId) continue;
+
+      (lookup[expenseId] ??= []).push({
+        fileName: String(document.file_name),
+        sha256: String(document.sha256),
+      });
+    }
+  }
+
+  return lookup;
+}
+
+function downloadCsv(fileName: string, csv: string) {
+  // The BOM keeps Excel from misreading the file as ANSI.
+  const blob = new Blob(["\uFEFF", csv], {
+    type: "text/csv;charset=utf-8",
+  });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 export default function ReportsPage() {
   const router = useRouter();
   const toast = useToast();
@@ -55,6 +114,9 @@ export default function ReportsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [currentStep, setCurrentStep] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedReports, setGeneratedReports] = useState<
+    GeneratedReport[] | null
+  >(null);
 
   // Step 1: Report Selection
   const [selectedReports, setSelectedReports] = useState<string[]>([
@@ -177,13 +239,70 @@ export default function ReportsPage() {
   };
 
   const generateReports = async () => {
-    setIsGenerating(true);
-    try {
-      // TODO: Generate reports based on selections and save to Supabase/blockchain
-      await new Promise((resolve) => setTimeout(resolve, 4000));
+    if (!currentUser) {
+      toast.error("Your profile is still loading. Try again in a moment.");
+      return;
+    }
 
+    setIsGenerating(true);
+    setGeneratedReports(null);
+
+    try {
+      const params = new URLSearchParams({
+        limit: "500",
+        from: dateRange.startDate,
+        to: dateRange.endDate,
+      });
+      const response = await fetch(`/api/records?${params.toString()}`, {
+        cache: "no-store",
+        credentials: "same-origin",
+      });
+      const body = (await response.json().catch(() => null)) as {
+        data?: LedgerRecord[];
+        error?: string;
+      } | null;
+
+      if (!response.ok) {
+        throw new Error(body?.error || "Failed to load ledger records.");
+      }
+
+      const records = Array.isArray(body?.data) ? body.data : [];
+
+      let receipts: ReceiptLookup = {};
+      if (filters.includeReceipts) {
+        const expenseIds = [
+          ...new Set(
+            records
+              .filter(
+                (record) =>
+                  record.record_type === "expense" &&
+                  typeof record.id === "string",
+              )
+              .map((record) => record.id as string),
+          ),
+        ];
+
+        if (expenseIds.length > 0) {
+          receipts = await fetchReceiptsByExpense(expenseIds);
+        }
+      }
+
+      const meta: ReportMeta = {
+        barangay: currentUser.barangay,
+        periodStart: dateRange.startDate,
+        periodEnd: dateRange.endDate,
+        generatedBy: currentUser.full_name,
+        generatedAt: new Date().toISOString(),
+        includeReceipts: filters.includeReceipts,
+      };
+
+      const reports = selectedReports.map((kind) =>
+        buildReport(kind as ReportKind, records, receipts, meta),
+      );
+
+      setGeneratedReports(reports);
       toast.success(
-        "Reports generated successfully! Download links sent to your email.",
+        `Generated ${reports.length} report${reports.length === 1 ? "" : "s"}. Download ${reports.length === 1 ? "it" : "them"} below.`,
       );
     } catch (error: unknown) {
       const message =
@@ -458,6 +577,70 @@ export default function ReportsPage() {
                   : "Generate COA Reports"}
               </button>
             </div>
+
+            {/* GENERATED DOWNLOADS */}
+            {generatedReports && (
+              <Card>
+                <CardHeader eyebrow="Ready to file" title="Generated reports" />
+                <div className="space-y-3">
+                  {generatedReports.map((report) => {
+                    const summary =
+                      report.kind === "liquidation"
+                        ? `${report.rows.length} expense row${report.rows.length === 1 ? "" : "s"} • ₱${formatPesos(report.totalCentavos)} total${report.missingReceipts ? ` • ${report.missingReceipts} without receipts` : ""}`
+                        : `Utilization ${formatPercent(report.totals.utilization)} • ₱${formatPesos(report.totals.expenseCentavos)} expenses • ₱${formatPesos(report.totals.remainingCentavos)} remaining`;
+
+                    return (
+                      <div
+                        key={report.kind}
+                        className="flex flex-col gap-3 rounded-2xl border border-border p-4 sm:flex-row sm:items-center sm:justify-between"
+                      >
+                        <div>
+                          <p className="font-bold text-primary-foreground">
+                            {report.kind === "liquidation"
+                              ? "Liquidation Report"
+                              : "Financial Summary"}
+                          </p>
+                          <p className="text-xs text-secondary-foreground">
+                            {summary}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            downloadCsv(
+                              reportFileName(
+                                report.kind,
+                                report.meta.barangay,
+                                report.meta.periodStart,
+                                report.meta.periodEnd,
+                              ),
+                              reportToCsv(report),
+                            )
+                          }
+                          className="flex items-center justify-center gap-2 rounded-xl border border-primary px-4 py-2 text-sm font-bold text-primary transition-colors hover:bg-primary hover:text-white"
+                        >
+                          <Download size={16} />
+                          Download CSV
+                        </button>
+                      </div>
+                    );
+                  })}
+
+                  {generatedReports.some((report) => report.truncated) && (
+                    <p className="rounded-xl border border-danger/30 bg-danger/10 p-3 text-xs font-medium text-danger">
+                      The selected period has 500 or more ledger records. Reports
+                      cover only the 500 most recent records; narrow the date range
+                      for a complete filing.
+                    </p>
+                  )}
+
+                  <p className="text-xs text-secondary-foreground">
+                    Files are generated locally from ledger data for your barangay.
+                    Nothing is emailed or stored.
+                  </p>
+                </div>
+              </Card>
+            )}
           </div>
         )}
 

@@ -14,10 +14,16 @@ import {
   useWriteContract,
   useWaitForTransactionReceipt,
   useAccount,
+  usePublicClient,
 } from "wagmi";
 import { CONTRACT_ADDRESS, SK_LEDGE_ABI } from "@/lib/contractConfig";
 import { syncRecord } from "@/lib/syncRecord";
 import { canonicalizeBarangay } from "@/lib/batangasBarangays";
+import {
+  RECEIPT_MAX_FILES,
+  buildReceiptUrl,
+  validateReceiptFile,
+} from "@/lib/receipts";
 import {
   Upload,
   Building,
@@ -47,6 +53,14 @@ interface UploadedFile {
   file: File;
 }
 
+interface StoredReceipt {
+  id: string;
+  fileName: string;
+  sizeBytes: number;
+  sha256: string;
+  url: string;
+}
+
 const CATEGORIES = [
   "Sports & Development",
   "Education",
@@ -63,6 +77,10 @@ const CATEGORIES = [
 const inputClass =
   "w-full rounded-xl border border-border bg-white py-3 pl-10 pr-3 text-sm font-bold text-primary-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20";
 
+// The live contract only supports this after the receipt-hash redeploy.
+const ONCHAIN_RECEIPT_HASH_ENABLED =
+  process.env.NEXT_PUBLIC_ONCHAIN_RECEIPT_HASH_ENABLED === "true";
+
 export default function ExpensesPage() {
   const router = useRouter();
   const toast = useToast();
@@ -71,11 +89,13 @@ export default function ExpensesPage() {
   const [synced, setSynced] = useState(false);
 
   const { isConnected, address } = useAccount();
+  const publicClient = usePublicClient();
   const {
     data: hash,
     isPending: isWritePending,
     writeContract,
   } = useWriteContract();
+  const { writeContractAsync: attachHashAsync } = useWriteContract();
   const { isLoading: isConfirming, isSuccess: isConfirmed } =
     useWaitForTransactionReceipt({ hash });
 
@@ -88,6 +108,9 @@ export default function ExpensesPage() {
   });
 
   const [receipts, setReceipts] = useState<UploadedFile[]>([]);
+  const [storedReceipts, setStoredReceipts] = useState<StoredReceipt[]>([]);
+  const [isFilingReceipts, setIsFilingReceipts] = useState(false);
+  const pendingReceiptsRef = useRef<UploadedFile[]>([]);
   const [dragActive, setDragActive] = useState(false);
   const submitRef = useRef<{
     barangay: string;
@@ -181,15 +204,39 @@ export default function ExpensesPage() {
   const handleFileUpload = (files: FileList | null) => {
     if (!files) return;
 
-    const newFiles: UploadedFile[] = Array.from(files).map((file) => ({
-      id: Math.random().toString(36).substr(2, 9),
-      name: file.name,
-      size: file.size,
-      type: file.type,
-      file,
-    }));
+    const incoming = Array.from(files);
+    const errors: string[] = [];
 
-    setReceipts((prev) => [...prev, ...newFiles]);
+    if (receipts.length + incoming.length > RECEIPT_MAX_FILES) {
+      errors.push(`You can attach up to ${RECEIPT_MAX_FILES} receipts.`);
+    }
+
+    const newFiles: UploadedFile[] = [];
+    for (const file of incoming.slice(0, RECEIPT_MAX_FILES - receipts.length)) {
+      const error = validateReceiptFile(file);
+      if (error) {
+        errors.push(error);
+        continue;
+      }
+
+      newFiles.push({
+        id: Math.random().toString(36).substr(2, 9),
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        file,
+      });
+    }
+
+    if (errors.length > 0) {
+      errors.forEach((error) => toast.error(error));
+    }
+
+    if (newFiles.length > 0) {
+      setReceipts((prev) =>
+        [...prev, ...newFiles].slice(0, RECEIPT_MAX_FILES),
+      );
+    }
   };
 
   const removeFile = (id: string) => {
@@ -248,6 +295,8 @@ export default function ExpensesPage() {
     }
 
     try {
+      pendingReceiptsRef.current = [...receipts];
+      setStoredReceipts([]);
       submitRef.current = {
         barangay,
         amount: Math.round(parseFloat(form.amount) * 100),
@@ -292,37 +341,147 @@ export default function ExpensesPage() {
   };
 
   useEffect(() => {
-    if (isConfirmed && hash && submitRef.current) {
-      const data = submitRef.current;
-      submitRef.current = null;
+    if (!isConfirmed || !hash || !submitRef.current) return;
 
-      setForm({
-        amount: "",
-        vendor: "",
-        category: "",
-        description: "",
-        date: new Date().toISOString().split("T")[0],
-      });
-      setReceipts([]);
-      setSynced(true);
+    const data = submitRef.current;
+    const files = pendingReceiptsRef.current;
+    submitRef.current = null;
+    pendingReceiptsRef.current = [];
 
-      toast.success("Expense logged on blockchain!");
+    setForm({
+      amount: "",
+      vendor: "",
+      category: "",
+      description: "",
+      date: new Date().toISOString().split("T")[0],
+    });
+    setReceipts([]);
+    setSynced(true);
 
-      syncRecord({
-        type: "expense",
-        blockchain_tx_hash: hash,
-        contract_address: CONTRACT_ADDRESS,
-        official_address: address || "",
-        barangay: data.barangay,
-        amount: data.amount,
-        purpose: data.purpose,
-      }).catch((err) => {
+    toast.success("Expense logged on blockchain!");
+
+    void (async () => {
+      let expenseId: string | undefined;
+      let recordId: number | undefined;
+
+      try {
+        const response = (await syncRecord({
+          type: "expense",
+          blockchain_tx_hash: hash,
+          contract_address: CONTRACT_ADDRESS,
+          official_address: address || "",
+          barangay: data.barangay,
+          amount: data.amount,
+          purpose: data.purpose,
+        })) as unknown as {
+          data?: { id?: string; blockchain_record_id?: number };
+        };
+
+        expenseId = response?.data?.id;
+        recordId = response?.data?.blockchain_record_id;
+      } catch (err) {
         console.error("Sync failed:", err);
         toast.error(
           "Recorded on-chain, but syncing to the database failed. Contact an admin.",
         );
-      });
-    }
+      }
+
+      if (files.length === 0) return;
+
+      setIsFilingReceipts(true);
+      const stored: StoredReceipt[] = [];
+      let failed = 0;
+
+      for (const file of files) {
+        const body = new FormData();
+        body.append("file", file.file);
+        body.append("record_type", "expense");
+        body.append("blockchain_tx_hash", hash);
+        body.append("contract_address", CONTRACT_ADDRESS);
+
+        if (expenseId) body.append("expense_id", expenseId);
+        if (recordId) body.append("blockchain_record_id", String(recordId));
+
+        try {
+          const response = await fetch("/api/documents", {
+            method: "POST",
+            body,
+          });
+          const payload = (await response.json()) as {
+            data?: {
+              id: string;
+              fileName: string;
+              sizeBytes: number;
+              sha256: string;
+            };
+            error?: string;
+          };
+
+          if (!response.ok || !payload.data) {
+            throw new Error(payload.error || "Receipt upload failed.");
+          }
+
+          stored.push({
+            ...payload.data,
+            url: buildReceiptUrl(payload.data.id),
+          });
+        } catch (err) {
+          failed += 1;
+          console.error("Receipt upload failed:", err);
+        }
+      }
+
+      if (ONCHAIN_RECEIPT_HASH_ENABLED && stored.length > 0) {
+        if (!recordId || !publicClient) {
+          toast.warning(
+            "Receipts were filed, but the on-chain fingerprint could not be attached because the ledger record id is unavailable.",
+          );
+        } else {
+          let hashFailures = 0;
+
+          for (const receipt of stored) {
+            try {
+              const attachTx = await attachHashAsync({
+                address: CONTRACT_ADDRESS,
+                abi: SK_LEDGE_ABI,
+                functionName: "attachDocumentHash",
+                args: [
+                  BigInt(recordId),
+                  `0x${receipt.sha256}` as `0x${string}`,
+                ],
+              });
+              await publicClient.waitForTransactionReceipt({ hash: attachTx });
+            } catch (err) {
+              hashFailures += 1;
+              console.error("Failed to attach receipt fingerprint on-chain:", err);
+            }
+          }
+
+          if (hashFailures > 0) {
+            toast.error(
+              `${hashFailures} of ${stored.length} receipt fingerprint(s) could not be recorded on-chain.`,
+            );
+          } else {
+            toast.success(
+              `${stored.length} receipt fingerprint${stored.length === 1 ? "" : "s"} recorded on-chain.`,
+            );
+          }
+        }
+      }
+
+      setIsFilingReceipts(false);
+      setStoredReceipts(stored);
+
+      if (failed > 0) {
+        toast.error(
+          `${failed} of ${files.length} receipts could not be filed. The expense is still on-chain.`,
+        );
+      } else {
+        toast.success(
+          `${stored.length} receipt${stored.length === 1 ? "" : "s"} filed with SHA-256 fingerprints.`,
+        );
+      }
+    })();
   }, [isConfirmed, hash, currentUser, address, toast]);
 
   if (isLoading) return <LogoLoader />;
@@ -561,6 +720,45 @@ export default function ExpensesPage() {
               )}
             </button>
           </div>
+
+          {/* FILED RECEIPTS */}
+          {(isFilingReceipts || storedReceipts.length > 0) && (
+            <Card>
+              <CardHeader eyebrow="Audit trail" title="Filed Receipts" />
+              {isFilingReceipts ? (
+                <p className="flex items-center gap-2 text-sm font-bold text-secondary-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Uploading receipts and computing SHA-256 fingerprints...
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {storedReceipts.map((receipt) => (
+                    <div
+                      key={receipt.id}
+                      className="flex items-center justify-between gap-4 rounded-xl border border-border bg-secondary/40 p-3"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-bold text-primary-foreground">
+                          {receipt.fileName}
+                        </p>
+                        <p className="truncate font-mono text-[10px] text-secondary-foreground">
+                          SHA-256: {receipt.sha256}
+                        </p>
+                      </div>
+                      <a
+                        href={receipt.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="shrink-0 text-xs font-bold text-primary underline"
+                      >
+                        View
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+          )}
 
           {/* SUCCESS MESSAGE */}
           {synced && hash && (

@@ -45,6 +45,16 @@ are limited to 256 UTF-8 bytes. Both values must be non-empty. The contract
 reports over-limit inputs with custom errors; these limits count encoded bytes,
 not displayed characters.
 
+## Receipt fingerprint rollout
+
+The contract now exposes `attachDocumentHash(recordId, bytes32)` and
+`getDocumentHashes(recordId)` for append-only SHA-256 receipt fingerprints on
+expense records. The app only calls this after a receipt upload when
+`NEXT_PUBLIC_ONCHAIN_RECEIPT_HASH_ENABLED=true`; leave it unset against any
+deployment that predates the function. After deploying the updated contract,
+point `NEXT_PUBLIC_CONTRACT_ADDRESS` at the new address, enable the flag, and
+redeploy/restart the web app.
+
 ## Canonical barangay registry
 
 The canonical identity is `<barangay>, <municipality>`, sourced from
@@ -83,32 +93,39 @@ record writes but does not remove barangay assignments; reauthorization restores
 the assignments that remain in place. No wallet, including the owner, receives
 barangay access implicitly.
 
-## Multi-signature approvals
+## Authorizing wallets on the live contract
 
-Records use an approval threshold that defaults to `1`, preserving the original
-single-approver behavior. The owner can set it from `1` to `10`:
-
-```bash
-APPROVAL_THRESHOLD=2 npx hardhat run scripts/set-approval-threshold.ts --network sepolia
-```
-
-Authorized officials approve records from their own wallets:
+All operational scripts read the target contract from
+`NEXT_PUBLIC_CONTRACT_ADDRESS` and refuse to run unless `SEPOLIA_PRIVATE_KEY`
+(or `DEPLOYER_PRIVATE_KEY`) belongs to the contract owner:
 
 ```bash
-RECORD_ID=1 SIGNER_PRIVATE_KEY=0x... npx hardhat run scripts/approve-record.ts --network sepolia
+# SK official wallet (global record-write authorization)
+TARGET_OFFICIAL_ADDRESS=0x... npm run authorize-official
+
+# COA auditor wallet (confirmRecord permission)
+TARGET_APPROVER_ADDRESS=0x... npm run authorize-approver
+
+# Global official + barangay assignment + approver + ceiling in one pass
+npm run setup-sepolia
 ```
 
-Each official can approve a record once. When `approvalCount` reaches the
-threshold, the record is approved, the named approver is recorded, and the
-barangay is locked. Revoking an approval drops the record below the threshold
-and unapproves it. `setRecordApproval` remains the owner/approver override and
-does not change `approvalCount`.
+Set `AUTHORIZATION_STATUS=false` (or `APPROVER_AUTHORIZATION_STATUS=false`)
+to revoke. Barangay-scoped access is granted with
+`TARGET_OFFICIAL_BARANGAY_ADDRESS` / `TARGET_OFFICIAL_BARANGAY_NAME` through
+`npm run setup-sepolia`; global authorization alone does not grant barangay
+access.
 
-Threshold changes apply to subsequent approval and revocation calls; existing
-owner overrides are preserved. The contract is not upgradeable, so an already
-deployed contract must be redeployed to gain the multi-signature functions, then
-reconfigured with `register-barangays`, official/approver authorization, and
-ceilings.
+Records are final only after the COA wallet calls `confirmRecord(id)`. There is
+no multi-signature threshold in the current contract.
+
+## Deployment evidence
+
+`npm run deployment-evidence` writes `deployment-evidence.json` into the
+Ignition folder that recorded the deployed address. It captures the deployment
+transaction/block, owner, compiler settings, ABI and bytecode fingerprints,
+Etherscan verification status, and live contract counts. It is read-only and
+needs no private key.
 
 ## Export the frontend ABI
 

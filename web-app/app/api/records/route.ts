@@ -39,6 +39,27 @@ function parseLimit(rawLimit: string | null): number | null {
   return limit;
 }
 
+/**
+ * Parse a YYYY-MM-DD filter. Returns undefined when absent and null when the
+ * value is not a real calendar date.
+ */
+function parseDateParam(raw: string | null): string | null | undefined {
+  if (raw === null) {
+    return undefined;
+  }
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    return null;
+  }
+
+  const parsed = new Date(`${raw}T00:00:00.000Z`);
+  if (Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== raw) {
+    return null;
+  }
+
+  return raw;
+}
+
 export async function GET(req: NextRequest) {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -67,6 +88,20 @@ export async function GET(req: NextRequest) {
         `Invalid limit. Must be an integer between 1 and ${MAX_LIMIT}.`,
         400,
       );
+    }
+
+    const fromDate = parseDateParam(req.nextUrl.searchParams.get("from"));
+    if (fromDate === null) {
+      return errorResponse("Invalid from date. Use YYYY-MM-DD.", 400);
+    }
+
+    const toDate = parseDateParam(req.nextUrl.searchParams.get("to"));
+    if (toDate === null) {
+      return errorResponse("Invalid to date. Use YYYY-MM-DD.", 400);
+    }
+
+    if (fromDate && toDate && fromDate > toDate) {
+      return errorResponse("Invalid date range. from must not be after to.", 400);
     }
 
     const barangayParam = req.nextUrl.searchParams.get("barangay");
@@ -196,6 +231,14 @@ export async function GET(req: NextRequest) {
           query = query.eq("barangay", scopedBarangay);
         }
 
+        // Period boundaries follow Philippine calendar days.
+        if (fromDate) {
+          query = query.gte("created_at", `${fromDate}T00:00:00+08:00`);
+        }
+        if (toDate) {
+          query = query.lte("created_at", `${toDate}T23:59:59.999+08:00`);
+        }
+
         const { data, error } = await query;
         if (error) {
           console.error("Failed to read ledger records.", {
@@ -236,6 +279,8 @@ export async function GET(req: NextRequest) {
         types,
         barangay: scopedBarangay,
         limit,
+        from: fromDate ?? null,
+        to: toDate ?? null,
         scope: isPublicScope ? "public" : "authenticated",
         synced_at: new Date().toISOString(),
       },

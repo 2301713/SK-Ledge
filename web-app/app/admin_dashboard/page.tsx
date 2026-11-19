@@ -25,6 +25,7 @@ import {
   AlertCircle,
   ArrowRight,
   CheckCircle2,
+  ChevronLeft,
   ChevronRight,
   Clock,
   Download,
@@ -69,6 +70,8 @@ const ROLE_ABBREV: Record<string, string> = {
 
 const roleAbbrev = (role: string) => ROLE_ABBREV[role] ?? role.slice(0, 3);
 
+const APPROVED_PAGE_SIZE = 8;
+
 export default function AdminDashboardPage() {
   const router = useRouter();
   const {
@@ -90,6 +93,7 @@ export default function AdminDashboardPage() {
   const [approvedAccounts, setApprovedAccounts] = useState<AccountRow[]>([]);
   const [latestUsers, setLatestUsers] = useState<LatestUser[]>([]);
   const [search, setSearch] = useState("");
+  const [approvedPage, setApprovedPage] = useState(1);
   const authAttemptedRef = useRef(false);
 
   useEffect(() => {
@@ -241,6 +245,21 @@ export default function AdminDashboardPage() {
         .includes(query),
     );
   }, [approvedAccounts, search]);
+
+  useEffect(() => {
+    setApprovedPage(1);
+  }, [search]);
+
+  const approvedTotalPages = Math.max(
+    1,
+    Math.ceil(filteredApproved.length / APPROVED_PAGE_SIZE),
+  );
+  const approvedCurrentPage = Math.min(approvedPage, approvedTotalPages);
+  const approvedStartIndex = (approvedCurrentPage - 1) * APPROVED_PAGE_SIZE;
+  const pagedApproved = filteredApproved.slice(
+    approvedStartIndex,
+    approvedStartIndex + APPROVED_PAGE_SIZE,
+  );
 
   const pct = (numerator: number, denominator: number) =>
     denominator > 0 ? Math.round((numerator / denominator) * 100) : 0;
@@ -433,7 +452,14 @@ export default function AdminDashboardPage() {
             <CardHeader
               eyebrow="Directory"
               title="Approved Accounts"
-              subtitle={`Showing ${filteredApproved.length} of ${approvedAccounts.length} approved account(s).`}
+              subtitle={
+                filteredApproved.length > 0
+                  ? `Showing ${approvedStartIndex + 1}–${Math.min(
+                      approvedStartIndex + APPROVED_PAGE_SIZE,
+                      filteredApproved.length,
+                    )} of ${filteredApproved.length} approved account(s).`
+                  : "No approved accounts match the current search."
+              }
             />
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -457,7 +483,7 @@ export default function AdminDashboardPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {filteredApproved.map((account, index) => (
+                  {pagedApproved.map((account, index) => (
                     <tr key={account.id} className="transition hover:bg-secondary/40">
                       <td className="px-3 py-3.5">
                         <div className="flex items-center gap-2.5">
@@ -466,7 +492,8 @@ export default function AdminDashboardPage() {
                             style={{
                               backgroundColor:
                                 AVATAR_PALETTE[
-                                  index % AVATAR_PALETTE.length
+                                  (approvedStartIndex + index) %
+                                    AVATAR_PALETTE.length
                                 ],
                             }}
                           >
@@ -500,6 +527,38 @@ export default function AdminDashboardPage() {
                   No approved accounts match your search.
                 </p>
               )}
+            </div>
+
+            <div className="flex flex-col gap-3 border-t border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-[11px] font-medium text-secondary-foreground">
+                Page {approvedCurrentPage} of {approvedTotalPages}
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setApprovedPage(Math.max(1, approvedCurrentPage - 1))
+                  }
+                  disabled={approvedCurrentPage <= 1}
+                  className="inline-flex items-center gap-1 rounded-lg border border-border bg-white px-3 py-1.5 text-xs font-semibold text-primary-foreground transition hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <ChevronLeft className="h-3.5 w-3.5" />
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setApprovedPage(
+                      Math.min(approvedTotalPages, approvedCurrentPage + 1),
+                    )
+                  }
+                  disabled={approvedCurrentPage >= approvedTotalPages}
+                  className="inline-flex items-center gap-1 rounded-lg border border-border bg-white px-3 py-1.5 text-xs font-semibold text-primary-foreground transition hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Next
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </button>
+              </div>
             </div>
           </Card>
 

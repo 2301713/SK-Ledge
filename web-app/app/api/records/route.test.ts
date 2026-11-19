@@ -7,6 +7,12 @@ const mocks = vi.hoisted(() => ({
   currentUser: null as { id: string } | null,
   profile: null as Record<string, unknown> | null,
   authError: null as { status?: number } | null,
+  rangeFilters: [] as {
+    table: string;
+    op: "gte" | "lte";
+    column: string;
+    value: string;
+  }[],
 }));
 
 vi.mock("@supabase/supabase-js", () => {
@@ -19,6 +25,14 @@ vi.mock("@supabase/supabase-js", () => {
       order: () => builder,
       limit: () => builder,
       eq: () => builder,
+      gte: (column: string, value: string) => {
+        mocks.rangeFilters.push({ table, op: "gte", column, value });
+        return builder;
+      },
+      lte: (column: string, value: string) => {
+        mocks.rangeFilters.push({ table, op: "lte", column, value });
+        return builder;
+      },
       maybeSingle: async () => ({ data: mocks.profile, error: null }),
       then: (resolve: (value: unknown) => unknown) =>
         Promise.resolve({
@@ -77,6 +91,7 @@ beforeEach(() => {
   mocks.currentUser = null;
   mocks.profile = null;
   mocks.authError = null;
+  mocks.rangeFilters = [];
 });
 
 describe("GET /api/records input validation", () => {
@@ -100,6 +115,27 @@ describe("GET /api/records input validation", () => {
       expect(body.error).toContain("Invalid limit");
     },
   );
+
+  it.each(["2026-02-30", "03-01-2026", "2026-3-1", "" ])(
+    "rejects the invalid from date %s",
+    async (from) => {
+      mocks.currentUser = { id: "user-1" };
+
+      const { status, body } = await call(`?from=${encodeURIComponent(from)}`);
+
+      expect(status).toBe(400);
+      expect(body.error).toContain("Invalid from date");
+    },
+  );
+
+  it("rejects an inverted date range", async () => {
+    mocks.currentUser = { id: "user-1" };
+
+    const { status, body } = await call("?from=2026-03-31&to=2026-03-01");
+
+    expect(status).toBe(400);
+    expect(body.error).toContain("Invalid date range");
+  });
 
   it("rejects an ambiguous barangay filter", async () => {
     mocks.currentUser = { id: "user-1" };
@@ -171,6 +207,36 @@ describe("GET /api/records public scope", () => {
     const { status } = await call("?scope=public");
 
     expect(status).toBe(200);
+  });
+});
+
+describe("GET /api/records period filter", () => {
+  it("applies inclusive Manila-day boundaries to every ledger table", async () => {
+    mocks.currentUser = { id: "user-1" };
+    mocks.profile = { role_type: "COA", approval_status: "approved", barangay: null };
+    mocks.tableData = { allocations: [], expenses: [], awards: [] };
+
+    const { status, body } = await call("?from=2026-01-01&to=2026-03-31");
+
+    expect(status).toBe(200);
+    expect(body.meta).toMatchObject({ from: "2026-01-01", to: "2026-03-31" });
+    expect(mocks.rangeFilters).toHaveLength(6);
+    expect(mocks.rangeFilters).toEqual(
+      expect.arrayContaining([
+        {
+          table: "expenses",
+          op: "gte",
+          column: "created_at",
+          value: "2026-01-01T00:00:00+08:00",
+        },
+        {
+          table: "expenses",
+          op: "lte",
+          column: "created_at",
+          value: "2026-03-31T23:59:59.999+08:00",
+        },
+      ]),
+    );
   });
 });
 

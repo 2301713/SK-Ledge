@@ -21,6 +21,7 @@ type Disbursement = {
 export default function PublicDashboard() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [barangayFilter, setBarangayFilter] = useState("");
   const { records: allocations } = useRecordsSync({
     type: "allocation",
     public: true,
@@ -55,23 +56,38 @@ export default function PublicDashboard() {
     fetchProjects();
   }, []);
 
+  const barangayOptions = useMemo(() => {
+    const names = new Set<string>();
+
+    for (const project of projects) {
+      const location = project.barangay || project.location || "";
+      const barangay = canonicalizeBarangay(location) ?? location.trim();
+      if (barangay) {
+        names.add(barangay);
+      }
+    }
+
+    return [...names].sort((a, b) => a.localeCompare(b));
+  }, [projects]);
+
   const filteredProjects = useMemo(() => {
     return projects.filter((p) => {
       const q = searchQuery.toLowerCase();
       const name = (p.name || p.title || "").toLowerCase();
       const location = p.barangay || p.location || "";
-      const barangay = (
-        canonicalizeBarangay(location) ?? location
-      ).toLowerCase();
+      const barangay = canonicalizeBarangay(location) ?? location;
       const category = (p.category || "").toLowerCase();
 
-      return (
+      const matchesBarangay =
+        barangayFilter === "" || barangay === barangayFilter;
+      const matchesSearch =
         name.includes(q) ||
-        barangay.includes(q) ||
-        category.includes(q)
-      );
+        barangay.toLowerCase().includes(q) ||
+        category.includes(q);
+
+      return matchesBarangay && matchesSearch;
     });
-  }, [searchQuery, projects]);
+  }, [barangayFilter, searchQuery, projects]);
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-background selection:bg-tertiary selection:text-primary">
@@ -95,6 +111,9 @@ export default function PublicDashboard() {
           <ProjectRegistry
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
+            barangayFilter={barangayFilter}
+            onBarangayFilterChange={setBarangayFilter}
+            barangayOptions={barangayOptions}
             filteredProjects={filteredProjects}
           />
         </main>

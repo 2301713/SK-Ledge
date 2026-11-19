@@ -11,6 +11,8 @@ SK-Ledge-Use-Case-Diagram.png
 # Dependencies
 node_modules
 
-# Supabase: ignore local state, but track schema migrations
+# Supabase: ignore local state, but track schema migrations and docs
 supabase/*
+# !supabase/README.md
 # !supabase/migrations/
+# !supabase/migrations/**

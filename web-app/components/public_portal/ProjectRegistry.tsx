@@ -1,4 +1,11 @@
-import { Search, ExternalLink, ScrollText, Inbox } from "lucide-react";
+import {
+  Search,
+  ExternalLink,
+  ScrollText,
+  Inbox,
+  MapPin,
+  ChevronDown,
+} from "lucide-react";
 import StatusBadge from "./StatusBadge";
 import { StatusType } from "../../app/public_portal/types";
 
@@ -23,12 +30,18 @@ export interface Project {
 interface ProjectRegistryProps {
   searchQuery: string;
   onSearchChange: (value: string) => void;
+  barangayFilter: string;
+  onBarangayFilterChange: (value: string) => void;
+  barangayOptions: string[];
   filteredProjects: Project[];
 }
 
 export default function ProjectRegistry({
   searchQuery,
   onSearchChange,
+  barangayFilter,
+  onBarangayFilterChange,
+  barangayOptions,
   filteredProjects,
 }: ProjectRegistryProps) {
   return (
@@ -56,16 +69,39 @@ export default function ProjectRegistry({
               </div>
             </div>
 
-            {/* Search Input */}
-            <div className="relative w-full md:w-72">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-secondary-foreground" />
-              <input
-                type="text"
-                placeholder="Search project, barangay, category…"
-                value={searchQuery}
-                onChange={(e) => onSearchChange(e.target.value)}
-                className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-border bg-white text-xs text-primary-foreground placeholder:text-secondary-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
-              />
+            {/* Barangay Filter + Search */}
+            <div className="flex w-full flex-col gap-2 sm:flex-row md:w-auto md:items-center">
+              <div className="relative w-full sm:w-56">
+                <label htmlFor="public-barangay-filter" className="sr-only">
+                  Filter projects by barangay
+                </label>
+                <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-secondary-foreground" />
+                <select
+                  id="public-barangay-filter"
+                  value={barangayFilter}
+                  onChange={(e) => onBarangayFilterChange(e.target.value)}
+                  className="w-full appearance-none rounded-xl border border-border bg-white py-2.5 pl-9 pr-8 text-xs text-primary-foreground outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+                >
+                  <option value="">All barangays</option>
+                  {barangayOptions.map((barangay) => (
+                    <option key={barangay} value={barangay}>
+                      {barangay}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-secondary-foreground" />
+              </div>
+
+              <div className="relative w-full md:w-72">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-secondary-foreground" />
+                <input
+                  type="text"
+                  placeholder="Search project, category…"
+                  value={searchQuery}
+                  onChange={(e) => onSearchChange(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-border bg-white text-xs text-primary-foreground placeholder:text-secondary-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                />
+              </div>
             </div>
           </div>
 
@@ -103,10 +139,14 @@ export default function ProjectRegistry({
                           <Inbox className="h-5 w-5 text-secondary-foreground" />
                         </div>
                         <p className="text-sm font-bold text-primary-foreground">
-                          No projects found
+                          {barangayFilter
+                            ? `No projects in ${barangayFilter}`
+                            : "No projects found"}
                         </p>
                         <p className="mt-1 text-xs text-secondary-foreground">
-                          Try a different project name, barangay, or category.
+                          {barangayFilter
+                            ? "Choose another barangay or select All barangays."
+                            : "Try a different project name or category."}
                         </p>
                       </div>
                     </td>
@@ -209,6 +249,7 @@ export default function ProjectRegistry({
           <div className="flex items-center justify-between border-t border-border bg-secondary/20 px-6 py-4 sm:px-7">
             <p className="text-[10px] font-semibold uppercase tracking-widest text-secondary-foreground">
               Showing {filteredProjects.length} records
+              {barangayFilter ? ` in ${barangayFilter}` : ""}
             </p>
             <p className="hidden items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-secondary-foreground sm:flex">
               <span className="h-1.5 w-1.5 rounded-full bg-success" />

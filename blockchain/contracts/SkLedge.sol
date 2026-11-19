@@ -7,6 +7,7 @@ contract SkLedge {
     uint256 public constant MAX_BARANGAY_NAME_BYTES = 64;
     uint256 public constant MAX_PURPOSE_BYTES = 256;
     uint256 public constant MAX_VOID_REASON_BYTES = 256;
+    uint256 public constant MAX_DOCUMENT_HASHES_PER_RECORD = 10;
 
     error StringEmpty();
     error BarangayNameTooLong(uint256 length, uint256 max);
@@ -50,6 +51,9 @@ contract SkLedge {
     // Running total of allocations per barangay
     mapping(uint256 => uint256) private allocatedTotalsById;
 
+    // SHA-256 fingerprints of receipt documents linked to each record.
+    mapping(uint256 => bytes32[]) private documentHashesById;
+
     // Events
     event RecordAdded(
         uint256 indexed id,
@@ -78,6 +82,12 @@ contract SkLedge {
     );
 
     event RecordConfirmed(uint256 indexed id, address indexed auditor);
+
+    event DocumentHashAttached(
+        uint256 indexed id,
+        bytes32 indexed documentHash,
+        address indexed official
+    );
 
     event AllocationCeilingChanged(
         string barangay,
@@ -491,6 +501,72 @@ contract SkLedge {
         );
 
         nextRecordId++;
+    }
+
+    /**
+     * @notice Attaches a document fingerprint to an expense record.
+     * @dev Append-only: hashes cannot be removed or replaced. Duplicate hashes
+     *      for the same record are rejected.
+     * @param _id Record ID.
+     * @param _documentHash SHA-256 fingerprint of the uploaded receipt.
+     */
+    function attachDocumentHash(
+        uint256 _id,
+        bytes32 _documentHash
+    ) external onlyAuthorizedOfficial {
+        require(
+            _id > 0 && _id < nextRecordId,
+            "SkLedge: Record does not exist"
+        );
+
+        FinancialRecord storage record = records[_id - 1];
+        require(!record.voided, "SkLedge: Record is voided");
+        require(
+            keccak256(abi.encodePacked(record.recordType)) ==
+                keccak256(abi.encodePacked("Expense")),
+            "SkLedge: Only expense records accept receipt hashes"
+        );
+        require(
+            _documentHash != bytes32(0),
+            "SkLedge: Document hash is required"
+        );
+
+        uint256 barangayId = _getBarangayId(record.barangay);
+        require(
+            officialBarangayAuthorizationById[msg.sender][barangayId],
+            "SkLedge: Your wallet is not authorized for this barangay."
+        );
+
+        bytes32[] storage hashes = documentHashesById[_id];
+        require(
+            hashes.length < MAX_DOCUMENT_HASHES_PER_RECORD,
+            "SkLedge: Too many document hashes"
+        );
+
+        for (uint256 i = 0; i < hashes.length; i++) {
+            require(
+                hashes[i] != _documentHash,
+                "SkLedge: Document hash already attached"
+            );
+        }
+
+        hashes.push(_documentHash);
+
+        emit DocumentHashAttached(_id, _documentHash, msg.sender);
+    }
+
+    /**
+     * @notice Returns the document fingerprints attached to a record.
+     * @param _id Record ID.
+     */
+    function getDocumentHashes(
+        uint256 _id
+    ) external view returns (bytes32[] memory) {
+        require(
+            _id > 0 && _id < nextRecordId,
+            "SkLedge: Record does not exist"
+        );
+        return documentHashesById[_id];
     }
 
     /**

@@ -308,6 +308,156 @@ describe("SkLedge Contract Test Suite", function () {
     });
   });
 
+  describe("Document fingerprints", function () {
+    async function addExpense(
+      skLedge: any,
+      signer: any,
+      barangay = "Barangay 1"
+    ) {
+      await skLedge
+        .connect(signer)
+        .addRecord(barangay, 1500, "Office supplies", "Expense");
+    }
+
+    it("attaches a SHA-256 fingerprint to an expense record", async function () {
+      const { skLedge, owner, ethers } = await deploySkLedgeFixture();
+      await addExpense(skLedge, owner);
+      const hash = ethers.id("receipt-1");
+
+      await skLedge.connect(owner).attachDocumentHash(1, hash);
+
+      const hashes = await skLedge.getDocumentHashes(1);
+      expect(hashes.length).to.equal(1);
+      expect(hashes[0]).to.equal(hash);
+    });
+
+    it("emits DocumentHashAttached with the record, hash, and official", async function () {
+      const { skLedge, owner, ethers } = await deploySkLedgeFixture();
+      await addExpense(skLedge, owner);
+      const hash = ethers.id("receipt-1");
+
+      await expect(skLedge.connect(owner).attachDocumentHash(1, hash))
+        .to.emit(skLedge, "DocumentHashAttached")
+        .withArgs(1, hash, owner.address);
+    });
+
+    it("allows multiple fingerprints on the same record", async function () {
+      const { skLedge, owner, ethers } = await deploySkLedgeFixture();
+      await addExpense(skLedge, owner);
+
+      await skLedge.connect(owner).attachDocumentHash(1, ethers.id("receipt-1"));
+      await skLedge.connect(owner).attachDocumentHash(1, ethers.id("receipt-2"));
+
+      const hashes = await skLedge.getDocumentHashes(1);
+      expect(hashes.length).to.equal(2);
+      expect(hashes[1]).to.equal(ethers.id("receipt-2"));
+    });
+
+    it("rejects a duplicate fingerprint for the same record", async function () {
+      const { skLedge, owner, ethers } = await deploySkLedgeFixture();
+      await addExpense(skLedge, owner);
+      const hash = ethers.id("receipt-1");
+
+      await skLedge.connect(owner).attachDocumentHash(1, hash);
+
+      await expect(
+        skLedge.connect(owner).attachDocumentHash(1, hash)
+      ).to.be.revertedWith("SkLedge: Document hash already attached");
+    });
+
+    it("rejects an empty fingerprint", async function () {
+      const { skLedge, owner, ethers } = await deploySkLedgeFixture();
+      await addExpense(skLedge, owner);
+
+      await expect(
+        skLedge.connect(owner).attachDocumentHash(1, ethers.ZeroHash)
+      ).to.be.revertedWith("SkLedge: Document hash is required");
+    });
+
+    it("rejects fingerprints on non-expense records", async function () {
+      const { skLedge, owner, ethers } = await deploySkLedgeFixture();
+      await skLedge
+        .connect(owner)
+        .addRecord("Barangay 1", 5000, "Youth Sports", "Allocation");
+
+      await expect(
+        skLedge.connect(owner).attachDocumentHash(1, ethers.id("receipt-1"))
+      ).to.be.revertedWith(
+        "SkLedge: Only expense records accept receipt hashes"
+      );
+    });
+
+    it("rejects an unauthorized wallet", async function () {
+      const { skLedge, owner, nonOfficial, ethers } =
+        await deploySkLedgeFixture();
+      await addExpense(skLedge, owner);
+
+      await expect(
+        skLedge
+          .connect(nonOfficial)
+          .attachDocumentHash(1, ethers.id("receipt-1"))
+      ).to.be.revertedWith("SkLedge: Your wallet is not an authorized SK Official.");
+    });
+
+    it("rejects an official without access to the record's barangay", async function () {
+      const { skLedge, owner, official1, ethers } =
+        await deploySkLedgeFixture();
+      await addExpense(skLedge, owner);
+      await skLedge
+        .connect(owner)
+        .setOfficialAuthorization(official1.address, true);
+
+      await expect(
+        skLedge
+          .connect(official1)
+          .attachDocumentHash(1, ethers.id("receipt-1"))
+      ).to.be.revertedWith(
+        "SkLedge: Your wallet is not authorized for this barangay."
+      );
+    });
+
+    it("rejects fingerprints on voided records", async function () {
+      const { skLedge, owner, ethers } = await deploySkLedgeFixture();
+      await addExpense(skLedge, owner);
+      await skLedge.connect(owner).voidRecord(1, "Duplicate voucher");
+
+      await expect(
+        skLedge.connect(owner).attachDocumentHash(1, ethers.id("receipt-1"))
+      ).to.be.revertedWith("SkLedge: Record is voided");
+    });
+
+    it("rejects fingerprints for a nonexistent record", async function () {
+      const { skLedge, owner, ethers } = await deploySkLedgeFixture();
+
+      await expect(
+        skLedge.connect(owner).attachDocumentHash(99, ethers.id("receipt-1"))
+      ).to.be.revertedWith("SkLedge: Record does not exist");
+    });
+
+    it("rejects reading fingerprints for a nonexistent record", async function () {
+      const { skLedge } = await deploySkLedgeFixture();
+
+      await expect(skLedge.getDocumentHashes(99)).to.be.revertedWith(
+        "SkLedge: Record does not exist"
+      );
+    });
+
+    it("caps fingerprints per record", async function () {
+      const { skLedge, owner, ethers } = await deploySkLedgeFixture();
+      await addExpense(skLedge, owner);
+
+      for (let i = 1; i <= 10; i++) {
+        await skLedge
+          .connect(owner)
+          .attachDocumentHash(1, ethers.id(`receipt-${i}`));
+      }
+
+      await expect(
+        skLedge.connect(owner).attachDocumentHash(1, ethers.id("receipt-11"))
+      ).to.be.revertedWith("SkLedge: Too many document hashes");
+    });
+  });
+
   describe("Adding Records and Validations", function () {
     it("Should allow an authorized official to add an Allocation record", async function () {
       const { skLedge, owner } = await deploySkLedgeFixture();
