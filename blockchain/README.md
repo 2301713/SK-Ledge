@@ -15,6 +15,7 @@ must be the deployed contract owner. To configure one or more items, set:
 
 ```env
 TARGET_OFFICIAL_ADDRESS=
+TARGET_OFFICIAL_ADDRESSES=
 OFFICIAL_AUTHORIZATION_STATUS=true
 TARGET_OFFICIAL_BARANGAY_ADDRESS=
 TARGET_OFFICIAL_BARANGAY_NAME=
@@ -33,6 +34,21 @@ before reporting success. Set both `TARGET_OFFICIAL_BARANGAY_ADDRESS` and
 registered barangay; its status is independent of the global authorization
 setting. Barangay names are resolved through the canonical registry, so
 registered aliases refer to the same barangay.
+
+To authorize several officials for the same barangay, use comma-separated
+Ethereum addresses:
+
+```env
+TARGET_OFFICIAL_ADDRESSES=0xCHAIRPERSON,0xTREASURER
+TARGET_OFFICIAL_BARANGAY_ADDRESS=0xCHAIRPERSON,0xTREASURER
+TARGET_OFFICIAL_BARANGAY_NAME=Adia, Agoncillo
+OFFICIAL_AUTHORIZATION_STATUS=true
+OFFICIAL_BARANGAY_AUTHORIZATION_STATUS=true
+```
+
+The setup script authorizes every address globally and grants it access to the
+specified barangay. `TARGET_OFFICIAL_ADDRESS` remains supported for one-address
+configuration. If both variables are set, duplicate addresses are processed once.
 
 Run `npm run setup-sepolia` from this directory. The script will not deploy a
 contract; `NEXT_PUBLIC_CONTRACT_ADDRESS` must point to an existing SkLedge

@@ -21,11 +21,66 @@ function authorizationStatus(name: string): boolean {
   throw new Error(`${name} must be true, false, 1, or 0.`);
 }
 
+function addressList(name: string): string[] {
+  const value = process.env[name]?.trim();
+  if (!value) return [];
+
+  const addresses = value
+    .split(",")
+    .map((address) => address.trim())
+    .filter(Boolean);
+
+  for (const address of addresses) {
+    if (
+      !ethers.isAddress(address) ||
+      address.toLowerCase() === ethers.ZeroAddress
+    ) {
+      throw new Error(`${name} contains an invalid or zero wallet address: ${address}`);
+    }
+  }
+
+  return [...new Set(addresses.map((address) => ethers.getAddress(address)))];
+}
+
 async function submitAndConfirm(
   description: string,
-  transaction: Promise<ethers.TransactionResponse>
+  createTransaction: () => Promise<ethers.TransactionResponse>
 ): Promise<void> {
-  const response = await transaction;
+  let response: ethers.TransactionResponse | null = null;
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= 5; attempt++) {
+    try {
+      response = await createTransaction();
+      break;
+    } catch (error) {
+      lastError = error;
+      const message =
+        error instanceof Error ? error.message : String(error);
+
+      if (
+        message.includes("in-flight transaction limit reached") ||
+        message.includes("-32000")
+      ) {
+        const delaySeconds = attempt * 3;
+        console.log(
+          `RPC reported an in-flight transaction limit. Waiting ${delaySeconds}s before retry ${attempt}/5.`
+        );
+        await new Promise((resolve) =>
+          setTimeout(resolve, delaySeconds * 1000)
+        );
+        continue;
+      }
+
+      throw error;
+    }
+  }
+
+  if (!response) {
+    throw lastError instanceof Error
+      ? lastError
+      : new Error("Transaction submission failed after retries.");
+  }
   console.log(`${description}: ${response.hash}`);
 
   const receipt = await response.wait();
@@ -65,21 +120,19 @@ async function main(): Promise<void> {
   }
 
   const officialAddress = process.env.TARGET_OFFICIAL_ADDRESS?.trim();
-  const officialBarangayAddress =
-    process.env.TARGET_OFFICIAL_BARANGAY_ADDRESS?.trim();
+  const officialAddresses = [
+    ...addressList("TARGET_OFFICIAL_ADDRESSES"),
+    ...(officialAddress ? addressList("TARGET_OFFICIAL_ADDRESS") : []),
+  ].filter((address, index, all) => all.indexOf(address) === index);
+  const officialBarangayAddresses = addressList(
+    "TARGET_OFFICIAL_BARANGAY_ADDRESS"
+  );
   const officialBarangayName =
     process.env.TARGET_OFFICIAL_BARANGAY_NAME?.trim();
   const approverAddress = process.env.TARGET_APPROVER_ADDRESS?.trim();
   const barangay = process.env.BARANGAY_NAME?.trim();
   const ceilingValue = process.env.ALLOCATION_CEILING_CENTAVOS?.trim();
 
-  if (
-    officialAddress &&
-    (!ethers.isAddress(officialAddress) ||
-      officialAddress.toLowerCase() === ethers.ZeroAddress)
-  ) {
-    throw new Error("TARGET_OFFICIAL_ADDRESS must be a valid nonzero Ethereum address.");
-  }
   if (
     approverAddress &&
     (!ethers.isAddress(approverAddress) ||
@@ -88,17 +141,11 @@ async function main(): Promise<void> {
     throw new Error("TARGET_APPROVER_ADDRESS must be a valid nonzero Ethereum address.");
   }
   if (
-    officialBarangayAddress &&
-    (!ethers.isAddress(officialBarangayAddress) ||
-      officialBarangayAddress.toLowerCase() === ethers.ZeroAddress)
+    Boolean(officialBarangayAddresses.length) !==
+    Boolean(officialBarangayName)
   ) {
     throw new Error(
-      "TARGET_OFFICIAL_BARANGAY_ADDRESS must be a valid nonzero Ethereum address."
-    );
-  }
-  if (Boolean(officialBarangayAddress) !== Boolean(officialBarangayName)) {
-    throw new Error(
-      "Set both TARGET_OFFICIAL_BARANGAY_ADDRESS and TARGET_OFFICIAL_BARANGAY_NAME to configure barangay access."
+      "Set official barangay addresses and TARGET_OFFICIAL_BARANGAY_NAME to configure barangay access."
     );
   }
   if (Boolean(barangay) !== Boolean(ceilingValue)) {
@@ -107,8 +154,8 @@ async function main(): Promise<void> {
     );
   }
   if (
-    !officialAddress &&
-    !officialBarangayAddress &&
+    !officialAddresses.length &&
+    !officialBarangayAddresses.length &&
     !approverAddress &&
     !barangay
   ) {
@@ -120,14 +167,16 @@ async function main(): Promise<void> {
     throw new Error("ALLOCATION_CEILING_CENTAVOS must be a positive whole number.");
   }
 
-  if (officialAddress) {
+  if (officialAddresses.length) {
     const authorized = authorizationStatus("OFFICIAL_AUTHORIZATION_STATUS");
-    await submitAndConfirm(
-      `Set official authorization for ${officialAddress} to ${authorized}`,
-      contract.setOfficialAuthorization(officialAddress, authorized)
-    );
-    if ((await contract.isAuthorizedOfficial(officialAddress)) !== authorized) {
-      throw new Error("Official authorization did not match the requested status.");
+    for (const address of officialAddresses) {
+      await submitAndConfirm(
+        `Set official authorization for ${address} to ${authorized}`,
+        () => contract.setOfficialAuthorization(address, authorized)
+      );
+      if ((await contract.isAuthorizedOfficial(address)) !== authorized) {
+        throw new Error("Official authorization did not match the requested status.");
+      }
     }
   }
 
@@ -135,34 +184,37 @@ async function main(): Promise<void> {
     const authorized = authorizationStatus("APPROVER_AUTHORIZATION_STATUS");
     await submitAndConfirm(
       `Set approver authorization for ${approverAddress} to ${authorized}`,
-      contract.setApproverAuthorization(approverAddress, authorized)
+      () => contract.setApproverAuthorization(approverAddress, authorized)
     );
     if ((await contract.isApprover(approverAddress)) !== authorized) {
       throw new Error("Approver authorization did not match the requested status.");
     }
   }
 
-  if (officialBarangayAddress && officialBarangayName) {
+  if (officialBarangayAddresses.length && officialBarangayName) {
     const authorized = authorizationStatus(
       "OFFICIAL_BARANGAY_AUTHORIZATION_STATUS"
     );
-    await submitAndConfirm(
-      `Set barangay access for ${officialBarangayAddress} to ${officialBarangayName}: ${authorized}`,
-      contract.setOfficialBarangayAuthorization(
-        officialBarangayAddress,
-        officialBarangayName,
-        authorized
-      )
-    );
-    if (
-      (await contract.isOfficialAuthorizedForBarangay(
-        officialBarangayAddress,
-        officialBarangayName
-      )) !== authorized
-    ) {
-      throw new Error(
-        "Official barangay authorization did not match the requested status."
+    for (const address of officialBarangayAddresses) {
+      await submitAndConfirm(
+        `Set barangay access for ${address} to ${officialBarangayName}: ${authorized}`,
+        () =>
+          contract.setOfficialBarangayAuthorization(
+            address,
+            officialBarangayName,
+            authorized
+          )
       );
+      if (
+        (await contract.isOfficialAuthorizedForBarangay(
+          address,
+          officialBarangayName
+        )) !== authorized
+      ) {
+        throw new Error(
+          "Official barangay authorization did not match the requested status."
+        );
+      }
     }
   }
 
@@ -170,7 +222,7 @@ async function main(): Promise<void> {
     const ceiling = BigInt(ceilingValue);
     await submitAndConfirm(
       `Set allocation ceiling for ${barangay} to ${ceiling} centavos`,
-      contract.setAllocationCeiling(barangay, ceiling)
+      () => contract.setAllocationCeiling(barangay, ceiling)
     );
     if ((await contract.allocationCeilings(barangay)) !== ceiling) {
       throw new Error("Allocation ceiling did not match the requested value.");

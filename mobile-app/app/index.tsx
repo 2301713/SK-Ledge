@@ -122,7 +122,7 @@ export default function IndexPage() {
           contentContainerStyle={{ flexGrow: 1, paddingBottom: 24 }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
-          automaticallyAdjustKeyboardInsets
+          keyboardDismissMode="none"
         >
         {/* BRAND HEADER */}
         <View className="relative overflow-hidden border-b border-border bg-white px-6 pb-7 pt-3">

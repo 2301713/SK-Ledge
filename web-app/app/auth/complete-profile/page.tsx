@@ -110,6 +110,12 @@ export default function CompleteProfilePage() {
         throw new Error("Username is required");
       }
 
+      if (formData.role_type === "Admin") {
+        throw new Error(
+          "Admin accounts cannot be self-registered. Ask an existing administrator to create this account.",
+        );
+      }
+
       if (isSKRole && !formData.barangay.trim()) {
         throw new Error("Barangay is required for SK Officials");
       }
@@ -296,9 +302,11 @@ export default function CompleteProfilePage() {
                   <option value="SK_Treasurer">SK Treasurer</option>
                   <option value="SK_Federation">SK Federation</option>
                   <option value="COA">COA</option>
-                  <option value="Admin">Admin</option>
                 </select>
               </div>
+              <p className="text-xs text-slate-500">
+                Admin accounts are created by an existing administrator.
+              </p>
             </div>
 
             {/* BARANGAY */}

@@ -1,5 +1,5 @@
 import { Eye, EyeOff, type LucideIcon } from "lucide-react-native";
-import React, { useMemo, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   Text,
   TextInput,
@@ -40,42 +40,6 @@ export default function FormField({
   const [focused, setFocused] = useState(false);
   const inputRef = useRef<React.ComponentRef<typeof TextInput>>(null);
 
-  // Build the input once per real prop change. Focus/blur below only restyle the
-  // container: on Android every re-commit of a secure input resets its input
-  // type, which tears down the IME connection and hides the keyboard.
-  const input = useMemo(
-    () => (
-      <TextInput
-        ref={inputRef}
-        accessibilityLabel={label}
-        className="font-inter-medium ml-3 flex-1 text-[15px] text-primary-foreground"
-        placeholder={placeholder}
-        placeholderTextColor="#94A3B8"
-        value={value}
-        onChangeText={onChangeText}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-        secureTextEntry={secure && !showSecure}
-        keyboardType={keyboardType}
-        autoCapitalize={autoCapitalize}
-        autoCorrect={autoCorrect}
-        editable={editable}
-      />
-    ),
-    [
-      label,
-      value,
-      onChangeText,
-      placeholder,
-      secure,
-      showSecure,
-      keyboardType,
-      autoCapitalize,
-      autoCorrect,
-      editable,
-    ],
-  );
-
   return (
     <View>
       <Text className="font-inter-bold mb-2 ml-0.5 text-[10px] uppercase tracking-[0.16em] text-secondary-foreground">
@@ -105,7 +69,22 @@ export default function FormField({
           size={17}
           color={error ? "#DC2626" : focused ? "#0138A8" : "#94A3B8"}
         />
-        {input}
+        <TextInput
+          ref={inputRef}
+          accessibilityLabel={label}
+          className="font-inter-medium ml-3 flex-1 text-[15px] text-primary-foreground"
+          placeholder={placeholder}
+          placeholderTextColor="#94A3B8"
+          value={value}
+          onChangeText={onChangeText}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          secureTextEntry={secure && !showSecure}
+          keyboardType={keyboardType}
+          autoCapitalize={autoCapitalize}
+          autoCorrect={autoCorrect}
+          editable={editable}
+        />
         {secure && onToggleSecure ? (
           <TouchableOpacity
             onPress={() => {
