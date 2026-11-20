@@ -52,6 +52,7 @@ export type SupabaseMockState = {
   updated: { table: string; patch: TableRow }[];
   upserted: { table: string; row: TableRow }[];
   selectedColumns: { table: string; columns: string }[];
+  filterCalls: { table: string; column: string; value: unknown; mode: Filter["mode"] }[];
   queryCounts: Record<string, number>;
   onQuery: QueryHook | null;
   storage: StorageMockState;
@@ -69,6 +70,7 @@ export function createSupabaseMockState(): SupabaseMockState {
     updated: [],
     upserted: [],
     selectedColumns: [],
+    filterCalls: [],
     queryCounts: {},
     onQuery: null,
     storage: {
@@ -184,14 +186,17 @@ function makeBuilder(state: SupabaseMockState, table: string) {
     },
     eq(column: string, value: unknown) {
       filters.push({ column, value, mode: "eq" });
+      state.filterCalls.push({ table, column, value, mode: "eq" });
       return builder;
     },
     neq(column: string, value: unknown) {
       filters.push({ column, value, mode: "neq" });
+      state.filterCalls.push({ table, column, value, mode: "neq" });
       return builder;
     },
     ilike(column: string, value: unknown) {
       filters.push({ column, value, mode: "ilike" });
+      state.filterCalls.push({ table, column, value, mode: "ilike" });
       return builder;
     },
     order() {

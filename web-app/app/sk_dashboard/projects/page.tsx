@@ -67,10 +67,18 @@ export default function ProjectsPage() {
   });
   const [formError, setFormError] = useState<string | null>(null);
 
-  const fetchProjects = async () => {
+  const fetchProjects = async (assignedBarangay: string | null) => {
+    // Projects are public for bidding, but this dashboard is barangay-scoped:
+    // officials must only manage their own barangay's proposals.
+    if (!assignedBarangay) {
+      setProjects([]);
+      return;
+    }
+
     const { data, error } = await supabase
       .from('projects')
       .select('*')
+      .eq('barangay', assignedBarangay)
       .order('id', { ascending: false });
 
     if (!error && data) {
@@ -126,7 +134,7 @@ export default function ProjectsPage() {
             approval_status: profileData.approval_status,
           });
 
-          await fetchProjects();
+          await fetchProjects(canonicalizeBarangay(profileData.barangay ?? ''));
         }
       } catch (err) {
         console.error('Unexpected error loading profile:', err);
@@ -178,7 +186,7 @@ export default function ProjectsPage() {
         is_open_for_bidding: false,
         bid_deadline: '',
       });
-      fetchProjects();
+      fetchProjects(barangay);
     } else {
       console.error(
         'Failed to create project:',

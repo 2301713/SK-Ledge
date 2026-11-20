@@ -89,13 +89,27 @@ export default function BidsPage({ params }: { params: Promise<{ projectId: stri
     vendorName: string;
   } | null>(null);
 
-  const { data: isAuthorized } = useReadContract({
+  const { data: isAuthorizedOfficial } = useReadContract({
     address: CONTRACT_ADDRESS,
     abi: SK_LEDGE_ABI,
     functionName: 'isAuthorizedOfficial',
     args: address ? [address] : undefined,
     query: { enabled: !!address },
   });
+
+  // addRecord requires both global authorization and authorization for the
+  // record's barangay. Checking only the global flag told officials of other
+  // barangays they could award, then the transaction reverted on-chain.
+  const { data: isAuthorizedForBarangay } = useReadContract({
+    address: CONTRACT_ADDRESS,
+    abi: SK_LEDGE_ABI,
+    functionName: 'isOfficialAuthorizedForBarangay',
+    args:
+      address && projectBarangay ? [address, projectBarangay] : undefined,
+    query: { enabled: Boolean(address && projectBarangay) },
+  });
+  const isAuthorized =
+    isAuthorizedOfficial === true && isAuthorizedForBarangay === true;
 
   const {
     data: txHash,
@@ -195,6 +209,17 @@ export default function BidsPage({ params }: { params: Promise<{ projectId: stri
     checkAuthAndLoad();
   }, [loadBids, router]);
 
+  // Bids and awards are barangay-scoped. Projects are publicly readable for
+  // bidding, so guard against managing another barangay's project by URL.
+  useEffect(() => {
+    if (!project || !currentUser) return;
+
+    const officialBarangay = canonicalizeBarangay(currentUser.barangay);
+    if (projectBarangay && officialBarangay && projectBarangay !== officialBarangay) {
+      router.replace('/sk_dashboard/projects');
+    }
+  }, [project, currentUser, projectBarangay, router]);
+
   const handleStatusUpdate = async (bidId: string, newStatus: string) => {
     if (newStatus === 'recommended') {
       await supabase
@@ -211,16 +236,23 @@ export default function BidsPage({ params }: { params: Promise<{ projectId: stri
   const initiateAward = async (bid: Bid) => {
     setActionError(null);
 
-    if (!isAuthorized) {
+    if (!projectBarangay) {
+      setActionError(
+        'This project has no registered barangay on record, so the award cannot be written to the ledger. Set the project location to a canonical Batangas barangay first.',
+      );
+      return;
+    }
+
+    if (isAuthorizedOfficial !== true) {
       setActionError(
         'Your connected wallet is not authorized as an SK official on the contract. Ask the contract owner to authorize it.',
       );
       return;
     }
 
-    if (!projectBarangay) {
+    if (isAuthorizedForBarangay !== true) {
       setActionError(
-        'This project has no registered barangay on record, so the award cannot be written to the ledger. Set the project location to a canonical Batangas barangay first.',
+        `Your connected wallet is not authorized for ${projectBarangay} on the contract. Ask the contract owner to grant this wallet barangay access.`,
       );
       return;
     }
@@ -389,16 +421,16 @@ export default function BidsPage({ params }: { params: Promise<{ projectId: stri
                   <>
                     <ShieldCheck className="h-5 w-5 shrink-0" />
                     <p className="text-sm font-bold">
-                      Your connected wallet is authorized to award bids
-                      on-chain.
+                      Your connected wallet is authorized to award bids for{' '}
+                      {projectBarangay} on-chain.
                     </p>
                   </>
                 ) : (
                   <>
                     <ShieldCheck className="h-5 w-5 shrink-0" />
                     <p className="text-sm font-bold">
-                      Connect an authorized SK Official wallet to award bids
-                      on-chain.
+                      Connect a wallet authorized for {projectBarangay ?? 'this barangay'} to award
+                      bids on-chain.
                     </p>
                   </>
                 )}
