@@ -126,9 +126,12 @@ export default function SKDashboard() {
 
   useEffect(() => {
     const fetchProjects = async () => {
+      if (!canonicalBarangay) return;
+
       const { data, error } = await supabase
         .from("projects")
         .select("*")
+        .eq("barangay", canonicalBarangay)
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -150,7 +153,7 @@ export default function SKDashboard() {
     };
 
     fetchProjects();
-  }, []);
+  }, [canonicalBarangay]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-PH", {

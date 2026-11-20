@@ -1,9 +1,15 @@
 import { expect } from "chai";
-import {
+import { createRequire } from "node:module";
+
+// The shared registry lives in the web app, which is a separate package without
+// "type": "module". Hardhat's test loader imports test files as ESM, and a plain
+// ESM import of that file loses its named exports, so load it as CommonJS.
+const require = createRequire(import.meta.url);
+const {
   canonicalizeBarangay,
   getUniqueBarangayAlias,
   BATANGAS_BARANGAY_IDENTITIES,
-} from "../../web-app/lib/batangasBarangays.js";
+} = require("../../web-app/lib/batangasBarangays.ts") as typeof import("../../web-app/lib/batangasBarangays.ts");
 
 describe("Barangay identity source", function () {
   it("uses municipality-qualified names as canonical identities", function () {
