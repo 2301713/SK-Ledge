@@ -40,7 +40,13 @@
       "expo-font",
       "expo-image",
       "expo-web-browser",
-      "expo-notifications"
+      "expo-notifications",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "SK-Ledge uses your photo library so you can add a profile photo."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

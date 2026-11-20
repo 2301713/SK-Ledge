@@ -157,11 +157,7 @@ export const toProject = (row: ProjectRow): Project => {
   };
 };
 
-export const getErrorMessage = (error: unknown, fallback: string) => {
-  if (error instanceof Error && error.message) return error.message;
-  if (typeof error === "string" && error.trim()) return error;
-  return fallback;
-};
+export { getErrorMessage } from "@/lib/errors";
 
 export async function fetchOpenProjectsPage(
   options: PageOptions = {},

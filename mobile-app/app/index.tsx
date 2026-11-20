@@ -1,5 +1,11 @@
 import DotGrid from "@/components/ui/DotGrid";
+import FormField from "@/components/ui/FormField";
 import GoogleButton from "@/components/ui/GoogleButton";
+import PrimaryButton from "@/components/ui/PrimaryButton";
+import {
+  isPasswordLoginEnabled,
+  signInWithEmailPassword,
+} from "@/lib/email-auth";
 import { getGoogleRedirectUrl, signInWithGoogle } from "@/lib/google-auth";
 import { getErrorMessage } from "@/lib/projects";
 import { useRouter } from "expo-router";
@@ -7,12 +13,16 @@ import {
   ChevronRight,
   CircleAlert,
   Lock,
+  Mail,
   ShieldCheck,
 } from "lucide-react-native";
 import React, { useEffect, useState } from "react";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import {
+  ActivityIndicator,
   Image,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   StatusBar,
   Text,
@@ -25,6 +35,12 @@ export default function IndexPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState("");
+  const [passwordEmail, setPasswordEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordFieldError, setPasswordFieldError] = useState("");
   const redirectUrl = getGoogleRedirectUrl();
 
   useEffect(() => {
@@ -60,14 +76,54 @@ export default function IndexPage() {
     }
   };
 
+  const handlePasswordSignIn = async () => {
+    setPasswordError("");
+    setPasswordFieldError("");
+
+    if (!passwordEmail.trim() || !password) {
+      setPasswordFieldError("Enter both your email and password.");
+      return;
+    }
+
+    setPasswordLoading(true);
+
+    try {
+      const outcome = await signInWithEmailPassword(passwordEmail, password);
+
+      if (outcome.status === "cancelled") return;
+      if (outcome.status === "approved") {
+        router.replace("/(tabs)/home");
+        return;
+      }
+      if (outcome.status === "incomplete") {
+        router.replace("/auth/complete-profile");
+        return;
+      }
+
+      setPasswordError(outcome.message);
+    } catch (err) {
+      setPasswordError(
+        getErrorMessage(err, "Email sign-in failed. Please try again."),
+      );
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
       <StatusBar barStyle="dark-content" />
-      <ScrollView
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         className="flex-1"
-        contentContainerStyle={{ flexGrow: 1 }}
-        showsVerticalScrollIndicator={false}
       >
+        <ScrollView
+          className="flex-1"
+          contentContainerStyle={{ flexGrow: 1, paddingBottom: 24 }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          automaticallyAdjustKeyboardInsets
+        >
         {/* BRAND HEADER */}
         <View className="relative overflow-hidden border-b border-border bg-white px-6 pb-7 pt-3">
           <DotGrid color="#0138A8" opacity={0.06} rows={8} />
@@ -151,8 +207,9 @@ export default function IndexPage() {
                 Continue with your Google account
               </Text>
               <Text className="font-inter mt-1.5 text-[12px] leading-5 text-secondary-foreground">
-                SK-Ledge mobile uses Google sign-in only. Password login is not
-                available in the app.
+                {isPasswordLoginEnabled
+                  ? "Use the Google account linked to your approved vendor registration, or the temporary email login below."
+                  : "SK-Ledge mobile uses Google sign-in only. Password login is not available in the app."}
               </Text>
 
               <View className="mt-5">
@@ -186,6 +243,108 @@ export default function IndexPage() {
             </View>
           </Animated.View>
 
+          {/* TEMPORARY EMAIL LOGIN (testing only) */}
+          {isPasswordLoginEnabled ? (
+            <Animated.View entering={FadeInDown.delay(160).duration(450)}>
+              <View className="mt-4 rounded-2xl border border-dashed border-primary/40 bg-primary/[0.03] p-4">
+                <View className="mb-1 flex-row items-center justify-between gap-2">
+                  <Text className="font-inter-bold text-[9px] uppercase tracking-[0.16em] text-primary">
+                    Temporary testing login
+                  </Text>
+                  <View className="rounded-full bg-primary/10 px-2 py-0.5">
+                    <Text className="font-inter-bold text-[8px] uppercase tracking-[0.12em] text-primary">
+                      Dev only
+                    </Text>
+                  </View>
+                </View>
+                <Text className="font-inter text-[10px] leading-4 text-secondary-foreground">
+                  Sign in with an existing Supabase Auth email/password account
+                  to test the app without Google OAuth.
+                </Text>
+
+                {passwordError ? (
+                  <View className="mt-3 flex-row items-start gap-2 rounded-xl border border-danger/25 bg-danger/[0.07] p-3">
+                    <CircleAlert
+                      size={15}
+                      color="#DC2626"
+                      style={{ marginTop: 1 }}
+                    />
+                    <Text className="font-inter-medium flex-1 text-[11px] leading-4 text-danger">
+                      {passwordError}
+                    </Text>
+                  </View>
+                ) : null}
+
+                <View className="mt-3 gap-3">
+                  <FormField
+                    label="Email"
+                    icon={Mail}
+                    value={passwordEmail}
+                    onChangeText={(value) => {
+                      setPasswordEmail(value);
+                      setPasswordFieldError("");
+                      setPasswordError("");
+                    }}
+                    placeholder="vendor@example.com"
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    editable={!passwordLoading}
+                  />
+
+                  <FormField
+                    label="Password"
+                    icon={Lock}
+                    value={password}
+                    onChangeText={(value) => {
+                      setPassword(value);
+                      setPasswordFieldError("");
+                      setPasswordError("");
+                    }}
+                    placeholder="Enter your password"
+                    secure
+                    showSecure={showPassword}
+                    onToggleSecure={() => setShowPassword((current) => !current)}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    editable={!passwordLoading}
+                    error={passwordFieldError}
+                  />
+                </View>
+
+                <View className="mt-4">
+                  <PrimaryButton
+                    onPress={handlePasswordSignIn}
+                    disabled={passwordLoading}
+                  >
+                    {passwordLoading ? (
+                      <ActivityIndicator color="#FFFFFF" />
+                    ) : (
+                      "Sign in with email"
+                    )}
+                  </PrimaryButton>
+                </View>
+
+                <TouchableOpacity
+                  className="mt-3 items-center justify-center py-1"
+                  activeOpacity={0.7}
+                  onPress={() => router.push("/auth/forgot-password")}
+                  disabled={passwordLoading}
+                  accessibilityRole="button"
+                  accessibilityLabel="Forgot your password?"
+                >
+                  <Text className="font-inter-bold text-[10px] uppercase tracking-[0.12em] text-primary">
+                    Forgot your password?
+                  </Text>
+                </TouchableOpacity>
+
+                <Text className="font-inter mt-2.5 text-center text-[9px] leading-4 text-secondary-foreground/70">
+                  The account must already have a vendor profile in Supabase.
+                </Text>
+              </View>
+            </Animated.View>
+          ) : null}
+
           {/* REGISTER PROMPT */}
           <Animated.View entering={FadeInDown.delay(200).duration(450)}>
             <View className="mt-4 rounded-2xl border border-border bg-secondary/40 p-4">
@@ -217,7 +376,8 @@ export default function IndexPage() {
             © {new Date().getFullYear()} SK-Ledge · Batangas Province
           </Text>
         </View>
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

@@ -6,16 +6,25 @@ export default function PrimaryButton({
   onPress,
   disabled,
   className = "",
+  accessibilityLabel,
 }: {
   children: React.ReactNode;
   onPress?: () => void;
   disabled?: boolean;
   className?: string;
+  accessibilityLabel?: string;
 }) {
+  // Screen readers should announce what the button actually does. Callers with
+  // icon or spinner children pass an explicit label; the rest get their text.
+  const label =
+    accessibilityLabel ??
+    (typeof children === "string" ? children : "Primary action");
+
   return (
     <TouchableOpacity
       accessibilityRole="button"
-      accessibilityLabel="Primary action"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled: Boolean(disabled) }}
       activeOpacity={0.85}
       disabled={disabled}
       onPress={onPress}

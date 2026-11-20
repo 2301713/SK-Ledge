@@ -127,6 +127,7 @@ export default function RegisterPage() {
         className="flex-1"
         contentContainerStyle={{ flexGrow: 1 }}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         {/* BRAND HEADER */}
         <View className="relative overflow-hidden border-b border-border bg-white px-6 pb-7 pt-3">

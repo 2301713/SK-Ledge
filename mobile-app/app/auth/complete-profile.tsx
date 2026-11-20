@@ -44,7 +44,7 @@ export default function CompleteVendorProfileScreen() {
 
         if (!user) {
           setError(
-            "We could not load your Google session. Please return to sign in and try again.",
+            "We could not load your account session. Please return to sign in and try again.",
           );
           return;
         }
@@ -65,7 +65,7 @@ export default function CompleteVendorProfileScreen() {
       })
       .catch((err) => {
         if (active) {
-          setError(getErrorMessage(err, "Could not load your Google account."));
+          setError(getErrorMessage(err, "Could not load your account."));
         }
       })
       .finally(() => {
@@ -96,7 +96,7 @@ export default function CompleteVendorProfileScreen() {
 
       if (!user) {
         throw new Error(
-          "Your Google session expired. Please return to sign in and try again.",
+          "Your session expired. Please return to sign in and try again.",
         );
       }
 
@@ -193,8 +193,8 @@ export default function CompleteVendorProfileScreen() {
                   Complete your vendor profile
                 </Text>
                 <Text className="font-inter mt-1.5 max-w-[320px] text-[13px] leading-5 text-secondary-foreground">
-                  Your Google account is connected. Confirm the company name
-                  that should appear on your SK-Ledge bids.
+                  Your account is connected. Confirm the company name that
+                  should appear on your SK-Ledge bids.
                 </Text>
               </View>
             </Animated.View>
@@ -246,7 +246,7 @@ export default function CompleteVendorProfileScreen() {
 
                   <View>
                     <Text className="font-inter-bold mb-2 ml-0.5 text-[10px] uppercase tracking-[0.16em] text-secondary-foreground">
-                      Google Email
+                      Account Email
                     </Text>
                     <View className="h-[52px] flex-row items-center rounded-xl border border-border bg-secondary/50 px-4">
                       <Mail size={17} color="#94A3B8" />
@@ -274,8 +274,8 @@ export default function CompleteVendorProfileScreen() {
                 </View>
 
                 <Text className="font-inter mt-3 text-center text-[10px] leading-4 text-secondary-foreground/80">
-                  Google sign-up always creates a Vendor account. The SK
-                  Federation reviews every application before bidding is enabled.
+                  Signing up always creates a Vendor account. The SK Federation
+                  reviews every application before bidding is enabled.
                 </Text>
               </View>
             </Animated.View>
@@ -284,7 +284,7 @@ export default function CompleteVendorProfileScreen() {
               <View className="mt-5 flex-row items-center justify-center gap-2">
                 <ActivityIndicator color="#0138A8" />
                 <Text className="font-inter-semibold text-[10px] uppercase tracking-[0.14em] text-secondary-foreground">
-                  Checking your Google session…
+                  Checking your account session…
                 </Text>
               </View>
             ) : null}

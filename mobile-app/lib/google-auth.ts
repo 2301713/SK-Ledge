@@ -68,7 +68,9 @@ export function evaluateVendorProfile(
   return { status: "approved" };
 }
 
-async function resolveVendorAccount(userId: string): Promise<VendorAuthOutcome> {
+export async function resolveVendorAccount(
+  userId: string,
+): Promise<VendorAuthOutcome> {
   const profile = await fetchMyProfile(userId);
   const outcome = evaluateVendorProfile(profile);
 

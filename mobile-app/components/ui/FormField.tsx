@@ -1,5 +1,5 @@
 import { Eye, EyeOff, type LucideIcon } from "lucide-react-native";
-import React, { useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import {
   Text,
   TextInput,
@@ -38,6 +38,43 @@ export default function FormField({
   editable?: boolean;
 }) {
   const [focused, setFocused] = useState(false);
+  const inputRef = useRef<React.ComponentRef<typeof TextInput>>(null);
+
+  // Build the input once per real prop change. Focus/blur below only restyle the
+  // container: on Android every re-commit of a secure input resets its input
+  // type, which tears down the IME connection and hides the keyboard.
+  const input = useMemo(
+    () => (
+      <TextInput
+        ref={inputRef}
+        accessibilityLabel={label}
+        className="font-inter-medium ml-3 flex-1 text-[15px] text-primary-foreground"
+        placeholder={placeholder}
+        placeholderTextColor="#94A3B8"
+        value={value}
+        onChangeText={onChangeText}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        secureTextEntry={secure && !showSecure}
+        keyboardType={keyboardType}
+        autoCapitalize={autoCapitalize}
+        autoCorrect={autoCorrect}
+        editable={editable}
+      />
+    ),
+    [
+      label,
+      value,
+      onChangeText,
+      placeholder,
+      secure,
+      showSecure,
+      keyboardType,
+      autoCapitalize,
+      autoCorrect,
+      editable,
+    ],
+  );
 
   return (
     <View>
@@ -64,23 +101,25 @@ export default function FormField({
             : undefined
         }
       >
-        <Icon size={17} color={error ? "#DC2626" : focused ? "#0138A8" : "#94A3B8"} />
-        <TextInput
-          className="font-inter-medium ml-3 flex-1 text-[15px] text-primary-foreground"
-          placeholder={placeholder}
-          placeholderTextColor="#94A3B8"
-          value={value}
-          onChangeText={onChangeText}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          secureTextEntry={secure && !showSecure}
-          keyboardType={keyboardType}
-          autoCapitalize={autoCapitalize}
-          autoCorrect={autoCorrect}
-          editable={editable}
+        <Icon
+          size={17}
+          color={error ? "#DC2626" : focused ? "#0138A8" : "#94A3B8"}
         />
+        {input}
         {secure && onToggleSecure ? (
-          <TouchableOpacity onPress={onToggleSecure} hitSlop={10}>
+          <TouchableOpacity
+            onPress={() => {
+              onToggleSecure();
+              // Toggling secureTextEntry re-commits the input; keep typing.
+              inputRef.current?.focus();
+            }}
+            hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel={
+              showSecure ? "Hide password" : "Show password"
+            }
+            accessibilityState={{ selected: showSecure }}
+          >
             {showSecure ? (
               <EyeOff size={17} color="#64748B" />
             ) : (
@@ -90,7 +129,10 @@ export default function FormField({
         ) : null}
       </View>
       {error ? (
-        <Text className="font-inter-medium mt-1.5 ml-0.5 text-[11px] text-danger">
+        <Text
+          accessibilityLiveRegion="polite"
+          className="font-inter-medium mt-1.5 ml-0.5 text-[11px] text-danger"
+        >
           {error}
         </Text>
       ) : null}

@@ -117,7 +117,12 @@ export default function OpportunityDetailsPage() {
     return (
       <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
         <View className="flex-row items-center justify-between border-b border-border bg-background px-4 py-3">
-          <TouchableOpacity onPress={() => router.back()} className="p-2">
+          <TouchableOpacity
+            onPress={() => router.back()}
+            className="p-2"
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+          >
             <ArrowLeft size={24} color="#1E293B" />
           </TouchableOpacity>
           <Text className="font-inter-bold text-lg text-primary-foreground">

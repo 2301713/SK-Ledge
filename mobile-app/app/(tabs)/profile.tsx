@@ -1,4 +1,5 @@
 import { canonicalizeBarangay } from "@/lib/batangasBarangays";
+import PasswordSecurityCard from "@/components/profile/PasswordSecurityCard";
 import BarangayPicker from "@/components/ui/BarangayPicker";
 import FormField from "@/components/ui/FormField";
 import PrimaryButton from "@/components/ui/PrimaryButton";
@@ -12,10 +13,13 @@ import {
   updateVendorProfile,
   type VendorProfile,
 } from "@/lib/projects";
+import { updatePassword } from "@/lib/password-reset";
+import { pickAvatarImage, uploadAvatar } from "@/lib/profile-media";
 import { unregisterPushToken } from "@/lib/push-notifications";
 import { supabase } from "@/lib/supabase";
 import {
   Building2,
+  Camera,
   LogOut,
   Mail,
   MapPin,
@@ -30,6 +34,7 @@ import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import {
   ActivityIndicator,
   Alert,
+  Image,
   RefreshControl,
   ScrollView,
   Text,
@@ -85,6 +90,7 @@ export default function Profile() {
     contact?: string;
     barangay?: string;
   }>({});
+  const [avatarSaving, setAvatarSaving] = useState(false);
 
   const loadProfile = useCallback(async () => {
     try {
@@ -236,6 +242,37 @@ export default function Profile() {
     }
   };
 
+  const handleChangeAvatar = async () => {
+    setError("");
+    setSuccess("");
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      setError("Your session expired. Please sign in again.");
+      return;
+    }
+
+    const picked = await pickAvatarImage();
+    if (picked.status === "cancelled") return;
+    if (picked.status === "error") {
+      setError(picked.message);
+      return;
+    }
+
+    setAvatarSaving(true);
+    try {
+      const url = await uploadAvatar(user.id, picked.avatar);
+      setProfile((prev) => (prev ? { ...prev, avatar_url: url } : prev));
+      setSuccess("Profile photo updated.");
+    } catch (err) {
+      setError(getErrorMessage(err, "Could not update your photo."));
+    } finally {
+      setAvatarSaving(false);
+    }
+  };
+
   const handleDeleteAccount = () => {
     Alert.alert(
       "Delete your account?",
@@ -286,16 +323,39 @@ export default function Profile() {
         title={loading ? "Loading..." : companyName}
         subtitle={profile?.email || email || "Registered vendor"}
         right={
-          <View className="h-12 w-12 items-center justify-center rounded-2xl bg-primary">
-            <Text className="font-inter-black text-[20px] text-white">
-              {companyName.charAt(0).toUpperCase()}
-            </Text>
-            {isApproved ? (
-              <View className="absolute -bottom-0.5 -right-0.5 h-4 w-4 items-center justify-center rounded-full border-2 border-white bg-success">
-                <ShieldCheck size={8} color="#FFFFFF" />
+          <TouchableOpacity
+            className="h-12 w-12 items-center justify-center overflow-hidden rounded-2xl bg-primary"
+            activeOpacity={0.85}
+            onPress={handleChangeAvatar}
+            disabled={avatarSaving || deleting}
+            accessibilityRole="button"
+            accessibilityLabel={
+              profile?.avatar_url
+                ? "Change profile photo"
+                : "Add a profile photo"
+            }
+          >
+            {profile?.avatar_url ? (
+              <Image
+                source={{ uri: profile.avatar_url }}
+                style={{ width: 48, height: 48 }}
+                resizeMode="cover"
+              />
+            ) : (
+              <Text className="font-inter-black text-[20px] text-white">
+                {companyName.charAt(0).toUpperCase()}
+              </Text>
+            )}
+            {avatarSaving ? (
+              <View className="absolute inset-0 items-center justify-center bg-black/35">
+                <ActivityIndicator color="#FFFFFF" />
               </View>
-            ) : null}
-          </View>
+            ) : (
+              <View className="absolute -bottom-0.5 -right-0.5 h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-primary">
+                <Camera size={9} color="#FFFFFF" />
+              </View>
+            )}
+          </TouchableOpacity>
         }
       />
       </Animated.View>
@@ -410,6 +470,44 @@ export default function Profile() {
                   </View>
                 ) : (
                   <>
+                    <View className="flex-row items-center border-b border-border/70 py-3">
+                      <View className="mr-3 h-11 w-11 items-center justify-center overflow-hidden rounded-xl border border-border/70 bg-secondary">
+                        {profile?.avatar_url ? (
+                          <Image
+                            source={{ uri: profile.avatar_url }}
+                            style={{ width: 44, height: 44 }}
+                            resizeMode="cover"
+                          />
+                        ) : (
+                          <Camera size={16} color="#94A3B8" />
+                        )}
+                      </View>
+                      <View className="flex-1">
+                        <Text className="font-inter-bold text-[9px] uppercase tracking-[0.12em] text-secondary-foreground">
+                          Profile photo
+                        </Text>
+                        <Text className="font-inter mt-1 text-[11px] text-secondary-foreground/80">
+                          JPG, PNG, or WebP up to 5 MB.
+                        </Text>
+                      </View>
+                      <TouchableOpacity
+                        className="rounded-lg border border-primary/20 bg-secondary/40 px-3 py-2"
+                        activeOpacity={0.75}
+                        onPress={handleChangeAvatar}
+                        disabled={avatarSaving}
+                        accessibilityRole="button"
+                        accessibilityLabel="Change profile photo"
+                      >
+                        {avatarSaving ? (
+                          <ActivityIndicator color="#0138A8" size="small" />
+                        ) : (
+                          <Text className="font-inter-bold text-[9px] uppercase tracking-[0.12em] text-primary">
+                            {profile?.avatar_url ? "Change" : "Upload"}
+                          </Text>
+                        )}
+                      </TouchableOpacity>
+                    </View>
+
                     <DetailRow
                       icon={Building2}
                       label="Registered name"
@@ -488,6 +586,21 @@ export default function Profile() {
                   />
                 </View>
               </View>
+
+              <PasswordSecurityCard
+                onChangePassword={updatePassword}
+                onOpen={() => {
+                  setError("");
+                  setSuccess("");
+                }}
+                onSaved={() =>
+                  setSuccess("Password updated. Use it the next time you sign in.")
+                }
+                onError={(message) => {
+                  setSuccess("");
+                  setError(message);
+                }}
+              />
 
               {/* LOGOUT */}
               <TouchableOpacity

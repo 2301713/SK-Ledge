@@ -279,7 +279,8 @@ export default function BidDetailPage() {
         <TouchableOpacity
           onPress={() => router.back()}
           className="p-2"
-          accessibilityLabel="Back"
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
         >
           <ArrowLeft size={24} color="#1E293B" />
         </TouchableOpacity>

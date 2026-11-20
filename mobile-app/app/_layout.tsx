@@ -8,6 +8,7 @@ import {
   Inter_800ExtraBold,
   Inter_900Black,
 } from "@expo-google-fonts/inter";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { supabase } from "@/lib/supabase";
 import { useFonts } from "expo-font";
 import { StatusBar } from "expo-status-bar";
@@ -73,14 +74,16 @@ export default function RootLayout() {
   return (
     <>
       <StatusBar style="dark" />
-      <Stack screenOptions={{ headerShown: false }}>
-        {/* Public Auth Screens */}
-        <Stack.Screen name="index" />
-        <Stack.Screen name="register" />
+      <ErrorBoundary>
+        <Stack screenOptions={{ headerShown: false }}>
+          {/* Public Auth Screens */}
+          <Stack.Screen name="index" />
+          <Stack.Screen name="register" />
 
-        {/* Private Tabbed Screens */}
-        <Stack.Screen name="(tabs)" />
-      </Stack>
+          {/* Private Tabbed Screens */}
+          <Stack.Screen name="(tabs)" />
+        </Stack>
+      </ErrorBoundary>
     </>
   );
 }
