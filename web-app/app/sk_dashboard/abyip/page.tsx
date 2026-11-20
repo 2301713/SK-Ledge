@@ -172,6 +172,40 @@ export default function ABYIPPage() {
       );
   }, [projects, expenseRecords, selectedYear]);
 
+  const projectSpending = useMemo(() => {
+    const year = Number(selectedYear);
+    const spentByProject = new Map<string, number>();
+
+    for (const record of expenseRecords) {
+      if (!record.created_at) continue;
+      if (new Date(record.created_at).getFullYear() !== year) continue;
+
+      const projectId =
+        typeof record.project_id === "string" ||
+        typeof record.project_id === "number"
+          ? String(record.project_id)
+          : null;
+      if (!projectId) continue;
+
+      const amount = Number(record.amount);
+      spentByProject.set(
+        projectId,
+        (spentByProject.get(projectId) ?? 0) +
+          (Number.isFinite(amount) ? amount : 0) / 100,
+      );
+    }
+
+    return projects
+      .filter((project) => project.year === year)
+      .map((project) => ({
+        ...project,
+        spent: spentByProject.get(project.id) ?? 0,
+      }))
+      .sort(
+        (a, b) => b.budget - a.budget || a.name.localeCompare(b.name),
+      );
+  }, [projects, expenseRecords, selectedYear]);
+
   const exportCategoryBreakdown = () => {
     downloadCsv(`abyip-category-breakdown-${selectedYear}.csv`, [
       [
@@ -276,7 +310,9 @@ export default function ABYIPPage() {
     const fetchProjects = async () => {
       const { data, error } = await supabase
         .from("projects")
-        .select("id, name, category, budget, status, created_at, dateProposed")
+        .select(
+          "id, name, category, budget, status, fiscal_year, created_at, dateProposed",
+        )
         .eq("barangay", currentUser.barangay);
 
       if (!active) return;
@@ -289,7 +325,13 @@ export default function ABYIPPage() {
       setProjects(
         (data ?? []).map((project) => {
           const proposedAt = project.dateProposed || project.created_at;
-          const year = proposedAt ? new Date(proposedAt).getFullYear() : null;
+          const fallbackYear = proposedAt
+            ? new Date(proposedAt).getFullYear()
+            : null;
+          const fiscalYear =
+            typeof project.fiscal_year === "number"
+              ? project.fiscal_year
+              : fallbackYear;
 
           return {
             id: String(project.id),
@@ -297,7 +339,7 @@ export default function ABYIPPage() {
             category: project.category || "Uncategorized",
             budget: Number(project.budget) || 0,
             status: (project.status as string) || "Proposed",
-            year: Number.isFinite(year) ? year : null,
+            year: Number.isFinite(fiscalYear) ? fiscalYear : null,
           };
         }),
       );
@@ -510,6 +552,58 @@ export default function ABYIPPage() {
               </div>
             </aside>
           </div>
+        </Card>
+
+        {/* ABYIP PROJECTS */}
+        <Card>
+          <CardHeader
+            eyebrow="ABYIP"
+            title={`Approved Projects — ${selectedYear}`}
+            subtitle="Each project's approved amount and the expenses linked to it"
+          />
+
+          {projectSpending.length === 0 ? (
+            <p className="rounded-2xl border border-dashed border-border bg-secondary/40 p-6 text-center text-xs font-medium text-secondary-foreground">
+              No projects recorded for {selectedYear} yet.
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[640px] text-left text-xs">
+                <thead>
+                  <tr className="border-b border-border text-[10px] font-bold uppercase tracking-wider text-secondary-foreground">
+                    <th className="py-2 pr-4">Project</th>
+                    <th className="py-2 pr-4">Category</th>
+                    <th className="py-2 pr-4 text-right">Approved</th>
+                    <th className="py-2 pr-4 text-right">Spent</th>
+                    <th className="py-2">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {projectSpending.map((project) => (
+                    <tr key={project.id} className="border-b border-border/60 last:border-0">
+                      <td className="py-3 pr-4 font-semibold text-primary-foreground">
+                        {project.name}
+                      </td>
+                      <td className="py-3 pr-4 text-secondary-foreground">
+                        {project.category}
+                      </td>
+                      <td className="py-3 pr-4 text-right font-bold text-primary-foreground">
+                        {formatPeso(project.budget)}
+                      </td>
+                      <td className="py-3 pr-4 text-right text-secondary-foreground">
+                        {formatPeso(project.spent)}
+                      </td>
+                      <td className="py-3">
+                        <span className="rounded-full bg-secondary px-2.5 py-0.5 text-[10px] font-bold text-secondary-foreground">
+                          {project.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </Card>
 
         {/* BUDGET BREAKDOWN */}

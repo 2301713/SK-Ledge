@@ -8,7 +8,10 @@ export interface SyncRecordPayload {
   barangay: string;
   amount: number;
   purpose: string;
+  /** Award project, or the ABYIP project an expense is attributed to. */
   project_id?: string;
+  /** Expense category, persisted so ABYIP reporting does not rely on fallbacks. */
+  category?: string;
 }
 
 export function syncRecord(payload: SyncRecordPayload) {

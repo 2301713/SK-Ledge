@@ -115,11 +115,23 @@ for (const record of evidence.records ?? []) {
 
 if (recordIds.length > 0) {
   const gaps = await supabase(
-    `ledger_sync_gaps?select=blockchain_record_id&blockchain_record_id=in.(${recordIds.join(",")})`,
+    `ledger_sync_gaps?select=blockchain_record_id,record_type,official_address,reason&blockchain_record_id=in.(${recordIds.join(",")})`,
   );
 
   if (!Array.isArray(gaps) || gaps.length > 0) {
-    fail(`ledger_sync_gaps still lists ${gaps?.length ?? "unknown"} journey record(s)`);
+    for (const gap of gaps ?? []) {
+      fail(
+        `ledger_sync_gaps lists ${gap.record_type}#${gap.blockchain_record_id} ` +
+          `(${gap.reason}, signing wallet ${gap.official_address})`,
+      );
+    }
+    if (gaps?.some((gap) => gap.reason === "official_not_bound")) {
+      console.error(
+        "      The signing wallet has no Supabase profile. Bind it at " +
+          "/sk_dashboard/account (or use E2E_OFFICIAL_PRIVATE_KEY for an already-bound wallet), " +
+          "then click Sync ledger and run this verifier again.",
+      );
+    }
   } else {
     pass("no ledger sync gaps for the journey records");
   }

@@ -61,6 +61,7 @@ export default function ProjectsPage() {
     name: '',
     category: '',
     budget: '',
+    fiscal_year: String(new Date().getFullYear()),
     is_open_for_bidding: false,
     bid_deadline: '',
   });
@@ -154,6 +155,7 @@ export default function ProjectsPage() {
         name: formData.name,
         category: formData.category,
         budget: Number(formData.budget),
+        fiscal_year: Number(formData.fiscal_year),
         status: 'Proposed',
         proposedBy: currentUser?.full_name,
         dateProposed: new Date().toISOString(),
@@ -172,6 +174,7 @@ export default function ProjectsPage() {
         name: '',
         category: '',
         budget: '',
+        fiscal_year: String(new Date().getFullYear()),
         is_open_for_bidding: false,
         bid_deadline: '',
       });
@@ -293,6 +296,34 @@ export default function ProjectsPage() {
                     {PROJECT_CATEGORIES.map((cat) => (
                       <option key={cat} value={cat}>
                         {cat}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-secondary-foreground">
+                  Fiscal Year
+                </label>
+                <div className="relative">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                    <Calendar className="h-5 w-5 text-secondary-foreground" />
+                  </div>
+                  <select
+                    className={inputClass}
+                    value={formData.fiscal_year}
+                    onChange={(e) =>
+                      setFormData({ ...formData, fiscal_year: e.target.value })
+                    }
+                    required
+                  >
+                    {Array.from(
+                      { length: 5 },
+                      (_, index) => new Date().getFullYear() - index,
+                    ).map((year) => (
+                      <option key={year} value={String(year)}>
+                        {year}
                       </option>
                     ))}
                   </select>

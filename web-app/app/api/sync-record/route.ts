@@ -153,6 +153,7 @@ export async function POST(req: NextRequest) {
       barangay,
       purpose,
       project_id,
+      category,
     } = payload;
 
     if (!isRecordType(type)) {
@@ -262,8 +263,38 @@ export async function POST(req: NextRequest) {
         );
       }
       projectId = project_id.trim();
+    } else if (type === "expense" && project_id !== undefined && project_id !== null) {
+      if (
+        typeof project_id !== "string" ||
+        project_id.trim().length === 0 ||
+        project_id.length > 128
+      ) {
+        return errorResponse(
+          "project_id must be a valid string when linking an expense to an ABYIP project.",
+          400,
+        );
+      }
+      projectId = project_id.trim();
     } else if (project_id !== undefined && project_id !== null) {
-      return errorResponse("project_id is only valid for award records.", 400);
+      return errorResponse(
+        "project_id is only valid for award and expense records.",
+        400,
+      );
+    }
+
+    let expenseCategory: string | undefined;
+    if (type === "expense" && category !== undefined && category !== null) {
+      if (
+        typeof category !== "string" ||
+        category.trim().length === 0 ||
+        category.length > 120
+      ) {
+        return errorResponse(
+          "Invalid category. It must contain 1 to 120 characters.",
+          400,
+        );
+      }
+      expenseCategory = category.trim();
     }
 
     const expectedContract = CONTRACT_ADDRESS;
@@ -293,19 +324,31 @@ export async function POST(req: NextRequest) {
     if (projectId) {
       const { data: project, error: projectError } = await supabaseAdmin
         .from("projects")
-        .select("id")
+        .select("id, barangay, category")
         .eq("id", projectId)
         .maybeSingle();
 
       if (projectError) {
-        console.error("Failed to verify award project.", {
+        console.error("Failed to verify linked project.", {
           code: projectError.code,
         });
-        return errorResponse("Failed to verify award project.", 500);
+        return errorResponse("Failed to verify linked project.", 500);
       }
 
       if (!project) {
-        return errorResponse("Award project was not found.", 400);
+        return errorResponse("Linked project was not found.", 400);
+      }
+
+      if (type === "expense") {
+        if (canonicalizeBarangay(project.barangay ?? "") !== canonicalBarangay) {
+          return errorResponse(
+            "The linked project belongs to a different barangay.",
+            403,
+          );
+        }
+        if (!expenseCategory && typeof project.category === "string") {
+          expenseCategory = project.category;
+        }
       }
     }
 
@@ -479,6 +522,10 @@ export async function POST(req: NextRequest) {
       insertPayload.project_id = projectId;
     }
 
+    if (type === "expense" && expenseCategory) {
+      insertPayload.category = expenseCategory;
+    }
+
     const { data: insertedData, error: insertError } = await supabaseAdmin
       .from(tableName)
       .insert([insertPayload])
@@ -530,6 +577,9 @@ export async function POST(req: NextRequest) {
               amount,
               purpose,
               ...(projectId ? { project_id: projectId } : {}),
+              ...(type === "expense" && expenseCategory
+                ? { category: expenseCategory }
+                : {}),
             },
             status: "pending",
             last_error: insertError.message,

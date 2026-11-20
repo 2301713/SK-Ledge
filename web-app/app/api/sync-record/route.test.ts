@@ -414,13 +414,24 @@ describe("POST /api/sync-record payload validation", () => {
     expect(responseBody.error).toContain("Invalid purpose");
   });
 
-  it("rejects project_id on a non-award record", async () => {
+  it("rejects project_id on an allocation record", async () => {
     const { status, body: responseBody } = await call(
-      payload({ project_id: "project-1" }),
+      payload({ type: "allocation", project_id: "project-1" }),
     );
 
     expect(status).toBe(400);
-    expect(responseBody.error).toContain("only valid for award records");
+    expect(responseBody.error).toContain(
+      "only valid for award and expense records",
+    );
+  });
+
+  it("rejects a non-string expense category", async () => {
+    const { status, body: responseBody } = await call(
+      payload({ category: 42 }),
+    );
+
+    expect(status).toBe(400);
+    expect(responseBody.error).toContain("Invalid category");
   });
 
   it("requires project_id on award records", async () => {
@@ -465,14 +476,14 @@ describe("POST /api/sync-record award project lookup", () => {
     const { status, body: responseBody } = await call(award());
 
     expect(status).toBe(500);
-    expect(responseBody.error).toBe("Failed to verify award project.");
+    expect(responseBody.error).toBe("Failed to verify linked project.");
   });
 
   it("returns 400 when the project does not exist", async () => {
     const { status, body: responseBody } = await call(award());
 
     expect(status).toBe(400);
-    expect(responseBody.error).toBe("Award project was not found.");
+    expect(responseBody.error).toBe("Linked project was not found.");
   });
 
   it("records the award when the project exists", async () => {
@@ -483,6 +494,52 @@ describe("POST /api/sync-record award project lookup", () => {
     expect(status).toBe(201);
     expect(responseBody.data.project_id).toBe("project-1");
     expect(responseBody.data.blockchain_tx_hash).toBe(TX_HASH);
+  });
+});
+
+describe("POST /api/sync-record expense project link", () => {
+  it("records an expense against a project in the same barangay", async () => {
+    db().rows.projects = [
+      { id: "project-1", barangay: BARANGAY, category: "Education" },
+    ];
+
+    const { status, body: responseBody } = await call(
+      payload({ project_id: "project-1" }),
+    );
+
+    expect(status).toBe(201);
+    expect(responseBody.data.project_id).toBe("project-1");
+    expect(responseBody.data.category).toBe("Education");
+  });
+
+  it("keeps an explicitly submitted category", async () => {
+    db().rows.projects = [
+      { id: "project-1", barangay: BARANGAY, category: "Education" },
+    ];
+
+    const { status, body: responseBody } = await call(
+      payload({ project_id: "project-1", category: "Health" }),
+    );
+
+    expect(status).toBe(201);
+    expect(responseBody.data.category).toBe("Health");
+  });
+
+  it("rejects a project from another barangay", async () => {
+    db().rows.projects = [
+      {
+        id: "project-1",
+        barangay: OTHER_BARANGAY,
+        category: "Education",
+      },
+    ];
+
+    const { status, body: responseBody } = await call(
+      payload({ project_id: "project-1" }),
+    );
+
+    expect(status).toBe(403);
+    expect(responseBody.error).toContain("different barangay");
   });
 });
 

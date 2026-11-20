@@ -44,8 +44,17 @@ interface ExpenseForm {
   amount: string;
   vendor: string;
   category: string;
+  projectId: string;
   description: string;
   date: string;
+}
+
+interface AbiypProjectOption {
+  id: number;
+  name: string;
+  category: string;
+  fiscal_year: number;
+  status: string;
 }
 
 interface UploadedFile {
@@ -157,9 +166,12 @@ export default function ExpensesPage() {
     amount: "",
     vendor: "",
     category: "",
+    projectId: "",
     description: "",
     date: new Date().toISOString().split("T")[0],
   });
+
+  const [projects, setProjects] = useState<AbiypProjectOption[]>([]);
 
   const [receipts, setReceipts] = useState<UploadedFile[]>([]);
   const [storedReceipts, setStoredReceipts] = useState<StoredReceipt[]>([]);
@@ -170,6 +182,8 @@ export default function ExpensesPage() {
     barangay: string;
     amount: number;
     purpose: string;
+    category: string;
+    projectId: string | null;
   } | null>(null);
 
   const pendingExpenseCentavos = Number.isFinite(parseFloat(form.amount))
@@ -269,8 +283,45 @@ export default function ExpensesPage() {
     fetchUserProfile();
   }, [router, toast]);
 
+  // Expenses can be tied to a specific ABYIP project for the fiscal year, which
+  // is what makes the ABYIP breakdown project-level instead of category-only.
+  useEffect(() => {
+    if (!currentUser) return;
+
+    let active = true;
+    void (async () => {
+      const { data, error } = await supabase
+        .from("projects")
+        .select("id, name, category, fiscal_year, status")
+        .eq("barangay", currentUser.barangay)
+        .eq("fiscal_year", new Date().getFullYear())
+        .order("name");
+
+      if (!active) return;
+      if (error) {
+        console.error("Error fetching ABYIP projects:", error.message);
+        return;
+      }
+
+      setProjects((data ?? []) as AbiypProjectOption[]);
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [currentUser]);
+
   const handleInputChange = (field: keyof ExpenseForm, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleProjectChange = (value: string) => {
+    const project = projects.find((candidate) => String(candidate.id) === value);
+    setForm((prev) => ({
+      ...prev,
+      projectId: value,
+      category: project?.category || prev.category,
+    }));
   };
 
   const handleFileUpload = (files: FileList | null) => {
@@ -380,6 +431,8 @@ export default function ExpensesPage() {
         barangay,
         amount: Math.round(parseFloat(form.amount) * 100),
         purpose: `${form.description} — Vendor: ${form.vendor}`,
+        category: form.category,
+        projectId: form.projectId || null,
       };
 
       writeContract({
@@ -431,6 +484,7 @@ export default function ExpensesPage() {
       amount: "",
       vendor: "",
       category: "",
+      projectId: "",
       description: "",
       date: new Date().toISOString().split("T")[0],
     });
@@ -453,6 +507,8 @@ export default function ExpensesPage() {
           barangay: data.barangay,
           amount: data.amount,
           purpose: data.purpose,
+          category: data.category,
+          ...(data.projectId ? { project_id: data.projectId } : {}),
         })) as unknown as {
           data?: { id?: string; blockchain_record_id?: number };
         };
@@ -683,6 +739,34 @@ export default function ExpensesPage() {
                     ))}
                   </select>
                 </div>
+              </div>
+
+              {/* ABYIP PROJECT LINK */}
+              <div className="space-y-2 md:col-span-2">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-secondary-foreground">
+                  ABYIP Project (optional)
+                </label>
+                <div className="relative">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                    <Tag className="h-5 w-5 text-secondary-foreground" />
+                  </div>
+                  <select
+                    value={form.projectId}
+                    onChange={(e) => handleProjectChange(e.target.value)}
+                    className={inputClass}
+                  >
+                    <option value="">Not linked to a project</option>
+                    {projects.map((project) => (
+                      <option key={project.id} value={String(project.id)}>
+                        {project.name} ({project.fiscal_year})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <p className="text-[10px] text-secondary-foreground">
+                  Linking an expense to a project attributes its amount to that
+                  project in the ABYIP breakdown for the fiscal year.
+                </p>
               </div>
             </div>
 

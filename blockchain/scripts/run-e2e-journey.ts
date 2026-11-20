@@ -172,13 +172,30 @@ async function main(): Promise<void> {
 
   const generatedWallets: { wallet: ethers.Wallet; label: string }[] = [];
 
+  function parsePrivateKey(envName: string): string {
+    const raw = process.env[envName]?.trim();
+    if (!raw) throw new Error(`${envName} was empty.`);
+
+    const normalized = raw.startsWith("0x") ? raw : `0x${raw}`;
+    if (/^0x[0-9a-fA-F]{64}$/.test(normalized)) return normalized;
+    if (/^0x[0-9a-fA-F]{40}$/.test(normalized)) {
+      throw new Error(
+        `${envName} is a wallet address, not a private key. ` +
+          "Use the 64-hex-character private key for that address (without it the script cannot sign).",
+      );
+    }
+    throw new Error(
+      `${envName} must be a 32-byte private key: 64 hex characters, optionally prefixed with 0x.`,
+    );
+  }
+
   async function resolveWallet(
     envName: string,
     label: string,
   ): Promise<ethers.Wallet> {
     const provided = process.env[envName]?.trim();
     const wallet = provided
-      ? new ethers.Wallet(provided, provider)
+      ? new ethers.Wallet(parsePrivateKey(envName), provider)
       : ethers.Wallet.createRandom().connect(provider);
 
     evidence.generatedWallets = evidence.generatedWallets || !provided;
