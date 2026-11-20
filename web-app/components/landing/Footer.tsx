@@ -1,13 +1,14 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Mail, MapPin } from "lucide-react";
+import LegalLinks from "./LegalLinks";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
     <footer className="bg-slate-950 border-t border-white/8 py-12 px-6 animate-fadein">
-      <div className="max-w-6xl mx-auto grid gap-10 md:grid-cols-3">
+      <div className="max-w-6xl mx-auto grid gap-10 md:grid-cols-2 lg:grid-cols-4">
         {/* Brand */}
         <div>
           <Link href="/" className="flex items-center gap-2.5">
@@ -69,6 +70,14 @@ export default function Footer() {
               </Link>
             </li>
           </ul>
+        </div>
+
+        {/* Legal */}
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-4">
+            Legal
+          </p>
+          <LegalLinks />
         </div>
 
         {/* Contact */}

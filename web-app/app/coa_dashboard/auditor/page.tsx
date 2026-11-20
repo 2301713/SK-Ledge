@@ -15,6 +15,7 @@ import { UserAccount } from "@/lib/useAuthStore";
 import { useRecordsSync } from "@/lib/useRecordsSync";
 import type { LedgerRecord } from "@/lib/records";
 import { VerifiedTransaction, ProjectStatus } from "../types";
+import { downloadCsv } from "@/lib/downloadCsv";
 import {
   ShieldCheck,
   Search,
@@ -22,7 +23,6 @@ import {
   MapPin,
   Lock,
   Download,
-  Play,
   FileText,
   Loader2,
 } from "lucide-react";
@@ -154,11 +154,7 @@ export default function AuditorPage() {
         }
 
         if (profileData) {
-          if (
-            !["COA", "COA_Auditor", "DILG_Official"].includes(
-              profileData.role_type,
-            )
-          ) {
+          if (profileData.role_type !== "COA") {
             console.warn(
               "Unauthorized access: Only auditors can access this dashboard.",
             );
@@ -367,6 +363,41 @@ export default function AuditorPage() {
     return matchesSearch && matchesStatus;
   });
 
+  const exportTransactions = () => {
+    downloadCsv("coa-audit-transactions.csv", [
+      ["Date", "Vendor", "Category", "Status", "Amount (PHP)", "Reference"],
+      ...filteredTransactions.map((tx) => [
+        tx.date,
+        tx.vendor,
+        tx.category,
+        tx.status,
+        tx.amount.toFixed(2),
+        tx.blockchainHash,
+      ]),
+    ]);
+  };
+
+  const exportProjects = () => {
+    downloadCsv("coa-project-oversight.csv", [
+      [
+        "Project",
+        "Status",
+        "Budget (PHP)",
+        "Awarded (PHP)",
+        "Compliance (%)",
+        "Last audit",
+      ],
+      ...projects.map((project) => [
+        project.name,
+        project.status,
+        project.budget.toFixed(2),
+        project.spent.toFixed(2),
+        project.complianceScore ?? "",
+        project.lastAudit,
+      ]),
+    ]);
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-PH", {
       style: "currency",
@@ -524,11 +555,12 @@ export default function AuditorPage() {
           </div>
 
           <div className="flex gap-2">
-            <button className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-xs font-bold uppercase tracking-widest text-white shadow-sm transition hover:bg-primary/90">
-              <Play className="h-3.5 w-3.5" />
-              Start audit
-            </button>
-            <button className="inline-flex items-center gap-2 rounded-xl border border-border bg-white px-4 py-2 text-xs font-bold uppercase tracking-widest text-secondary-foreground transition hover:bg-secondary">
+            <button
+              type="button"
+              onClick={exportTransactions}
+              disabled={filteredTransactions.length === 0}
+              className="inline-flex items-center gap-2 rounded-xl border border-border bg-white px-4 py-2 text-xs font-bold uppercase tracking-widest text-secondary-foreground transition hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50"
+            >
               <Download className="h-3.5 w-3.5" />
               Export
             </button>
@@ -627,7 +659,12 @@ export default function AuditorPage() {
               title="Compliance & Budget Review"
               subtitle="Review project compliance and budgets"
               action={
-                <button className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-xs font-bold uppercase tracking-widest text-white shadow-sm transition hover:bg-primary/90">
+                <button
+                  type="button"
+                  onClick={exportProjects}
+                  disabled={projects.length === 0}
+                  className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-xs font-bold uppercase tracking-widest text-white shadow-sm transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+                >
                   <Download className="h-3.5 w-3.5" />
                   Export
                 </button>

@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { Bell, Command, Mail, Search } from "lucide-react";
+import { Command, Search } from "lucide-react";
 import { useAvatarUrl } from "@/lib/useAvatarUrl";
 
 interface TopBarProps {
@@ -44,21 +44,7 @@ export default function TopBar({
       )}
 
       <div className="ml-auto flex items-center gap-3">
-        <button
-          title="Messages"
-          className="relative flex h-10 w-10 items-center justify-center rounded-full border border-border bg-white text-secondary-foreground shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition hover:text-primary"
-        >
-          <Mail className="h-4 w-4" />
-        </button>
-        <button
-          title="Notifications"
-          className="relative flex h-10 w-10 items-center justify-center rounded-full border border-border bg-white text-secondary-foreground shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition hover:text-primary"
-        >
-          <Bell className="h-4 w-4" />
-          <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-danger ring-2 ring-white" />
-        </button>
-
-        <div className="flex items-center gap-3 border-l border-border pl-4">
+        <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-primary text-sm font-bold text-white">
             {resolvedAvatarUrl ? (
               <Image

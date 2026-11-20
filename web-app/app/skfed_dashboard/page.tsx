@@ -22,7 +22,6 @@ import {
 import {
   Building2,
   Megaphone,
-  FileText,
   ChevronRight,
   TrendingUp,
   FolderKanban,
@@ -58,6 +57,20 @@ interface BarangayRow {
 
 const CLOSED_PROJECT_STATUSES = new Set(["Awarded", "Completed", "Rejected"]);
 
+async function fetchFederationMemos(): Promise<FederationMemo[]> {
+  const { data, error } = await supabase
+    .from("federation_memos")
+    .select("id, sender_id, subject, body, priority, audience, created_at")
+    .order("created_at", { ascending: false })
+    .limit(10);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return (data ?? []) as FederationMemo[];
+}
+
 export default function SKFederationDashboard() {
   const {
     currentUser,
@@ -81,17 +94,7 @@ export default function SKFederationDashboard() {
 
   const loadMemos = useCallback(async () => {
     try {
-      const { data, error } = await supabase
-        .from("federation_memos")
-        .select("id, sender_id, subject, body, priority, audience, created_at")
-        .order("created_at", { ascending: false })
-        .limit(10);
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      setMemos((data ?? []) as FederationMemo[]);
+      setMemos(await fetchFederationMemos());
     } catch (err) {
       console.error("Failed to load federation memos:", err);
     } finally {
@@ -100,10 +103,27 @@ export default function SKFederationDashboard() {
   }, []);
 
   useEffect(() => {
-    if (currentUser) {
-      void loadMemos();
-    }
-  }, [currentUser, loadMemos]);
+    if (!currentUser) return;
+
+    let cancelled = false;
+
+    void fetchFederationMemos().then(
+      (data) => {
+        if (cancelled) return;
+        setMemos(data);
+        setMemosLoading(false);
+      },
+      (err) => {
+        if (cancelled) return;
+        console.error("Failed to load federation memos:", err);
+        setMemosLoading(false);
+      },
+    );
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentUser]);
 
   // 1. AUTHENTICATION & ROLE PROTECTION
   useEffect(() => {
@@ -544,21 +564,6 @@ export default function SKFederationDashboard() {
                 ))}
               </div>
             </Card>
-
-            {/* FEDERATION VAULT */}
-            <div className="rounded-3xl bg-primary-foreground p-6 text-white shadow-[0_8px_28px_-10px_rgba(15,23,42,0.5)] transition-all hover:shadow-[0_12px_36px_-10px_rgba(15,23,42,0.55)]">
-              <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-white/10 text-tertiary">
-                <FileText className="h-5 w-5" />
-              </div>
-              <h2 className="text-lg font-bold tracking-tight">Federation Vault</h2>
-              <p className="mt-1 text-xs font-medium leading-relaxed text-white/60">
-                Access standard LGU templates, CBYDP forms, and approved
-                resolutions.
-              </p>
-              <button className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-white/10 py-3 text-xs font-bold uppercase tracking-widest text-white transition hover:bg-white/20">
-                Open Vault <TrendingUp className="h-4 w-4" />
-              </button>
-            </div>
           </div>
         </div>
 

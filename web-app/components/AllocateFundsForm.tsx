@@ -1,7 +1,8 @@
 "use client";
 
-import { Fragment, useState, useEffect } from "react";
+import { Fragment, useState, useEffect, useRef } from "react";
 import {
+  useReadContract,
   useWriteContract,
   useWaitForTransactionReceipt,
   useAccount,
@@ -23,10 +24,12 @@ import {
   ExternalLink,
   MapPin,
   Check,
+  AlertTriangle,
 } from "lucide-react";
 import { CONTRACT_ADDRESS, SK_LEDGE_ABI } from "@/lib/contractConfig";
 import { useToast } from "@/lib/useToast";
 import { syncRecord } from "@/lib/syncRecord";
+import { describeWalletError } from "@/lib/walletErrors";
 import { canonicalizeBarangay } from "@/lib/batangasBarangays";
 
 const STEPS = [
@@ -41,6 +44,12 @@ const STEP_TITLES: Record<number, string> = {
   3: "Blockchain Ledger Sign-off",
 };
 
+const formatCentavos = (centavos: number | bigint) =>
+  new Intl.NumberFormat("en-PH", {
+    style: "currency",
+    currency: "PHP",
+  }).format(Number(centavos) / 100);
+
 export default function AllocateFundsForm({
   assignedBarangay,
 }: {
@@ -51,6 +60,7 @@ export default function AllocateFundsForm({
   const [category, setCategory] = useState("Health & Sports");
   const [amountPhp, setAmountPhp] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
+  const [formError, setFormError] = useState("");
   const barangay = assignedBarangay
     ? canonicalizeBarangay(assignedBarangay)
     : null;
@@ -60,10 +70,19 @@ export default function AllocateFundsForm({
   const { switchChain } = useSwitchChain();
   const toast = useToast();
 
+  const pendingSubmissionRef = useRef<{
+    barangay: string;
+    amountCentavos: number;
+    purpose: string;
+    officialAddress: string;
+  } | null>(null);
+
   const {
     data: hash,
+    error: writeError,
     isPending: isWritePending,
     writeContract,
+    reset: resetWriteContract,
   } = useWriteContract();
 
   const { isLoading: isConfirming, isSuccess: isConfirmed } =
@@ -71,33 +90,103 @@ export default function AllocateFundsForm({
       hash,
     });
 
+  const { data: ceilingRaw, refetch: refetchCeiling } = useReadContract({
+    address: CONTRACT_ADDRESS,
+    abi: SK_LEDGE_ABI,
+    functionName: "allocationCeilings",
+    args: barangay ? [barangay] : undefined,
+    query: { enabled: Boolean(barangay) },
+  });
+
+  const { data: allocatedRaw, refetch: refetchAllocated } = useReadContract({
+    address: CONTRACT_ADDRESS,
+    abi: SK_LEDGE_ABI,
+    functionName: "getAllocated",
+    args: barangay ? [barangay] : undefined,
+    query: { enabled: Boolean(barangay) },
+  });
+
+  const ceilingKnown = ceilingRaw !== undefined && allocatedRaw !== undefined;
+  const ceilingCentavos = ceilingRaw ?? BigInt(0);
+  const allocatedCentavos = allocatedRaw ?? BigInt(0);
+  // A zero ceiling means the contract does not cap this barangay.
+  const hasCeiling = ceilingCentavos > BigInt(0);
+  const remainingCentavos =
+    ceilingCentavos > allocatedCentavos
+      ? ceilingCentavos - allocatedCentavos
+      : BigInt(0);
+
+  const ceilingViolation = (amountCentavos: number): string | null => {
+    if (!ceilingKnown || !hasCeiling) return null;
+    if (BigInt(amountCentavos) <= remainingCentavos) return null;
+
+    return `This allocation of ${formatCentavos(amountCentavos)} exceeds the remaining ceiling of ${formatCentavos(remainingCentavos)} for ${barangay}. The ceiling is ${formatCentavos(ceilingCentavos)} and ${formatCentavos(allocatedCentavos)} is already allocated. Lower the amount or raise the ceiling first.`;
+  };
+
+  const reviewAmountCentavos = Math.round(Number(amountPhp) * 100);
+  const headroomAfterCentavos =
+    Number(remainingCentavos) - reviewAmountCentavos;
+
   const isWrongNetwork = chainId !== sepolia.id;
 
   const handleNext = () => {
-    if (currentStep === 1 && !programName) {
-      alert("Please enter a Program Title");
+    setFormError("");
+
+    if (currentStep === 1 && !programName.trim()) {
+      setFormError("Enter a program or project title to continue.");
       return;
     }
+    if (currentStep === 1) {
+      // Match the contract's MAX_PURPOSE_BYTES limit before signing.
+      const purposeByteLength = new TextEncoder().encode(
+        programName.trim(),
+      ).length;
+      if (purposeByteLength > 256) {
+        setFormError(
+          `Program title is too long (${purposeByteLength}/256 bytes). Please shorten it.`,
+        );
+        return;
+      }
+    }
     if (currentStep === 1 && !barangay) {
-      toast.error(
-        "Your profile must have a valid canonical barangay before allocating funds.",
+      setFormError(
+        "Your profile has no valid barangay assigned, so funds cannot be allocated. Ask an admin to assign your barangay first.",
       );
       return;
     }
-    if (currentStep === 2 && (!amountPhp || Number(amountPhp) <= 0)) {
-      alert("Please enter a valid amount");
-      return;
+    if (currentStep === 2) {
+      const amount = Number(amountPhp);
+      if (!amountPhp || !Number.isFinite(amount) || amount <= 0) {
+        setFormError("Enter an allocation amount greater than zero.");
+        return;
+      }
+
+      const violation = ceilingViolation(Math.round(amount * 100));
+      if (violation) {
+        setFormError(violation);
+        return;
+      }
     }
     setCurrentStep((prev) => Math.min(prev + 1, 3));
   };
 
   const handleBack = () => {
+    setFormError("");
     setCurrentStep((prev) => Math.max(prev - 1, 1));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSuccess(false);
+    resetWriteContract();
+
+    // Enter in an earlier step should advance the wizard, not sign a transaction.
+    if (currentStep !== 3) {
+      handleNext();
+      return;
+    }
+
+    setFormError("");
 
     if (isWrongNetwork) {
       switchChain({ chainId: sepolia.id });
@@ -105,47 +194,87 @@ export default function AllocateFundsForm({
     }
 
     if (!barangay) {
-      toast.error(
-        "Your profile must have a valid canonical barangay before allocating funds.",
+      setFormError(
+        "Your profile has no valid barangay assigned, so funds cannot be allocated. Ask an admin to assign your barangay first.",
       );
       return;
     }
 
+    const purpose = programName.trim();
+    if (!purpose) {
+      setFormError("Enter a program or project title before allocating funds.");
+      return;
+    }
+
+    const amountCentavos = Math.round(Number(amountPhp) * 100);
+    if (!Number.isFinite(amountCentavos) || amountCentavos <= 0) {
+      setFormError("Enter an allocation amount greater than zero.");
+      return;
+    }
+
+    // Re-check at signing time: the ceiling may have changed since review.
+    const violation = ceilingViolation(amountCentavos);
+    if (violation) {
+      setFormError(violation);
+      setCurrentStep(2);
+      return;
+    }
+
     try {
+      // Capture the submitted values: the form is cleared once the transaction
+      // confirms, so the sync effect must not read live state.
+      pendingSubmissionRef.current = {
+        barangay,
+        amountCentavos,
+        purpose,
+        officialAddress: address ?? "",
+      };
+
       writeContract({
         address: CONTRACT_ADDRESS,
         abi: SK_LEDGE_ABI,
         functionName: "addRecord",
-        args: [barangay, BigInt(Math.round(Number(amountPhp) * 100)), programName, "Allocation"],
+        args: [barangay, BigInt(amountCentavos), purpose, "Allocation"],
       });
     } catch (err) {
+      pendingSubmissionRef.current = null;
       console.error("Submission error:", err);
+      toast.error("Failed to submit the allocation. Please try again.");
     }
   };
 
   useEffect(() => {
-    if (isConfirmed && hash && barangay) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+    const submission = pendingSubmissionRef.current;
+    if (isConfirmed && hash && submission) {
+      pendingSubmissionRef.current = null;
       setIsSuccess(true);
       setProgramName("");
       setAmountPhp("");
       setCurrentStep(1);
+
+      // The new allocation changes the remaining ceiling immediately.
+      void refetchCeiling();
+      void refetchAllocated();
 
       // Sync to Supabase via API
       syncRecord({
         type: "allocation",
         blockchain_tx_hash: hash,
         contract_address: CONTRACT_ADDRESS,
-        official_address: address || "",
-        barangay,
-        amount: Math.round(Number(amountPhp) * 100),
-        purpose: programName,
-      }).catch((err) => {
-        console.error("Sync failed:", err);
-        toast.error("Recorded on-chain, but syncing to the database failed.");
-      });
+        official_address: submission.officialAddress,
+        barangay: submission.barangay,
+        amount: submission.amountCentavos,
+        purpose: submission.purpose,
+      })
+        .then(() => {
+          toast.success("Allocation recorded on-chain and synced to the ledger.");
+        })
+        .catch((err) => {
+          console.error("Sync failed:", err);
+          toast.error("Recorded on-chain, but syncing to the database failed.");
+        });
     }
-  }, [isConfirmed, hash, address, barangay, amountPhp, programName, toast]);
+  }, [isConfirmed, hash, toast, refetchCeiling, refetchAllocated]);
 
   const formatCurrency = (val: string) => {
     const num = parseFloat(val);
@@ -198,6 +327,16 @@ export default function AllocateFundsForm({
       {/* FORM CONTENT */}
       <div className="p-6 md:p-8">
         <form onSubmit={handleSubmit}>
+          {formError && (
+            <div
+              role="alert"
+              className="mx-auto mb-5 flex max-w-xl items-start gap-2 rounded-xl border border-danger/30 bg-danger/10 p-3.5 text-xs font-medium text-danger animate-fadein"
+            >
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              <span className="break-words">{formError}</span>
+            </div>
+          )}
+
           {/* STEP 1: PROJECT DETAILS */}
           {currentStep === 1 && (
             <div className="space-y-5 max-w-xl mx-auto animate-fadein">
@@ -211,7 +350,10 @@ export default function AllocateFundsForm({
                   required
                   placeholder="e.g., Youth Leadership Summit 2026"
                   value={programName}
-                  onChange={(e) => setProgramName(e.target.value)}
+                  onChange={(e) => {
+                    setProgramName(e.target.value);
+                    setFormError("");
+                  }}
                   className="w-full px-4 py-3.5 bg-white border border-border rounded-2xl text-primary-foreground text-sm font-semibold placeholder:text-secondary-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                 />
               </div>
@@ -277,7 +419,10 @@ export default function AllocateFundsForm({
                     min="1"
                     placeholder="25000"
                     value={amountPhp}
-                    onChange={(e) => setAmountPhp(e.target.value)}
+                    onChange={(e) => {
+                      setAmountPhp(e.target.value);
+                      setFormError("");
+                    }}
                     className="w-full pl-9 pr-4 py-4 bg-white border border-border rounded-2xl text-primary-foreground text-2xl font-black placeholder:text-secondary-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                   />
                 </div>
@@ -287,6 +432,16 @@ export default function AllocateFundsForm({
                     {formatCurrency(amountPhp)}
                   </strong>
                 </p>
+                {ceilingKnown && hasCeiling && (
+                  <p className="mt-2 rounded-xl border border-border bg-secondary/40 px-3 py-2 text-xs text-secondary-foreground">
+                    Remaining ceiling for {barangay}:{" "}
+                    <strong className="font-bold text-primary-foreground">
+                      {formatCentavos(remainingCentavos)}
+                    </strong>{" "}
+                    of {formatCentavos(ceilingCentavos)} (
+                    {formatCentavos(allocatedCentavos)} already allocated)
+                  </p>
+                )}
               </div>
 
               <div className="flex gap-3 pt-2">
@@ -341,6 +496,32 @@ export default function AllocateFundsForm({
                       {formatCurrency(amountPhp)}
                     </span>
                   </div>
+                  {ceilingKnown && hasCeiling && (
+                    <>
+                      <div className="flex justify-between">
+                        <span className="text-secondary-foreground">
+                          Ceiling:
+                        </span>
+                        <span className="font-bold text-primary-foreground">
+                          {formatCentavos(ceilingCentavos)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-secondary-foreground">
+                          Headroom after this allocation:
+                        </span>
+                        <span
+                          className={`font-bold ${
+                            headroomAfterCentavos < 0
+                              ? "text-danger"
+                              : "text-primary-foreground"
+                          }`}
+                        >
+                          {formatCentavos(headroomAfterCentavos)}
+                        </span>
+                      </div>
+                    </>
+                  )}
                   <div className="flex justify-between items-center pt-2 border-t border-border text-xs">
                     <span className="text-secondary-foreground">Signing Wallet:</span>
                     <span className="font-mono text-primary-foreground bg-white px-2 py-1 rounded border border-border">
@@ -396,6 +577,19 @@ export default function AllocateFundsForm({
                   )}
                 </button>
               </div>
+            </div>
+          )}
+
+          {/* TRANSACTION ERROR */}
+          {writeError && (
+            <div className="mt-6 flex items-start gap-2 rounded-2xl border border-danger/30 bg-danger/10 p-4 text-xs font-medium text-danger">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              <span className="break-words">
+                {describeWalletError(
+                  writeError,
+                  "The allocation transaction failed. Please try again.",
+                )}
+              </span>
             </div>
           )}
 

@@ -40,6 +40,15 @@ contract deployed on Sepolia.
 
 Run `npm test` from this directory to execute the contract tests.
 
+## Automated Sepolia journey
+
+`npm run e2e:sepolia` runs an automated end-to-end contract journey against the
+deployed contract: wallet authorization, ceiling, `Allocation`, `Expense`,
+`Award`, COA confirmation, unauthorized/over-ceiling/double-confirm reverts, and
+an evidence file. It needs `E2E_BARANGAY` and the owner credentials above, and it
+writes real testnet records. See `docs/SEPOLIA-RUNBOOK.md` for the full flow and
+the companion `web-app` verifier (`npm run verify:journey`).
+
 Barangay names and aliases are limited to 64 UTF-8 bytes, and record purposes
 are limited to 256 UTF-8 bytes. Both values must be non-empty. The contract
 reports over-limit inputs with custom errors; these limits count encoded bytes,

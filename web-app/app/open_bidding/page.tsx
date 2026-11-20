@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Search,
   Wallet,
-  Download,
   ChevronRight,
   CheckCircle2,
   FileText,
@@ -775,7 +774,7 @@ export default function BiddingPortal() {
 
                       <ol className="space-y-3 text-xs leading-relaxed text-secondary-foreground">
                         {[
-                          "Download the bid documents and review the scope.",
+                          "Review the project scope and budget details above.",
                           "Prepare your technical and financial proposal package.",
                           "Submit before the deadline through the SK procurement office.",
                         ].map((step, index) => (
@@ -1006,11 +1005,6 @@ export default function BiddingPortal() {
                         </form>
                       )}
                     </div>
-
-                    <button className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-white py-3.5 text-[11px] font-black uppercase tracking-widest text-primary-foreground transition hover:border-primary/30 hover:bg-secondary hover:text-primary active:scale-95">
-                      <Download size={16} strokeWidth={2.5} />
-                      Download Bidding Documents
-                    </button>
                   </div>
                 </>
               )}

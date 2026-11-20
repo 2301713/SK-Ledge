@@ -15,6 +15,7 @@ import {
   Gavel,
   ExternalLink,
   ChevronRight,
+  AlertTriangle,
 } from 'lucide-react';
 
 import SideBar from '@/components/dashboard/SideBar';
@@ -63,6 +64,7 @@ export default function ProjectsPage() {
     is_open_for_bidding: false,
     bid_deadline: '',
   });
+  const [formError, setFormError] = useState<string | null>(null);
 
   const fetchProjects = async () => {
     const { data, error } = await supabase
@@ -137,9 +139,11 @@ export default function ProjectsPage() {
 
   const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
+
     const barangay = canonicalizeBarangay(currentUser?.barangay ?? '');
     if (!barangay) {
-      alert(
+      setFormError(
         'Your profile must have a valid canonical barangay before creating a project.',
       );
       return;
@@ -177,8 +181,13 @@ export default function ProjectsPage() {
         'Failed to create project:',
         JSON.stringify(error, null, 2),
       );
-      alert(
-        `Failed to submit proposal: ${error.message}\n\n${error.hint || error.details || ''}`,
+      setFormError(
+        [
+          `Failed to submit proposal: ${error.message}`,
+          error.hint || error.details || '',
+        ]
+          .filter(Boolean)
+          .join(' '),
       );
     }
   };
@@ -358,6 +367,16 @@ export default function ProjectsPage() {
                     required={formData.is_open_for_bidding}
                   />
                 </div>
+              </div>
+            )}
+
+            {formError && (
+              <div
+                role="alert"
+                className="flex items-start gap-2 rounded-xl border border-danger/30 bg-danger/10 p-4 text-xs font-medium text-danger"
+              >
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                <span className="break-words">{formError}</span>
               </div>
             )}
 

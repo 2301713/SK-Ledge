@@ -43,4 +43,13 @@ describe("GET /api/debug-env", () => {
 
     expect(body).toEqual({ hasUrl: true, urlLen: 0, hasKey: true, keyLen: 0 });
   });
+
+  it("is not exposed in production", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+
+    const response = await GET();
+
+    expect(response.status).toBe(404);
+    expect(await response.json()).toEqual({ error: "Not found." });
+  });
 });

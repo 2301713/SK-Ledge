@@ -2,6 +2,7 @@
 
 import LogoLoader from "@/components/LogoLoader";
 import { useState, useEffect, useMemo } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import SideBar from "@/components/dashboard/SideBar";
 import TopBar from "@/components/dashboard/ui/TopBar";
@@ -11,18 +12,19 @@ import { Card, CardHeader } from "@/components/dashboard/ui/Card";
 import { supabase } from "@/lib/supabase";
 import { UserAccount } from "@/lib/useAuthStore";
 import {
-  Filter,
   Download,
   Landmark,
   PiggyBank,
   Receipt,
   Gauge,
+  Coins,
+  ArrowRight,
 } from "lucide-react";
 import { useReadContract } from "wagmi";
 import { CONTRACT_ADDRESS, SK_LEDGE_ABI } from "@/lib/contractConfig";
-import AllocateFundsForm from "@/components/AllocateFundsForm";
 import { canonicalizeBarangay } from "@/lib/batangasBarangays";
 import { useRecordsSync } from "@/lib/useRecordsSync";
+import { downloadCsv } from "@/lib/downloadCsv";
 
 interface AbiypProject {
   id: string;
@@ -169,6 +171,25 @@ export default function ABYIPPage() {
         (a, b) => b.allocation - a.allocation || b.spent - a.spent,
       );
   }, [projects, expenseRecords, selectedYear]);
+
+  const exportCategoryBreakdown = () => {
+    downloadCsv(`abyip-category-breakdown-${selectedYear}.csv`, [
+      [
+        "Category",
+        "Allocation (PHP)",
+        "Spent (PHP)",
+        "Utilization (%)",
+        "Status",
+      ],
+      ...budgetCeilings.map((item) => [
+        item.category,
+        item.allocation.toFixed(2),
+        item.spent.toFixed(2),
+        item.percentage,
+        item.status,
+      ]),
+    ]);
+  };
 
   const totalAllocation = budgetCeilings.reduce(
     (sum, item) => sum + item.allocation,
@@ -403,10 +424,34 @@ export default function ABYIPPage() {
           <CardHeader
             eyebrow="Blockchain"
             title="Budget Allocation"
-            subtitle="Record official SK funds directly on the Sepolia ledger"
+            subtitle="Allocations are signed on the dedicated Fund Allocations screen"
           />
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
-            <AllocateFundsForm assignedBarangay={barangay} />
+            <div className="flex flex-col justify-between gap-5 rounded-3xl border border-border bg-secondary/40 p-6">
+              <div className="flex items-start gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                  <Coins className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-primary-foreground">
+                    Allocations have their own screen
+                  </p>
+                  <p className="mt-1 text-xs leading-relaxed text-secondary-foreground">
+                    Sign new ABYIP allocations for {barangay ?? "your barangay"}{" "}
+                    and review the allocations recorded on the Sepolia ledger on
+                    the Fund Allocations page.
+                  </p>
+                </div>
+              </div>
+
+              <Link
+                href="/sk_dashboard/allocations"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white shadow-[0_6px_16px_-6px_rgba(1,56,168,0.5)] transition hover:bg-primary/90 active:scale-[0.98]"
+              >
+                Open Fund Allocations
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
             <aside className="flex flex-col gap-5 rounded-3xl border border-border bg-secondary/40 p-6">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-secondary-foreground">
@@ -474,16 +519,15 @@ export default function ABYIPPage() {
             title="Budget Category Breakdown"
             subtitle="Detailed allocation and spending per category"
             action={
-              <div className="flex items-center gap-2">
-                <button className="inline-flex items-center gap-2 rounded-xl border border-border bg-white px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-secondary">
-                  <Filter className="h-4 w-4" />
-                  Filter
-                </button>
-                <button className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-bold text-white shadow-[0_6px_16px_-6px_rgba(1,56,168,0.5)] transition hover:bg-primary/90">
-                  <Download className="h-4 w-4" />
-                  Export
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={exportCategoryBreakdown}
+                disabled={budgetCeilings.length === 0}
+                className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-bold text-white shadow-[0_6px_16px_-6px_rgba(1,56,168,0.5)] transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Download className="h-4 w-4" />
+                Export
+              </button>
             }
           />
 

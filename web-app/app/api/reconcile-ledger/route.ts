@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { createPublicClient, http, zeroAddress } from "viem";
+import { createPublicClient, http } from "viem";
 import { sepolia } from "viem/chains";
 import { CONTRACT_ADDRESS, SK_LEDGE_ABI } from "@/lib/contractConfig";
 
@@ -268,7 +268,7 @@ export async function POST() {
         return;
       }
 
-      rowsByTable[table].push({
+      const row: Record<string, unknown> = {
         user_id: userId,
         blockchain_tx_hash: storedHashes.get(`${table}:${record.id}`) ?? null,
         contract_address: CONTRACT_ADDRESS,
@@ -278,17 +278,15 @@ export async function POST() {
         purpose: record.purpose,
         created_at: new Date(Number(record.timestamp) * 1000).toISOString(),
         blockchain_record_id: Number(record.id),
-        approved: record.approved,
-        approved_by:
-          record.approvedBy.toLowerCase() === zeroAddress ? null : record.approvedBy,
-        approval_count: record.approved ? 1 : 0,
-        voided: record.voided,
-        void_reason: record.voided ? record.voidReason : null,
-        predecessor_id:
-          record.predecessorId > BigInt(0) ? Number(record.predecessorId) : null,
-        superseded: record.superseded,
-        synced_at: new Date().toISOString(),
-      });
+      };
+
+      // expenses.voided backs the COA voucher check; the other mirror columns
+      // were removed in 20261120100000_drop_dead_schema.sql.
+      if (table === "expenses") {
+        row.voided = record.voided;
+      }
+
+      rowsByTable[table].push(row);
       mirroredIds.push(Number(record.id));
     });
 

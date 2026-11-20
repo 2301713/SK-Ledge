@@ -13,6 +13,7 @@ import { supabase } from "@/lib/supabase";
 import { UserAccount } from "@/lib/useAuthStore";
 import { useRecordsSync } from "@/lib/useRecordsSync";
 import { canonicalizeBarangay } from "@/lib/batangasBarangays";
+import { downloadCsv } from "@/lib/downloadCsv";
 import { BRAND, SUCCESS, PENDING, DANGER } from "@/components/dashboard/ui/chartColors";
 import {
   FileDown,
@@ -287,6 +288,27 @@ export default function SKFederationDashboard() {
       .sort((a, b) => b.allocated - a.allocated || b.projects - a.projects);
   }, [projects, records]);
 
+  const exportCityWideReport = () => {
+    downloadCsv("skfed-city-wide-report.csv", [
+      [
+        "Barangay",
+        "Projects",
+        "Awarded",
+        "Allocated (PHP)",
+        "Spent (PHP)",
+        "Utilization (%)",
+      ],
+      ...complianceMatrix.map((row) => [
+        row.barangay,
+        row.projects,
+        row.awarded,
+        row.allocated.toFixed(2),
+        row.spent.toFixed(2),
+        row.utilization,
+      ]),
+    ]);
+  };
+
   const formatCompact = (amount: number) =>
     amount >= 1_000_000
       ? `₱${(amount / 1_000_000).toFixed(1)}M`
@@ -324,7 +346,12 @@ export default function SKFederationDashboard() {
           title="Oversight Reports"
           subtitle="City-wide analytics engine & performance matrix."
           actions={
-            <button className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white shadow-[0_6px_16px_-6px_rgba(1,56,168,0.5)] transition hover:bg-primary/90">
+            <button
+              type="button"
+              onClick={exportCityWideReport}
+              disabled={complianceMatrix.length === 0}
+              className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white shadow-[0_6px_16px_-6px_rgba(1,56,168,0.5)] transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+            >
               <FileDown className="h-4 w-4" />
               Generate City-Wide LGU Report
             </button>

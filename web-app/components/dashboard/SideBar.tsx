@@ -22,6 +22,7 @@ import {
   ShieldCheck,
   LogOut,
   ChartPie,
+  Coins,
   Sliders,
   X,
   Loader2,
@@ -56,6 +57,12 @@ const ROLE_LINKS: Record<
       label: "ABYIP",
       href: "/sk_dashboard/abyip",
       icon: ChartPie,
+    },
+    {
+      id: "id_32",
+      label: "Allocations",
+      href: "/sk_dashboard/allocations",
+      icon: Coins,
     },
     {
       id: "id_30",
@@ -106,6 +113,12 @@ const ROLE_LINKS: Record<
       label: "ABYIP",
       href: "/sk_dashboard/abyip",
       icon: ChartPie,
+    },
+    {
+      id: "id_33",
+      label: "Allocations",
+      href: "/sk_dashboard/allocations",
+      icon: Coins,
     },
     {
       id: "id_31",

@@ -2,6 +2,7 @@
 
 import LogoLoader from "@/components/LogoLoader";
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import SideBar from "@/components/dashboard/SideBar";
 import TopBar from "@/components/dashboard/ui/TopBar";
 import PageHeader from "@/components/dashboard/ui/PageHeader";
@@ -10,8 +11,10 @@ import { Card, CardHeader } from "@/components/dashboard/ui/Card";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/useAuthStore";
-import { useRecordsSync } from "@/lib/useRecordsSync";
-import { sumAmountCentavos } from "@/lib/records";
+import { sumBarangayCentavos } from "@/lib/spending";
+import { CONTRACT_ADDRESS, SK_LEDGE_ABI } from "@/lib/contractConfig";
+import { canonicalizeBarangay } from "@/lib/batangasBarangays";
+import { useReadContract } from "wagmi";
 import {
   Plus,
   ChevronRight,
@@ -24,6 +27,7 @@ import {
   Wallet,
   CircleAlert,
   FileText,
+  Gauge,
 } from "lucide-react";
 
 export default function SKDashboard() {
@@ -33,9 +37,23 @@ export default function SKDashboard() {
   const [projects, setProjects] = useState<
     { id: string; name: string; category: string; status: string; budget: number }[]
   >([]);
-  const { records: syncedRecords } = useRecordsSync({
-    enabled: Boolean(currentUser),
-    limit: 500,
+  const canonicalBarangay = currentUser?.barangay
+    ? canonicalizeBarangay(currentUser.barangay)
+    : null;
+
+  const { data: ceilingRaw, isLoading: isCeilingLoading } = useReadContract({
+    address: CONTRACT_ADDRESS,
+    abi: SK_LEDGE_ABI,
+    functionName: "allocationCeilings",
+    args: canonicalBarangay ? [canonicalBarangay] : undefined,
+    query: { enabled: Boolean(canonicalBarangay) },
+  });
+
+  const { data: ledgerRecords } = useReadContract({
+    address: CONTRACT_ADDRESS,
+    abi: SK_LEDGE_ABI,
+    functionName: "getAllRecords",
+    query: { enabled: Boolean(canonicalBarangay) },
   });
 
   useEffect(() => {
@@ -170,12 +188,31 @@ export default function SKDashboard() {
     );
   }
 
+  // Totals come from the contract ledger, the same source the expense ceiling
+  // guard uses, so the two screens cannot disagree.
+  const ledgerEntries = (ledgerRecords ?? []).map((record) => ({
+    type: record.recordType,
+    barangay: record.barangay,
+    amount: record.amount,
+    voided: record.voided,
+  }));
+
   // Ledger amounts are stored in centavos; the UI shows pesos.
-  const totalAllocated = sumAmountCentavos(syncedRecords, "allocation") / 100;
-  const totalSpent = sumAmountCentavos(syncedRecords, "expense") / 100;
+  const totalAllocated =
+    sumBarangayCentavos(ledgerEntries, "allocation", canonicalBarangay) / 100;
+  const totalSpent =
+    sumBarangayCentavos(ledgerEntries, "expense", canonicalBarangay) / 100;
   const percentageSpent =
     totalAllocated > 0 ? (totalSpent / totalAllocated) * 100 : 0;
   const availableFunds = totalAllocated - totalSpent;
+
+  // A zero ceiling means the contract does not cap this barangay.
+  const ceiling = Number(ceilingRaw ?? BigInt(0)) / 100;
+  const hasCeiling = ceiling > 0;
+  const ceilingUsedPct = hasCeiling ? (totalSpent / ceiling) * 100 : 0;
+  const overCeiling = hasCeiling && totalSpent > ceiling;
+  const remainingCeiling = Math.max(ceiling - totalSpent, 0);
+
   const pendingCount = projects.filter((p) => p.status === "Pending").length;
   const approvedCount = projects.filter((p) => p.status === "Approved").length;
   const today = new Date().toLocaleDateString("en-US", {
@@ -213,7 +250,10 @@ export default function SKDashboard() {
             <Plus className="h-4 w-4" />
             Propose New Project
           </button>
-              <button className="inline-flex items-center gap-2 rounded-xl border border-border bg-white px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-secondary">
+              <button
+                onClick={() => router.push("/sk_dashboard/reports")}
+                className="inline-flex items-center gap-2 rounded-xl border border-border bg-white px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-secondary"
+              >
                 <FileText className="h-4 w-4" />
                 View Ledger
               </button>
@@ -253,6 +293,125 @@ export default function SKDashboard() {
           />
         </div>
 
+        {/* SPENDING VS CEILING */}
+        <Card>
+          <CardHeader
+            eyebrow="Allocation ceiling"
+            title="Spending vs Ceiling"
+            subtitle={`On-chain spending cap for Barangay ${currentUser.barangay}`}
+            action={
+              <span
+                className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[10px] font-bold uppercase tracking-widest ${
+                  !hasCeiling
+                    ? "bg-secondary text-secondary-foreground"
+                    : overCeiling
+                      ? "bg-danger/10 text-danger"
+                      : "bg-success/10 text-success"
+                }`}
+              >
+                {hasCeiling && !overCeiling && (
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                )}
+                {overCeiling && <CircleAlert className="h-3.5 w-3.5" />}
+                {!hasCeiling
+                  ? "No ceiling set"
+                  : overCeiling
+                    ? "Over ceiling"
+                    : "Within ceiling"}
+              </span>
+            }
+          />
+
+          {isCeilingLoading ? (
+            <p className="text-sm font-bold text-secondary-foreground">
+              Loading the on-chain ceiling...
+            </p>
+          ) : !hasCeiling ? (
+            <div className="flex flex-col gap-4 rounded-2xl border border-dashed border-border bg-secondary/40 p-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-secondary-foreground">
+                  <Gauge className="h-5 w-5" />
+                </div>
+                <p className="text-sm font-medium text-secondary-foreground">
+                  No allocation ceiling has been set for this barangay, so
+                  spending is currently uncapped.
+                </p>
+              </div>
+              <button
+                onClick={() => router.push("/sk_dashboard/ceiling")}
+                className="inline-flex shrink-0 items-center gap-1 rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-white transition hover:bg-primary/90"
+              >
+                Set a ceiling <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-5">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <div className="rounded-2xl border border-border bg-secondary/40 p-5">
+                  <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
+                    Ceiling
+                  </p>
+                  <p className="text-lg font-bold tracking-tight text-primary-foreground">
+                    {formatCurrency(ceiling)}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-border bg-secondary/40 p-5">
+                  <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
+                    Spent
+                  </p>
+                  <p
+                    className={`text-lg font-bold tracking-tight ${
+                      overCeiling ? "text-danger" : "text-primary-foreground"
+                    }`}
+                  >
+                    {formatCurrency(totalSpent)}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-border bg-secondary/40 p-5">
+                  <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
+                    Remaining
+                  </p>
+                  <p className="text-lg font-bold tracking-tight text-primary-foreground">
+                    {formatCurrency(remainingCeiling)}
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="h-3 overflow-hidden rounded-full bg-secondary">
+                  <div
+                    className={`h-full rounded-full transition-all ${
+                      overCeiling
+                        ? "bg-danger"
+                        : ceilingUsedPct >= 80
+                          ? "bg-pending"
+                          : "bg-primary"
+                    }`}
+                    style={{
+                      width: `${Math.min(Math.max(ceilingUsedPct, 0), 100)}%`,
+                    }}
+                  />
+                </div>
+                <p
+                  className={`text-xs font-medium ${
+                    overCeiling ? "text-danger" : "text-secondary-foreground"
+                  }`}
+                >
+                  {overCeiling
+                    ? `Spending is ${formatCurrency(
+                        totalSpent - ceiling,
+                      )} over the ceiling. Raise the ceiling before logging more expenses.`
+                    : `${ceilingUsedPct.toFixed(
+                        0,
+                      )}% of the ceiling committed · ${formatCurrency(
+                        remainingCeiling,
+                      )} left`}
+                </p>
+              </div>
+            </div>
+          )}
+        </Card>
+
         {/* ACTIVE PROPOSALS */}
         <Card>
           <CardHeader
@@ -260,7 +419,10 @@ export default function SKDashboard() {
             title="Active Proposals"
             subtitle="Recent entries in the ledger"
             action={
-              <button className="inline-flex items-center gap-1 rounded-xl bg-secondary px-4 py-2 text-xs font-bold uppercase tracking-widest text-primary transition hover:bg-secondary-foreground/10">
+              <button
+                onClick={() => router.push("/sk_dashboard/projects")}
+                className="inline-flex items-center gap-1 rounded-xl bg-secondary px-4 py-2 text-xs font-bold uppercase tracking-widest text-primary transition hover:bg-secondary-foreground/10"
+              >
                 View All <ChevronRight className="h-4 w-4" />
               </button>
             }
@@ -268,9 +430,10 @@ export default function SKDashboard() {
 
           <div className="space-y-4">
             {projects.map((p) => (
-              <div
+              <Link
                 key={p.id}
-                className="flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-2xl border border-border bg-secondary/40 p-5 transition-all group hover:bg-secondary"
+                href={`/sk_dashboard/bids/${p.id}`}
+                className="flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-2xl border border-border bg-secondary/40 p-5 transition-all group hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
               >
                 <div className="flex items-center gap-5 md:w-1/3">
                   <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-border bg-white text-secondary-foreground shadow-sm transition-colors group-hover:text-primary">
@@ -323,7 +486,9 @@ export default function SKDashboard() {
                     {formatCurrency(p.budget)}
                   </span>
                 </div>
-              </div>
+
+                <ChevronRight className="hidden h-5 w-5 shrink-0 text-secondary-foreground transition-colors group-hover:text-primary md:block" />
+              </Link>
             ))}
 
             {projects.length === 0 && (

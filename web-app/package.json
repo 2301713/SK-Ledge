@@ -8,6 +8,7 @@
     "start": "next start",
     "test": "vitest run",
     "test:watch": "vitest",
+    "verify:journey": "node scripts/verify-journey.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "eslint"
   },

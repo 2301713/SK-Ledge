@@ -16,6 +16,9 @@
 # Typechain output
 /types
 
+# E2E evidence output
+/e2e-evidence.json
+
 # Environment files
 .env
 .env.*

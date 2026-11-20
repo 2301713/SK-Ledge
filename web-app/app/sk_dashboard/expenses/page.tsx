@@ -1,7 +1,7 @@
 "use client";
 
 import LogoLoader from "@/components/LogoLoader";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import SideBar from "@/components/dashboard/SideBar";
 import TopBar from "@/components/dashboard/ui/TopBar";
@@ -11,6 +11,7 @@ import { supabase } from "@/lib/supabase";
 import { UserAccount } from "@/lib/useAuthStore";
 import { useToast } from "@/lib/useToast";
 import {
+  useReadContract,
   useWriteContract,
   useWaitForTransactionReceipt,
   useAccount,
@@ -19,6 +20,7 @@ import {
 import { CONTRACT_ADDRESS, SK_LEDGE_ABI } from "@/lib/contractConfig";
 import { syncRecord } from "@/lib/syncRecord";
 import { canonicalizeBarangay } from "@/lib/batangasBarangays";
+import { sumBarangayCentavos } from "@/lib/spending";
 import {
   RECEIPT_MAX_FILES,
   buildReceiptUrl,
@@ -35,6 +37,7 @@ import {
   PhilippinePeso,
   Loader2,
   ExternalLink,
+  AlertTriangle,
 } from "lucide-react";
 
 interface ExpenseForm {
@@ -77,6 +80,12 @@ const CATEGORIES = [
 const inputClass =
   "w-full rounded-xl border border-border bg-white py-3 pl-10 pr-3 text-sm font-bold text-primary-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20";
 
+const formatPesoFromCentavos = (centavos: number | bigint) =>
+  `₱${(Number(centavos) / 100).toLocaleString("en-PH", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+
 // The live contract only supports this after the receipt-hash redeploy.
 const ONCHAIN_RECEIPT_HASH_ENABLED =
   process.env.NEXT_PUBLIC_ONCHAIN_RECEIPT_HASH_ENABLED === "true";
@@ -99,6 +108,51 @@ export default function ExpensesPage() {
   const { isLoading: isConfirming, isSuccess: isConfirmed } =
     useWaitForTransactionReceipt({ hash });
 
+  const canonicalBarangay = currentUser?.barangay
+    ? canonicalizeBarangay(currentUser.barangay)
+    : null;
+
+  const { data: ceilingRaw } = useReadContract({
+    address: CONTRACT_ADDRESS,
+    abi: SK_LEDGE_ABI,
+    functionName: "allocationCeilings",
+    args: canonicalBarangay ? [canonicalBarangay] : undefined,
+    query: { enabled: Boolean(canonicalBarangay) },
+  });
+
+  const { data: ledgerRecords, refetch: refetchLedgerRecords } =
+    useReadContract({
+      address: CONTRACT_ADDRESS,
+      abi: SK_LEDGE_ABI,
+      functionName: "getAllRecords",
+      query: { enabled: Boolean(canonicalBarangay) },
+    });
+
+  // The contract caps allocation records only, so spending against the ceiling
+  // is derived from the ledger's non-voided expense records for this barangay.
+  const spentCentavos = useMemo<number | null>(() => {
+    if (!canonicalBarangay || !ledgerRecords) return null;
+
+    return sumBarangayCentavos(
+      ledgerRecords.map((record) => ({
+        type: record.recordType,
+        barangay: record.barangay,
+        amount: record.amount,
+        voided: record.voided,
+      })),
+      "expense",
+      canonicalBarangay,
+    );
+  }, [canonicalBarangay, ledgerRecords]);
+
+  const ceilingCentavos = Number(ceilingRaw ?? BigInt(0));
+  // A zero ceiling means the contract does not cap this barangay.
+  const hasCeiling = ceilingCentavos > 0;
+  const remainingCeilingCentavos =
+    spentCentavos === null
+      ? null
+      : Math.max(ceilingCentavos - spentCentavos, 0);
+
   const [form, setForm] = useState<ExpenseForm>({
     amount: "",
     vendor: "",
@@ -117,6 +171,24 @@ export default function ExpensesPage() {
     amount: number;
     purpose: string;
   } | null>(null);
+
+  const pendingExpenseCentavos = Number.isFinite(parseFloat(form.amount))
+    ? Math.round(parseFloat(form.amount) * 100)
+    : 0;
+  const ceilingExceeded =
+    hasCeiling &&
+    spentCentavos !== null &&
+    pendingExpenseCentavos > 0 &&
+    pendingExpenseCentavos + spentCentavos > ceilingCentavos;
+  const ceilingBlockMessage = ceilingExceeded
+    ? `This expense of ${formatPesoFromCentavos(
+        pendingExpenseCentavos,
+      )} would bring ${canonicalBarangay}'s spending to ${formatPesoFromCentavos(
+        (spentCentavos ?? 0) + Math.max(pendingExpenseCentavos, 0),
+      )}, above its ${formatPesoFromCentavos(
+        ceilingCentavos,
+      )} allocation ceiling. Lower the amount or raise the ceiling before logging it.`
+    : "";
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -294,6 +366,13 @@ export default function ExpensesPage() {
       return;
     }
 
+    if (ceilingExceeded) {
+      toast.error(
+        "This expense would push spending past the barangay's allocation ceiling.",
+      );
+      return;
+    }
+
     try {
       pendingReceiptsRef.current = [...receipts];
       setStoredReceipts([]);
@@ -357,6 +436,7 @@ export default function ExpensesPage() {
     });
     setReceipts([]);
     setSynced(true);
+    void refetchLedgerRecords();
 
     toast.success("Expense logged on blockchain!");
 
@@ -482,7 +562,7 @@ export default function ExpensesPage() {
         );
       }
     })();
-  }, [isConfirmed, hash, currentUser, address, toast]);
+  }, [isConfirmed, hash, currentUser, address, toast, refetchLedgerRecords]);
 
   if (isLoading) return <LogoLoader />;
 
@@ -695,11 +775,34 @@ export default function ExpensesPage() {
             )}
           </Card>
 
+          {/* CEILING GUARD */}
+          {hasCeiling && remainingCeilingCentavos !== null && (
+            <div className="space-y-3">
+              <p className="text-right text-xs font-medium text-secondary-foreground">
+                Ceiling {formatPesoFromCentavos(ceilingCentavos)} · Spent{" "}
+                {formatPesoFromCentavos(spentCentavos ?? BigInt(0))} · Remaining{" "}
+                {formatPesoFromCentavos(remainingCeilingCentavos)}
+              </p>
+
+              {ceilingExceeded && (
+                <div
+                  role="alert"
+                  className="flex items-start gap-2 rounded-xl border border-danger/30 bg-danger/10 p-4 text-xs font-medium text-danger"
+                >
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                  <span className="break-words">{ceilingBlockMessage}</span>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* SUBMIT BUTTON */}
           <div className="flex justify-end">
             <button
               type="submit"
-              disabled={isWritePending || isConfirming || !isConnected}
+              disabled={
+                isWritePending || isConfirming || !isConnected || ceilingExceeded
+              }
               className="flex items-center gap-2 rounded-xl bg-primary px-8 py-3 text-sm font-bold text-white shadow-[0_6px_16px_-6px_rgba(1,56,168,0.5)] transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:bg-secondary-foreground/30"
             >
               {isWritePending ? (

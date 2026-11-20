@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import {
+  AlertTriangle,
   ArrowLeft,
   Building2,
   Calendar,
@@ -24,6 +25,8 @@ import { supabase } from '@/lib/supabase';
 import { UserAccount } from '@/lib/useAuthStore';
 import { SK_LEDGE_ABI, CONTRACT_ADDRESS } from '@/lib/contractConfig';
 import { syncRecord } from '@/lib/syncRecord';
+import { describeWalletError } from '@/lib/walletErrors';
+import { canonicalizeBarangay } from '@/lib/batangasBarangays';
 import TopBar from '@/components/dashboard/ui/TopBar';
 import PageHeader from '@/components/dashboard/ui/PageHeader';
 import { Card } from '@/components/dashboard/ui/Card';
@@ -75,6 +78,12 @@ export default function BidsPage({ params }: { params: Promise<{ projectId: stri
   const [userRole, setUserRole] = useState<string>('');
   const [selectedBidId, setSelectedBidId] = useState<string | null>(null);
   const [openingProposalId, setOpeningProposalId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  // The ledger only accepts registered canonical barangay names.
+  const projectBarangay = project?.location
+    ? canonicalizeBarangay(project.location)
+    : null;
   const [proposalPreview, setProposalPreview] = useState<{
     url: string;
     vendorName: string;
@@ -88,8 +97,23 @@ export default function BidsPage({ params }: { params: Promise<{ projectId: stri
     query: { enabled: !!address },
   });
 
-  const { data: txHash, writeContract, isPending } = useWriteContract();
-  const { isSuccess: isTxConfirmed } = useWaitForTransactionReceipt({ hash: txHash });
+  const {
+    data: txHash,
+    writeContract,
+    isPending,
+    error: writeError,
+    reset: resetWrite,
+  } = useWriteContract();
+  const {
+    isSuccess: isTxConfirmed,
+    error: receiptError,
+  } = useWaitForTransactionReceipt({ hash: txHash });
+
+  const txError =
+    writeError || receiptError
+      ? describeWalletError(receiptError ?? writeError)
+      : null;
+  const displayedError = actionError ?? txError;
 
   const loadBids = useCallback(async () => {
     const { data: projData } = await supabase
@@ -185,10 +209,23 @@ export default function BidsPage({ params }: { params: Promise<{ projectId: stri
   };
 
   const initiateAward = async (bid: Bid) => {
+    setActionError(null);
+
     if (!isAuthorized) {
-      alert('Your connected wallet is not authorized as an SK Official.');
+      setActionError(
+        'Your connected wallet is not authorized as an SK official on the contract. Ask the contract owner to authorize it.',
+      );
       return;
     }
+
+    if (!projectBarangay) {
+      setActionError(
+        'This project has no registered barangay on record, so the award cannot be written to the ledger. Set the project location to a canonical Batangas barangay first.',
+      );
+      return;
+    }
+
+    resetWrite();
     setSelectedBidId(bid.id);
 
     writeContract({
@@ -196,7 +233,7 @@ export default function BidsPage({ params }: { params: Promise<{ projectId: stri
       abi: SK_LEDGE_ABI,
       functionName: 'addRecord',
       args: [
-        project?.location || 'Barangay',
+        projectBarangay,
         BigInt(Math.round(Number(bid.amount_php) * 100)),
         `Award: ${project?.name} to ${bid.vendor_name}`,
         'Award',
@@ -237,13 +274,14 @@ export default function BidsPage({ params }: { params: Promise<{ projectId: stri
         blockchain_tx_hash: txHash,
         contract_address: CONTRACT_ADDRESS,
         official_address: address ?? '',
-        barangay: project.location || 'Barangay',
+        barangay: projectBarangay ?? '',
         amount: Math.round(Number(winningBid.amount_php) * 100),
         purpose: `Award: ${project?.name} to ${winningBid.vendor_name}`,
         project_id: String(project.id),
       }).catch((err) => console.error('Failed to sync award record:', err));
 
       setSelectedBidId(null);
+      setActionError(null);
       await loadBids();
     };
 
@@ -258,9 +296,11 @@ export default function BidsPage({ params }: { params: Promise<{ projectId: stri
   };
 
   const openProposal = async (bid: Bid) => {
+    setActionError(null);
+
     const path = resolveProposalPath(bid);
     if (!path) {
-      alert('No proposal document is attached to this bid.');
+      setActionError('No proposal document is attached to this bid.');
       return;
     }
 
@@ -281,7 +321,7 @@ export default function BidsPage({ params }: { params: Promise<{ projectId: stri
       link.rel = 'noreferrer';
       link.click();
     } catch (err) {
-      alert(
+      setActionError(
         err instanceof Error
           ? err.message
           : 'Could not open the proposal document.',
@@ -362,6 +402,16 @@ export default function BidsPage({ params }: { params: Promise<{ projectId: stri
                     </p>
                   </>
                 )}
+              </div>
+            )}
+
+            {displayedError && (
+              <div
+                role="alert"
+                className="flex items-start gap-2 rounded-xl border border-danger/30 bg-danger/10 p-4 text-xs font-medium text-danger"
+              >
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                <span className="break-words">{displayedError}</span>
               </div>
             )}
 

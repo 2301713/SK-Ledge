@@ -257,11 +257,17 @@ export default function COADashboard() {
           subtitle={`${today} · ${pendingApprovalCount} pending approvals and ${pendingDisbursementCount} pending disbursements across municipal jurisdictions.`}
           actions={
             <>
-              <button className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white shadow-[0_6px_16px_-6px_rgba(1,56,168,0.5)] transition hover:bg-primary/90">
+              <button
+                onClick={() => router.push("/coa_dashboard/approvals")}
+                className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white shadow-[0_6px_16px_-6px_rgba(1,56,168,0.5)] transition hover:bg-primary/90"
+              >
                 <CheckSquare className="h-4 w-4" />
                 Review Approvals
               </button>
-              <button className="inline-flex items-center gap-2 rounded-xl border border-border bg-white px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-secondary">
+              <button
+                onClick={() => router.push("/coa_dashboard/disbursements")}
+                className="inline-flex items-center gap-2 rounded-xl border border-border bg-white px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-secondary"
+              >
                 <FileText className="h-4 w-4" />
                 Review Disbursements
               </button>

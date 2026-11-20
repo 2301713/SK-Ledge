@@ -5,12 +5,16 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "scheme": "skledgemobile",
+    "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.skledge.mobile"
     },
     "android": {
+      "package": "com.skledge.mobile",
       "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#E6F4FE"
       },
       "predictiveBackGestureEnabled": false

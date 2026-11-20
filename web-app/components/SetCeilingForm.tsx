@@ -1,8 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import {
+  useAccount,
+  useReadContract,
+  useWriteContract,
+  useWaitForTransactionReceipt,
+} from "wagmi";
 import { CONTRACT_ADDRESS, SK_LEDGE_ABI } from "@/lib/contractConfig";
+import { describeWalletError } from "@/lib/walletErrors";
 import { Settings, Loader2, CheckCircle2, AlertTriangle } from "lucide-react";
 import {
   BATANGAS_BARANGAY_IDENTITIES,
@@ -26,7 +32,46 @@ export default function SetCeilingForm({ barangay }: SetCeilingFormProps) {
       )
     : undefined;
 
-  const { data: hash, writeContract, isPending, error } = useWriteContract();
+  const { address } = useAccount();
+
+  const { data: ownerAddress } = useReadContract({
+    address: CONTRACT_ADDRESS,
+    abi: SK_LEDGE_ABI,
+    functionName: "owner",
+  });
+
+  const { data: isAuthorizedForBarangay, isLoading: isAuthorizationLoading } =
+    useReadContract({
+      address: CONTRACT_ADDRESS,
+      abi: SK_LEDGE_ABI,
+      functionName: "isOfficialAuthorizedForBarangay",
+      args:
+        canonicalBarangay && address
+          ? [address, canonicalBarangay]
+          : undefined,
+      query: { enabled: Boolean(canonicalBarangay && address) },
+    });
+
+  const isOwner = Boolean(
+    address &&
+      ownerAddress &&
+      address.toLowerCase() === ownerAddress.toLowerCase(),
+  );
+  // The contract also lets the owner set any ceiling; the per-barangay check
+  // only covers delegated officials.
+  const canSetCeiling = isOwner || isAuthorizedForBarangay === true;
+  const authorizationKnown =
+    Boolean(ownerAddress) && !isAuthorizationLoading && Boolean(address);
+  const showAuthorizationError =
+    Boolean(address) && authorizationKnown && !canSetCeiling;
+
+  const {
+    data: hash,
+    writeContract,
+    isPending,
+    error,
+    reset,
+  } = useWriteContract();
 
   const { isLoading: isConfirming, isSuccess: isConfirmed } =
     useWaitForTransactionReceipt({
@@ -35,7 +80,8 @@ export default function SetCeilingForm({ barangay }: SetCeilingFormProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!canonicalBarangay || !ceiling) return;
+    reset();
+    if (!canonicalBarangay || !ceiling || showAuthorizationError) return;
 
     writeContract({
       address: CONTRACT_ADDRESS,
@@ -113,9 +159,28 @@ export default function SetCeilingForm({ barangay }: SetCeilingFormProps) {
         </div>
       </div>
 
+      {!address && (
+        <div className="flex items-start gap-2 rounded-xl border border-pending/30 bg-pending/10 p-3.5 text-xs font-medium text-pending">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>Connect your wallet to set this barangay&apos;s ceiling.</span>
+        </div>
+      )}
+
+      {showAuthorizationError && (
+        <div className="flex items-start gap-2 rounded-xl border border-danger/30 bg-danger/10 p-3.5 text-xs font-medium text-danger">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>
+            This wallet is not authorized to set the ceiling for{" "}
+            {canonicalBarangay}. Only the contract owner or an authorized
+            official of this barangay can do that. Ask the contract owner to
+            authorize your wallet for {canonicalBarangay} first.
+          </span>
+        </div>
+      )}
+
       <button
         type="submit"
-        disabled={isPending || isConfirming}
+        disabled={isPending || isConfirming || !address || showAuthorizationError}
         className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-bold tracking-wide text-white shadow-[0_6px_16px_-6px_rgba(1,56,168,0.5)] transition-all hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20 active:scale-95 disabled:cursor-not-allowed disabled:bg-secondary-foreground/30 md:w-auto"
       >
         {isPending || isConfirming ? (
@@ -139,9 +204,10 @@ export default function SetCeilingForm({ barangay }: SetCeilingFormProps) {
         <div className="flex items-start gap-2 rounded-xl border border-danger/30 bg-danger/10 p-3.5 text-xs font-medium text-danger">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <span className="break-words">
-            {error.message.includes("User rejected")
-              ? "Transaction was rejected in MetaMask."
-              : "Transaction failed. Please ensure your wallet address is authorized as Contract Owner or Federation Official."}
+            {describeWalletError(
+              error,
+              "The ceiling update failed. Please try again.",
+            )}
           </span>
         </div>
       )}

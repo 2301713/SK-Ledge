@@ -1,7 +1,7 @@
 "use client";
 
 import LogoLoader from "@/components/LogoLoader";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import SideBar from "@/components/dashboard/SideBar";
 import TopBar from "@/components/dashboard/ui/TopBar";
 import PageHeader from "@/components/dashboard/ui/PageHeader";
@@ -14,6 +14,7 @@ import { useAuthStore } from "@/lib/useAuthStore";
 import { useRecordsSync } from "@/lib/useRecordsSync";
 import { useToast } from "@/lib/useToast";
 import AuditReviewModal from "@/components/coa/AuditReviewModal";
+import { downloadCsv } from "@/lib/downloadCsv";
 import {
   AUDIT_COMPLIANCE_LABELS,
   AUDIT_STATUS_LABELS,
@@ -23,7 +24,6 @@ import {
   Download,
   Eye,
   FileText,
-  MoreHorizontal,
   ShieldCheck,
   BadgeCheck,
   AlertTriangle,
@@ -146,36 +146,44 @@ export default function DisbursementsPage() {
     limit: 500,
   });
 
-  const loadAudits = useCallback(async () => {
-    try {
-      const { data, error: auditsError } = await supabase
-        .from("expense_audits")
-        .select("id, expense_id, reviewed_by, status, findings, created_at")
-        .order("created_at", { ascending: false })
-        .limit(500);
-
-      if (auditsError) {
-        throw new Error(auditsError.message);
-      }
-
-      const latestByExpense: Record<string, ExpenseAudit> = {};
-      for (const audit of (data ?? []) as ExpenseAudit[]) {
-        if (!latestByExpense[audit.expense_id]) {
-          latestByExpense[audit.expense_id] = audit;
-        }
-      }
-
-      setAudits(latestByExpense);
-    } catch (err) {
-      console.error("Failed to load expense audits:", err);
-    }
-  }, []);
-
   useEffect(() => {
-    if (currentUser) {
-      void loadAudits();
-    }
-  }, [currentUser, loadAudits]);
+    if (!currentUser) return;
+
+    let cancelled = false;
+
+    const loadAudits = async () => {
+      try {
+        const { data, error: auditsError } = await supabase
+          .from("expense_audits")
+          .select("id, expense_id, reviewed_by, status, findings, created_at")
+          .order("created_at", { ascending: false })
+          .limit(500);
+
+        if (auditsError) {
+          throw new Error(auditsError.message);
+        }
+
+        const latestByExpense: Record<string, ExpenseAudit> = {};
+        for (const audit of (data ?? []) as ExpenseAudit[]) {
+          if (!latestByExpense[audit.expense_id]) {
+            latestByExpense[audit.expense_id] = audit;
+          }
+        }
+
+        if (!cancelled) {
+          setAudits(latestByExpense);
+        }
+      } catch (err) {
+        console.error("Failed to load expense audits:", err);
+      }
+    };
+
+    void loadAudits();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentUser]);
 
   const disbursements = useMemo<DisbursementItem[]>(() => {
     return records.map((item): DisbursementItem => {
@@ -234,6 +242,35 @@ export default function DisbursementsPage() {
       style: "currency",
       currency: "PHP",
     }).format(amount);
+  };
+
+  const exportReport = () => {
+    downloadCsv("coa-pending-disbursements.csv", [
+      [
+        "DV Reference",
+        "Payee",
+        "Barangay",
+        "Category",
+        "Amount (PHP)",
+        "Submitted",
+        "Documents",
+        "Audit status",
+        "Findings",
+        "Transaction",
+      ],
+      ...filtered.map((item) => [
+        item.id,
+        item.payee,
+        item.brgy,
+        item.category,
+        item.amount.toFixed(2),
+        item.dateSubmitted,
+        item.compliance,
+        item.audit ? AUDIT_STATUS_LABELS[item.audit.status] : "Not reviewed",
+        item.audit?.findings ?? "",
+        item.txHash ?? "",
+      ]),
+    ]);
   };
 
   const cleanCount = disbursements.filter(
@@ -308,7 +345,12 @@ export default function DisbursementsPage() {
           title="Pending Disbursements"
           subtitle="Review live blockchain-verified vouchers, verify supporting documents, and conduct audit actions."
           actions={
-            <button className="inline-flex items-center gap-2 rounded-xl border border-border bg-white px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-secondary">
+            <button
+              type="button"
+              onClick={exportReport}
+              disabled={filtered.length === 0}
+              className="inline-flex items-center gap-2 rounded-xl border border-border bg-white px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50"
+            >
               <Download className="h-4 w-4" />
               Export Report
             </button>
@@ -466,9 +508,6 @@ export default function DisbursementsPage() {
                               title="Review Vouchers"
                             >
                               <Eye className="h-4 w-4" />
-                            </button>
-                            <button className="rounded-xl p-2 text-secondary-foreground transition hover:bg-secondary">
-                              <MoreHorizontal className="h-4 w-4" />
                             </button>
                             <button
                               type="button"
