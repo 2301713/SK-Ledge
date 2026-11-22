@@ -216,8 +216,12 @@ export default function SKDashboard() {
   const overCeiling = hasCeiling && totalSpent > ceiling;
   const remainingCeiling = Math.max(ceiling - totalSpent, 0);
 
-  const pendingCount = projects.filter((p) => p.status === "Pending").length;
-  const approvedCount = projects.filter((p) => p.status === "Approved").length;
+  const pendingCount = projects.filter(
+    (p) => p.status === "Proposed" || p.status === "Pending",
+  ).length;
+  const approvedCount = projects.filter((p) =>
+    ["Approved", "Open for Bidding", "Awarded", "Completed"].includes(p.status),
+  ).length;
   const today = new Date().toLocaleDateString("en-US", {
     weekday: "long",
     year: "numeric",
@@ -243,16 +247,18 @@ export default function SKDashboard() {
         <PageHeader
           eyebrow={`Barangay ${currentUser.barangay}`}
           title={`Welcome back, ${currentUser.full_name.split(" ")[0]}!`}
-          subtitle={`${today} · ${pendingCount} project(s) pending approval and the fiscal year budget is operating at optimal capacity.`}
+          subtitle={`${today} · ${pendingCount} project(s) awaiting official approval and ${approvedCount} approved or beyond.`}
           actions={
             <>
-              <button
-                onClick={() => router.push("/sk_dashboard/projects")}
-                className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white shadow-[0_6px_16px_-6px_rgba(1,56,168,0.5)] transition hover:bg-primary/90"
-              >
-            <Plus className="h-4 w-4" />
-            Propose New Project
-          </button>
+              {currentUser.role_type === "SK_Chairperson" && (
+                <button
+                  onClick={() => router.push("/sk_dashboard/projects")}
+                  className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white shadow-[0_6px_16px_-6px_rgba(1,56,168,0.5)] transition hover:bg-primary/90"
+                >
+                  <Plus className="h-4 w-4" />
+                  Propose New Project
+                </button>
+              )}
               <button
                 onClick={() => router.push("/sk_dashboard/reports")}
                 className="inline-flex items-center gap-2 rounded-xl border border-border bg-white px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-secondary"
@@ -340,12 +346,18 @@ export default function SKDashboard() {
                   spending is currently uncapped.
                 </p>
               </div>
-              <button
-                onClick={() => router.push("/sk_dashboard/ceiling")}
-                className="inline-flex shrink-0 items-center gap-1 rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-white transition hover:bg-primary/90"
-              >
-                Set a ceiling <ChevronRight className="h-4 w-4" />
-              </button>
+              {currentUser.role_type === "SK_Treasurer" ? (
+                <button
+                  onClick={() => router.push("/sk_dashboard/ceiling")}
+                  className="inline-flex shrink-0 items-center gap-1 rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-white transition hover:bg-primary/90"
+                >
+                  Set a ceiling <ChevronRight className="h-4 w-4" />
+                </button>
+              ) : (
+                <p className="shrink-0 text-xs font-semibold text-secondary-foreground">
+                  Budget ceilings are set by your SK Treasurer.
+                </p>
+              )}
             </div>
           ) : (
             <div className="space-y-5">
@@ -422,12 +434,14 @@ export default function SKDashboard() {
             title="Active Proposals"
             subtitle="Recent entries in the ledger"
             action={
-              <button
-                onClick={() => router.push("/sk_dashboard/projects")}
-                className="inline-flex items-center gap-1 rounded-xl bg-secondary px-4 py-2 text-xs font-bold uppercase tracking-widest text-primary transition hover:bg-secondary-foreground/10"
-              >
-                View All <ChevronRight className="h-4 w-4" />
-              </button>
+              currentUser.role_type === "SK_Chairperson" ? (
+                <button
+                  onClick={() => router.push("/sk_dashboard/projects")}
+                  className="inline-flex items-center gap-1 rounded-xl bg-secondary px-4 py-2 text-xs font-bold uppercase tracking-widest text-primary transition hover:bg-secondary-foreground/10"
+                >
+                  View All <ChevronRight className="h-4 w-4" />
+                </button>
+              ) : null
             }
           />
 
@@ -464,17 +478,19 @@ export default function SKDashboard() {
                 <div className="md:w-1/4">
                   <span
                     className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[10px] font-bold uppercase tracking-widest ${
-                      p.status === "Approved"
+                      ["Approved", "Open for Bidding", "Awarded", "Completed"].includes(
+                        p.status,
+                      )
                         ? "bg-success/10 text-success"
-                        : p.status === "Pending"
+                        : p.status === "Proposed" || p.status === "Pending"
                           ? "bg-pending/10 text-pending"
                           : "bg-danger/10 text-danger"
                     }`}
                   >
-                    {p.status === "Approved" && (
-                      <CheckCircle2 className="h-3.5 w-3.5" />
-                    )}
-                    {p.status === "Pending" && (
+                    {["Approved", "Open for Bidding", "Awarded", "Completed"].includes(
+                      p.status,
+                    ) && <CheckCircle2 className="h-3.5 w-3.5" />}
+                    {(p.status === "Proposed" || p.status === "Pending") && (
                       <Clock className="h-3.5 w-3.5" />
                     )}
                     {p.status}

@@ -208,10 +208,10 @@ describe("POST /api/vendors profile persistence", () => {
       barangay: "N/A",
       approval_status: "pending",
       avatar_url: "https://cdn.example/logo.png",
+      company_name: "Acme Trading",
     });
 
-    const vendor = db().upserted.find((entry) => entry.table === "vendors");
-    expect(vendor?.row).toEqual({ id: USER_ID, company_name: "Acme Trading" });
+    expect(db().upserted).toEqual([]);
   });
 
   it("falls back to the email prefix and company name", async () => {
@@ -274,6 +274,7 @@ describe("POST /api/vendors profile persistence", () => {
           avatar_url: null,
           role_type: "Vendor",
           barangay: "N/A",
+          company_name: "Acme Trading",
         },
       },
     ]);
@@ -287,14 +288,5 @@ describe("POST /api/vendors profile persistence", () => {
 
     expect(status).toBe(500);
     expect(body.error).toBe("Failed to save vendor profile.");
-  });
-
-  it("returns 500 when the vendor company cannot be saved", async () => {
-    db().errors["vendors:upsert"] = { code: "XX000" };
-
-    const { status, body } = await call({ company_name: "Acme Trading" });
-
-    expect(status).toBe(500);
-    expect(body.error).toBe("Failed to save vendor company.");
   });
 });

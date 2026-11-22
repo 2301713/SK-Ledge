@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Search,
   ExternalLink,
@@ -7,7 +8,8 @@ import {
   ChevronDown,
 } from "lucide-react";
 import StatusBadge from "./StatusBadge";
-import { StatusType } from "../../app/public_portal/types";
+
+const PAGE_SIZE = 10;
 
 export interface Project {
   id?: string;
@@ -23,6 +25,7 @@ export interface Project {
   budget?: number | string;
   amount?: number | string;
   status?: string;
+  is_open_for_bidding?: boolean;
   transaction_hash?: string;
   tx_hash?: string;
 }
@@ -44,6 +47,23 @@ export default function ProjectRegistry({
   barangayOptions,
   filteredProjects,
 }: ProjectRegistryProps) {
+  const [page, setPage] = useState(1);
+  const [prevSearch, setPrevSearch] = useState(searchQuery);
+  const [prevBarangay, setPrevBarangay] = useState(barangayFilter);
+
+  if (searchQuery !== prevSearch || barangayFilter !== prevBarangay) {
+    setPrevSearch(searchQuery);
+    setPrevBarangay(barangayFilter);
+    setPage(1);
+  }
+
+  const totalPages = Math.max(1, Math.ceil(filteredProjects.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const paginatedProjects = filteredProjects.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE,
+  );
+
   return (
     <section id="project-registry" className="scroll-mt-24 px-4 pb-12 sm:px-6">
       <div className="max-w-7xl mx-auto">
@@ -152,7 +172,7 @@ export default function ProjectRegistry({
                     </td>
                   </tr>
                 ) : (
-                  filteredProjects.map((p, idx) => {
+                  paginatedProjects.map((p, idx) => {
                     const projectName = p.name || p.title || "Untitled Project";
                     const projectCategory = p.category || "General";
                     const location = p.barangay || p.location || "N/A";
@@ -215,7 +235,11 @@ export default function ProjectRegistry({
                         {/* Status */}
                         <td className="px-6 py-4 text-center">
                           <StatusBadge
-                            status={(p.status as StatusType) || "Pending"}
+                            status={
+                              p.status === "Approved" && p.is_open_for_bidding
+                                ? "Open for Bidding"
+                                : p.status || "Proposed"
+                            }
                           />
                         </td>
 
@@ -246,15 +270,47 @@ export default function ProjectRegistry({
           </div>
 
           {/* Footer count */}
-          <div className="flex items-center justify-between border-t border-border bg-secondary/20 px-6 py-4 sm:px-7">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border bg-secondary/20 px-6 py-4 sm:px-7">
             <p className="text-[10px] font-semibold uppercase tracking-widest text-secondary-foreground">
-              Showing {filteredProjects.length} records
+              {filteredProjects.length === 0
+                ? "Showing 0 records"
+                : `Showing ${(currentPage - 1) * PAGE_SIZE + 1}-${Math.min(
+                    currentPage * PAGE_SIZE,
+                    filteredProjects.length,
+                  )} of ${filteredProjects.length} records`}
               {barangayFilter ? ` in ${barangayFilter}` : ""}
             </p>
-            <p className="hidden items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-secondary-foreground sm:flex">
-              <span className="h-1.5 w-1.5 rounded-full bg-success" />
-              Synced from Supabase
-            </p>
+
+            {totalPages > 1 ? (
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className="rounded-lg border border-border bg-white px-3 py-1.5 text-xs font-bold text-primary-foreground transition hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Previous
+                </button>
+                <span className="text-xs font-bold tabular-nums text-secondary-foreground">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setPage((prev) => Math.min(totalPages, prev + 1))
+                  }
+                  disabled={currentPage === totalPages}
+                  className="rounded-lg border border-border bg-white px-3 py-1.5 text-xs font-bold text-primary-foreground transition hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Next
+                </button>
+              </div>
+            ) : (
+              <p className="hidden items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-secondary-foreground sm:flex">
+                <span className="h-1.5 w-1.5 rounded-full bg-success" />
+                Synced from Supabase
+              </p>
+            )}
           </div>
         </div>
       </div>

@@ -99,7 +99,7 @@ beforeEach(() => {
       id: "7",
       name: "Barangay Sports Fest",
       location: "Adia",
-      status: "Open for Bidding",
+      status: "Approved",
       award_tx_hash: null,
     },
   ];

@@ -12,6 +12,10 @@ import { useAuthStore, UserAccount } from "@/lib/useAuthStore";
 import { AlertCircle, UserCircle, Pencil } from "lucide-react";
 import { useToast } from "@/lib/useToast";
 import { WalletBinding } from "@/components/WalletBinding";
+import {
+  isValidContactNumber,
+  normalizeContactNumber,
+} from "@/lib/contactNumber";
 
 export default function AccountPage() {
   const toast = useToast();
@@ -51,7 +55,7 @@ export default function AccountPage() {
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .select(
-            "id, username, full_name, role_type, barangay, email, approval_status, avatar_url, wallet_address",
+            "id, username, full_name, role_type, barangay, email, contact_number, approval_status, avatar_url, wallet_address",
           )
           .eq("id", user.id)
           .single();
@@ -68,6 +72,7 @@ export default function AccountPage() {
             role_type: profileData.role_type as "Chairman" | "Treasurer",
             barangay: profileData.barangay || "No Barangay Assigned",
             email: profileData.email,
+            contact_number: profileData.contact_number || null,
             approval_status: profileData.approval_status,
             avatar_url: profileData.avatar_url || undefined,
             wallet_address: profileData.wallet_address || null,
@@ -80,6 +85,7 @@ export default function AccountPage() {
             full_name: profileData.full_name || "",
             role_type: profileData.role_type,
             barangay: profileData.barangay || "N/A",
+            contact_number: profileData.contact_number || null,
             avatar_url: profileData.avatar_url || undefined,
             wallet_address: profileData.wallet_address || null,
           });
@@ -104,6 +110,14 @@ export default function AccountPage() {
     }
   };
 
+  const handleContactNumberChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    if (userProfile) {
+      setUserProfile({ ...userProfile, contact_number: e.target.value });
+    }
+  };
+
   const handleSave = async () => {
     if (!userProfile) return;
 
@@ -111,10 +125,24 @@ export default function AccountPage() {
     setError("");
     setSuccessMsg("");
 
+    const rawContact = (userProfile.contact_number || "").trim();
+    const contactNumber = rawContact
+      ? normalizeContactNumber(rawContact)
+      : null;
+
+    if (contactNumber && !isValidContactNumber(contactNumber)) {
+      setError("Enter a valid PH mobile number, e.g. 0917 123 4567.");
+      setIsSaving(false);
+      return;
+    }
+
     try {
       const { error: updateError } = await supabase
         .from("profiles")
-        .update({ full_name: userProfile.full_name })
+        .update({
+          full_name: userProfile.full_name,
+          contact_number: contactNumber,
+        })
         .eq("id", userProfile.id);
 
       if (updateError) throw updateError;
@@ -124,6 +152,7 @@ export default function AccountPage() {
         setCurrentUser({
           ...currentUser,
           full_name: userProfile.full_name,
+          contact_number: contactNumber,
         });
       }
 
@@ -301,6 +330,27 @@ export default function AccountPage() {
               )}
             </div>
 
+            {/* CONTACT NUMBER (Editable) */}
+            <div className="space-y-2">
+              <label className="ml-1 text-[10px] font-bold uppercase tracking-wider text-secondary-foreground">
+                Contact Number
+              </label>
+              {!isEditing ? (
+                <div className="rounded-xl border border-border bg-white px-4 py-3 text-sm font-bold text-primary-foreground">
+                  {userProfile?.contact_number || "Not provided"}
+                </div>
+              ) : (
+                <input
+                  type="tel"
+                  inputMode="tel"
+                  value={userProfile?.contact_number || ""}
+                  onChange={handleContactNumberChange}
+                  className={editableField}
+                  placeholder="0917 123 4567"
+                />
+              )}
+            </div>
+
             {/* USERNAME (Read-Only) */}
             <div className="space-y-2">
               <label className="ml-1 text-[10px] font-bold uppercase tracking-wider text-secondary-foreground">
@@ -352,6 +402,7 @@ export default function AccountPage() {
                       role_type: currentUser.role_type,
                       barangay: currentUser.barangay,
                       email: currentUser.email,
+                      contact_number: currentUser.contact_number,
                       approval_status: currentUser.approval_status,
                       avatar_url: currentUser.avatar_url,
                     });

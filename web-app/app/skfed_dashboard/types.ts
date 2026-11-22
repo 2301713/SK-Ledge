@@ -24,17 +24,11 @@ export interface LegendItemProps {
   budget: string | number;
 }
 
-export interface BroadcastMemoModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmitSuccess: () => void;
-}
-
 export type PendingEntry = {
   id: string;
   display_name: string;
   sub_label: string;
   role_type: string;
   barangay: string;
-  source: "profiles" | "vendors";
+  source: "profiles";
 };

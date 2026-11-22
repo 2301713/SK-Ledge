@@ -8,6 +8,7 @@ import {
   formatPeso,
   getErrorMessage,
   hasActiveBid,
+  isProjectApproved,
   type Project,
 } from "@/lib/projects";
 import * as DocumentPicker from "expo-document-picker";
@@ -25,7 +26,6 @@ import {
   ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
-  Platform,
   ScrollView,
   Text,
   TextInput,
@@ -78,6 +78,13 @@ export default function SubmitBidPage() {
 
         setProject(loadedProject);
 
+        if (!isProjectApproved(loadedProject)) {
+          setBlockedReason(
+            "This project has not been officially approved for bidding.",
+          );
+          setLoadState("blocked");
+          return;
+        }
         if (!loadedProject.acceptingBids) {
           setBlockedReason(
             "This procurement is no longer accepting proposals.",
@@ -327,7 +334,7 @@ export default function SubmitBidPage() {
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior="padding"
       >
         <ScrollView
           contentContainerStyle={{ padding: 24, paddingBottom: 120 }}

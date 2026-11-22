@@ -24,6 +24,7 @@ const DOCUMENT_KINDS = new Set([
   "receipt",
   "liquidation_report",
   "supporting_document",
+  "project_approval",
 ]);
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

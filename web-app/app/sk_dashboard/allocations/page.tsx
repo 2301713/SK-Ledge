@@ -77,11 +77,10 @@ export default function AllocationsPage() {
 
         if (!profileData) return;
 
-        if (
-          !["SK_Chairperson", "SK_Treasurer"].includes(profileData.role_type)
-        ) {
+        // Recording allocations is an SK Treasurer responsibility.
+        if (profileData.role_type !== "SK_Treasurer") {
           console.warn(
-            "Unauthorized access: Only SK officials can record allocations.",
+            "Unauthorized access: only the SK Treasurer can record allocations.",
           );
           router.push("/unauthorized");
           return;

@@ -9,6 +9,7 @@ import {
   Briefcase,
   CircleAlert,
   Mail,
+  Phone,
   ShieldCheck,
 } from "lucide-react-native";
 import React, { useEffect, useState } from "react";
@@ -17,7 +18,6 @@ import {
   ActivityIndicator,
   Image,
   KeyboardAvoidingView,
-  Platform,
   ScrollView,
   StatusBar,
   Text,
@@ -25,14 +25,23 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+const normalizeContactNumber = (value: string) => {
+  const digits = value.replace(/[^0-9]/g, "");
+  if (/^639[0-9]{9}$/.test(digits)) return `0${digits.slice(2)}`;
+  if (/^9[0-9]{9}$/.test(digits)) return `0${digits}`;
+  return digits;
+};
+
 export default function CompleteVendorProfileScreen() {
   const router = useRouter();
   const [companyName, setCompanyName] = useState("");
+  const [contactNumber, setContactNumber] = useState("");
   const [email, setEmail] = useState("");
   const [loadingUser, setLoadingUser] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [fieldError, setFieldError] = useState("");
+  const [contactError, setContactError] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -80,10 +89,17 @@ export default function CompleteVendorProfileScreen() {
   const handleSubmit = async () => {
     setError("");
     setFieldError("");
+    setContactError("");
 
     const name = companyName.trim();
     if (!name) {
       setFieldError("Enter your registered company or vendor name.");
+      return;
+    }
+
+    const contact = normalizeContactNumber(contactNumber);
+    if (!/^09[0-9]{9}$/.test(contact)) {
+      setContactError("Enter a valid PH mobile number, e.g. 0917 123 4567.");
       return;
     }
 
@@ -108,6 +124,7 @@ export default function CompleteVendorProfileScreen() {
         id: user.id,
         email: user.email,
         full_name: name,
+        contact_number: contact,
         role_type: "Vendor",
         barangay: "N/A",
         approval_status: "pending",
@@ -121,7 +138,11 @@ export default function CompleteVendorProfileScreen() {
 
         const { error: updateError } = await supabase
           .from("profiles")
-          .update({ full_name: name, avatar_url: avatarUrl })
+          .update({
+            full_name: name,
+            contact_number: contact,
+            avatar_url: avatarUrl,
+          })
           .eq("id", user.id);
 
         if (updateError) throw updateError;
@@ -151,7 +172,7 @@ export default function CompleteVendorProfileScreen() {
     <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
       <StatusBar barStyle="dark-content" />
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior="padding"
         className="flex-1"
       >
         <ScrollView
@@ -241,6 +262,22 @@ export default function CompleteVendorProfileScreen() {
                     placeholder="Acme Trading Corp."
                     error={fieldError}
                     autoCapitalize="words"
+                    editable={!saving && !loadingUser}
+                  />
+
+                  <FormField
+                    label="Contact Number"
+                    icon={Phone}
+                    value={contactNumber}
+                    onChangeText={(value) => {
+                      setContactNumber(value);
+                      setContactError("");
+                      setError("");
+                    }}
+                    placeholder="0917 123 4567"
+                    keyboardType="phone-pad"
+                    error={contactError}
+                    autoCapitalize="none"
                     editable={!saving && !loadingUser}
                   />
 

@@ -35,6 +35,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  KeyboardAvoidingView,
   RefreshControl,
   ScrollView,
   Text,
@@ -360,7 +361,9 @@ export default function Profile() {
       />
       </Animated.View>
 
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
       <ScrollView
+        style={{ flex: 1 }}
         contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
@@ -655,6 +658,7 @@ export default function Profile() {
           )}
         </View>
       </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   );
 }

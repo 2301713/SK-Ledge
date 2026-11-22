@@ -165,6 +165,7 @@ export default function OpportunityDetailsPage() {
   }
 
   const isAwarded = opportunity.status.toLowerCase() === "awarded";
+  const isApproved = opportunity.status.toLowerCase() === "approved";
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
@@ -234,7 +235,9 @@ export default function OpportunityDetailsPage() {
             <Text className="font-inter-medium flex-1 text-[13px] leading-5 text-[#92400E]">
               {isAwarded
                 ? "This procurement has already been awarded and is no longer accepting proposals."
-                : "This procurement is closed for new proposals. You can still review its details."}
+                : !isApproved
+                  ? "This project has not been officially approved for bidding."
+                  : "This procurement is closed for new proposals. You can still review its details."}
             </Text>
           </View>
         ) : null}

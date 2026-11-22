@@ -7,6 +7,13 @@ import { NextResponse, type NextRequest } from "next/server";
  * in the first place.
  */
 const ROUTE_ROLES: { prefix: string; roles: string[] }[] = [
+  // Scope split: projects are Chairperson-only, financial controls are
+  // Treasurer-only. These specific prefixes must precede /sk_dashboard so
+  // `rolesForPath` matches the narrowest rule first.
+  { prefix: "/sk_dashboard/projects", roles: ["SK_Chairperson"] },
+  { prefix: "/sk_dashboard/ceiling", roles: ["SK_Treasurer"] },
+  { prefix: "/sk_dashboard/allocations", roles: ["SK_Treasurer"] },
+  { prefix: "/sk_dashboard/expenses", roles: ["SK_Treasurer"] },
   { prefix: "/sk_dashboard", roles: ["SK_Chairperson", "SK_Treasurer"] },
   { prefix: "/coa_dashboard", roles: ["COA"] },
   { prefix: "/skfed_dashboard", roles: ["SK_Federation"] },

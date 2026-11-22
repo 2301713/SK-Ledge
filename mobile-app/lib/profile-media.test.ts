@@ -161,7 +161,9 @@ describe("uploadAvatar", () => {
         mimeType: "image/png",
         fileName: "photo.png",
       }),
-    ).rejects.toThrow("Bucket not found");
+    ).rejects.toThrow(
+      "Photo storage is not set up yet. Please contact the SK Federation administrator.",
+    );
     expect(mocks.update).not.toHaveBeenCalled();
   });
 
@@ -174,6 +176,8 @@ describe("uploadAvatar", () => {
         mimeType: "image/png",
         fileName: "photo.png",
       }),
-    ).rejects.toThrow("Row not found");
+    ).rejects.toThrow(
+      "Your photo uploaded, but we could not save it to your profile. Please try again.",
+    );
   });
 });

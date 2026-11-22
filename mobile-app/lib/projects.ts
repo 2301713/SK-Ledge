@@ -131,12 +131,15 @@ export const daysLeftLabel = (project: Project) => {
   return `Closes in ${project.daysLeft}d`;
 };
 
+export const isProjectApproved = (row: Pick<ProjectRow, "status">) =>
+  (row.status ?? "").trim().toLowerCase() === "approved";
+
 const isProjectAccepting = (row: ProjectRow) => {
+  if (!isProjectApproved(row)) return false;
   if (row.is_open_for_bidding !== true) return false;
-  const status = (row.status ?? "").trim().toLowerCase();
-  if (status === "awarded" || status === "evaluation") return false;
   const daysLeft = getDaysLeft(row.bid_deadline);
-  return daysLeft === null || daysLeft >= 0;
+  // An approved procurement needs a live deadline; null is not open-ended.
+  return daysLeft !== null && daysLeft >= 0;
 };
 
 export const toProject = (row: ProjectRow): Project => {
@@ -170,7 +173,9 @@ export async function fetchOpenProjectsPage(
   const { data, error } = await supabase
     .from("projects")
     .select("*")
+    .eq("status", "Approved")
     .eq("is_open_for_bidding", true)
+    .not("bid_deadline", "is", null)
     .order("bid_deadline", { ascending: true, nullsFirst: false })
     .order("id", { ascending: true })
     .range(offset, offset + limit);
@@ -330,13 +335,20 @@ export async function fetchBidNotifications(
 }
 
 export async function fetchNotificationLastSeen(): Promise<string | null> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return null;
+
   const { data, error } = await supabase
-    .from("notification_state")
-    .select("last_seen_at")
+    .from("profiles")
+    .select("notifications_seen_at")
+    .eq("id", user.id)
     .maybeSingle();
 
   if (error) throw new Error(error.message);
-  return data?.last_seen_at ?? null;
+  return data?.notifications_seen_at ?? null;
 }
 
 export async function fetchUnreadNotificationCount(): Promise<number> {

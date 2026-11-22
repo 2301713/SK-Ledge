@@ -16,6 +16,8 @@ import {
   ExternalLink,
   ChevronRight,
   AlertTriangle,
+  ShieldCheck,
+  XCircle,
 } from 'lucide-react';
 
 import SideBar from '@/components/dashboard/SideBar';
@@ -28,6 +30,12 @@ import { Card, CardHeader } from '@/components/dashboard/ui/Card';
 import StatCard from '@/components/dashboard/ui/StatCard';
 import StatusBadge from '@/components/dashboard/ui/StatusBadge';
 import { canonicalizeBarangay } from '@/lib/batangasBarangays';
+import {
+  isAcceptingBids,
+  projectDisplayStatus,
+  PROJECT_STATUS,
+} from '@/lib/projectApproval';
+import ProjectApprovalModal from '@/components/projects/ProjectApprovalModal';
 
 interface Project {
   id: number;
@@ -42,6 +50,13 @@ interface Project {
   winning_bid_id?: number | null;
   winning_bidder_name?: string | null;
   award_tx_hash?: string | null;
+  approval_date?: string | null;
+  approval_remarks?: string | null;
+  rejection_date?: string | null;
+  rejection_reason?: string | null;
+  approval_document_id?: string | null;
+  status_updated_at?: string | null;
+  approver?: { full_name?: string | null } | null;
 }
 
 const inputClass =
@@ -51,6 +66,15 @@ const formatCurrency = (amount: number) =>
   new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(
     amount,
   );
+
+const formatDate = (value: string | null | undefined) =>
+  value
+    ? new Date(value).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      })
+    : '—';
 
 export default function ProjectsPage() {
   const router = useRouter();
@@ -62,10 +86,9 @@ export default function ProjectsPage() {
     category: '',
     budget: '',
     fiscal_year: String(new Date().getFullYear()),
-    is_open_for_bidding: false,
-    bid_deadline: '',
   });
   const [formError, setFormError] = useState<string | null>(null);
+  const [reviewProject, setReviewProject] = useState<Project | null>(null);
 
   const fetchProjects = async (assignedBarangay: string | null) => {
     // Projects are public for bidding, but this dashboard is barangay-scoped:
@@ -77,7 +100,7 @@ export default function ProjectsPage() {
 
     const { data, error } = await supabase
       .from('projects')
-      .select('*')
+      .select('*, approver:profiles!projects_approved_by_fkey(full_name)')
       .eq('barangay', assignedBarangay)
       .order('id', { ascending: false });
 
@@ -114,11 +137,11 @@ export default function ProjectsPage() {
         }
 
         if (profileData) {
-          if (
-            !['SK_Chairperson', 'SK_Treasurer'].includes(profileData.role_type)
-          ) {
+          // Project proposals, details, and bidding openness are owned by the
+          // SK Chairperson. Financial controls belong to the SK Treasurer.
+          if (profileData.role_type !== 'SK_Chairperson') {
             console.warn(
-              'Unauthorized access: Only SK officials can manage projects.',
+              'Unauthorized access: only the SK Chairperson can manage projects.',
             );
             router.push('/unauthorized');
             return;
@@ -169,11 +192,9 @@ export default function ProjectsPage() {
         dateProposed: new Date().toISOString(),
         barangay,
         location: barangay,
-        is_open_for_bidding: formData.is_open_for_bidding,
-        bid_deadline:
-          formData.is_open_for_bidding && formData.bid_deadline
-            ? formData.bid_deadline
-            : null,
+        // Bidding is opened only after the SK Chairperson records approval.
+        is_open_for_bidding: false,
+        bid_deadline: null,
       },
     ]);
 
@@ -183,8 +204,6 @@ export default function ProjectsPage() {
         category: '',
         budget: '',
         fiscal_year: String(new Date().getFullYear()),
-        is_open_for_bidding: false,
-        bid_deadline: '',
       });
       fetchProjects(barangay);
     } else {
@@ -204,7 +223,7 @@ export default function ProjectsPage() {
   };
 
   const totalBudget = projects.reduce((s, p) => s + Number(p.budget || 0), 0);
-  const openForBidding = projects.filter((p) => p.is_open_for_bidding).length;
+  const openForBidding = projects.filter(isAcceptingBids).length;
   const awardedCount = projects.filter((p) => p.status === 'Awarded').length;
 
   if (isLoading) return <LogoLoader />;
@@ -361,53 +380,15 @@ export default function ProjectsPage() {
               </div>
             </div>
 
-            {/* BIDDING TOGGLE */}
-            <label className="flex cursor-pointer items-center justify-between gap-4 rounded-2xl border border-border bg-secondary/40 px-4 py-3">
-              <div>
-                <p className="text-sm font-bold text-primary-foreground">
-                  Open for Bidding
-                </p>
-                <p className="text-xs text-secondary-foreground">
-                  Allow vendors to submit bids for this project
-                </p>
-              </div>
-              <span className="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full bg-secondary-foreground/20 transition-colors">
-                <input
-                  type="checkbox"
-                  className="peer sr-only"
-                  checked={formData.is_open_for_bidding}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      is_open_for_bidding: e.target.checked,
-                    })
-                  }
-                />
-                <span className="inline-block h-5 w-5 transform rounded-full bg-white shadow transition peer-checked:translate-x-5 peer-checked:bg-primary" />
-              </span>
-            </label>
-
-            {formData.is_open_for_bidding && (
-              <div className="space-y-2 animate-fadein">
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-secondary-foreground">
-                  Bid Deadline
-                </label>
-                <div className="relative">
-                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <Calendar className="h-5 w-5 text-secondary-foreground" />
-                  </div>
-                  <input
-                    type="date"
-                    className={inputClass}
-                    value={formData.bid_deadline}
-                    onChange={(e) =>
-                      setFormData({ ...formData, bid_deadline: e.target.value })
-                    }
-                    required={formData.is_open_for_bidding}
-                  />
-                </div>
-              </div>
-            )}
+            <div className="flex items-start gap-3 rounded-2xl border border-border bg-secondary/40 px-4 py-3">
+              <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+              <p className="text-xs leading-relaxed text-secondary-foreground">
+                New proposals start as <strong>Proposed</strong>. Bidding
+                controls stay disabled until the SK Chairperson records the
+                official approval issued through the SK/Sangguniang Bayan
+                process.
+              </p>
+            </div>
 
             {formError && (
               <div
@@ -447,24 +428,48 @@ export default function ProjectsPage() {
                   </p>
 
                   <div className="mt-3 flex flex-wrap items-center gap-2">
-                    <StatusBadge status={project.status} showDot />
-                    {project.is_open_for_bidding && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-information/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-information">
-                        <Gavel className="h-3 w-3" />
-                        Open for Bidding
-                      </span>
-                    )}
-                    {project.is_open_for_bidding && project.bid_deadline && (
+                    <StatusBadge
+                      status={projectDisplayStatus(project)}
+                      showDot
+                    />
+                    {isAcceptingBids(project) && project.bid_deadline && (
                       <span className="inline-flex items-center gap-1 rounded-full bg-pending/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-pending">
                         <Calendar className="h-3 w-3" />
-                        Deadline:{' '}
-                        {new Date(project.bid_deadline).toLocaleDateString(
-                          'en-US',
-                          { month: 'short', day: 'numeric', year: 'numeric' },
-                        )}
+                        Deadline: {formatDate(project.bid_deadline)}
                       </span>
                     )}
                   </div>
+
+                  {project.status === PROJECT_STATUS.approved && (
+                    <p className="mt-3 flex items-start gap-1.5 text-[11px] leading-relaxed text-secondary-foreground">
+                      <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-success" />
+                      <span>
+                        Official approval recorded{' '}
+                        {formatDate(project.approval_date)} by{' '}
+                        {project.approver?.full_name || 'SK Chairperson'}.
+                        {project.approval_remarks
+                          ? ` ${project.approval_remarks}`
+                          : ''}
+                      </span>
+                    </p>
+                  )}
+
+                  {project.status === PROJECT_STATUS.rejected && (
+                    <p className="mt-3 flex items-start gap-1.5 text-[11px] leading-relaxed text-danger">
+                      <XCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                      <span>
+                        Rejected {formatDate(project.rejection_date)}:{' '}
+                        {project.rejection_reason || 'No reason recorded.'}
+                      </span>
+                    </p>
+                  )}
+
+                  {project.status === PROJECT_STATUS.proposed && (
+                    <p className="mt-3 text-[11px] leading-relaxed text-secondary-foreground">
+                      Awaiting the SK Chairperson&apos;s official approval
+                      record. Bidding stays disabled.
+                    </p>
+                  )}
                 </div>
 
                 {project.award_tx_hash && (
@@ -488,8 +493,24 @@ export default function ProjectsPage() {
                 )}
               </div>
 
-              {(project.is_open_for_bidding || project.winning_bid_id) && (
-                <div className="mt-4 flex justify-end border-t border-border pt-4">
+              <div className="mt-4 flex flex-wrap items-center justify-end gap-2 border-t border-border pt-4">
+                {currentUser?.role_type === 'SK_Chairperson' &&
+                  project.status !== PROJECT_STATUS.awarded &&
+                  project.status !== PROJECT_STATUS.completed && (
+                    <button
+                      type="button"
+                      onClick={() => setReviewProject(project)}
+                      className="inline-flex items-center gap-2 rounded-xl border border-border bg-white px-4 py-2 text-sm font-bold text-primary-foreground transition-all hover:bg-secondary"
+                    >
+                      <ShieldCheck className="h-4 w-4" />
+                      {project.status === PROJECT_STATUS.proposed
+                        ? 'Record Approval Decision'
+                        : 'Approval Details'}
+                    </button>
+                  )}
+
+                {(project.status === PROJECT_STATUS.approved ||
+                  project.award_tx_hash) && (
                   <Link
                     href={`/sk_dashboard/bids/${project.id}`}
                     className="inline-flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2 text-sm font-bold text-primary transition-all hover:bg-primary hover:text-white"
@@ -498,8 +519,8 @@ export default function ProjectsPage() {
                     View Bids
                     <ChevronRight className="h-4 w-4" />
                   </Link>
-                </div>
-              )}
+                )}
+              </div>
             </Card>
           ))}
 
@@ -517,6 +538,20 @@ export default function ProjectsPage() {
             </Card>
           )}
         </div>
+
+        {reviewProject && (
+          <ProjectApprovalModal
+            project={reviewProject}
+            roleType={currentUser.role_type}
+            approvalStatus={currentUser.approval_status}
+            onClose={() => setReviewProject(null)}
+            onUpdated={() =>
+              fetchProjects(
+                canonicalizeBarangay(currentUser.barangay ?? '') || null,
+              )
+            }
+          />
+        )}
       </main>
     </div>
   );

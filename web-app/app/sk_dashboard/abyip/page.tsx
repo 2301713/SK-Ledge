@@ -479,20 +479,22 @@ export default function ABYIPPage() {
                     Allocations have their own screen
                   </p>
                   <p className="mt-1 text-xs leading-relaxed text-secondary-foreground">
-                    Sign new ABYIP allocations for {barangay ?? "your barangay"}{" "}
-                    and review the allocations recorded on the Sepolia ledger on
-                    the Fund Allocations page.
+                    {currentUser?.role_type === "SK_Treasurer"
+                      ? `Sign new ABYIP allocations for ${barangay ?? "your barangay"} and review the allocations recorded on the Sepolia ledger on the Fund Allocations page.`
+                      : `ABYIP allocations for ${barangay ?? "your barangay"} are recorded by your SK Treasurer and shown here as a planning reference.`}
                   </p>
                 </div>
               </div>
 
-              <Link
-                href="/sk_dashboard/allocations"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white shadow-[0_6px_16px_-6px_rgba(1,56,168,0.5)] transition hover:bg-primary/90 active:scale-[0.98]"
-              >
-                Open Fund Allocations
-                <ArrowRight className="h-4 w-4" />
-              </Link>
+              {currentUser?.role_type === "SK_Treasurer" && (
+                <Link
+                  href="/sk_dashboard/allocations"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white shadow-[0_6px_16px_-6px_rgba(1,56,168,0.5)] transition hover:bg-primary/90 active:scale-[0.98]"
+                >
+                  Open Fund Allocations
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              )}
             </div>
             <aside className="flex flex-col gap-5 rounded-3xl border border-border bg-secondary/40 p-6">
               <div>
@@ -558,8 +560,8 @@ export default function ABYIPPage() {
         <Card>
           <CardHeader
             eyebrow="ABYIP"
-            title={`Approved Projects — ${selectedYear}`}
-            subtitle="Each project's approved amount and the expenses linked to it"
+            title={`Projects — ${selectedYear}`}
+            subtitle="Each project's proposed amount, current approval status, and linked expenses"
           />
 
           {projectSpending.length === 0 ? (
@@ -594,7 +596,17 @@ export default function ABYIPPage() {
                         {formatPeso(project.spent)}
                       </td>
                       <td className="py-3">
-                        <span className="rounded-full bg-secondary px-2.5 py-0.5 text-[10px] font-bold text-secondary-foreground">
+                        <span
+                          className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                            ["Approved", "Open for Bidding", "Awarded", "Completed"].includes(
+                              project.status,
+                            )
+                              ? "bg-success/10 text-success"
+                              : project.status === "Rejected"
+                                ? "bg-danger/10 text-danger"
+                                : "bg-pending/10 text-pending"
+                          }`}
+                        >
                           {project.status}
                         </span>
                       </td>

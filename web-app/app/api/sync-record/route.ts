@@ -21,9 +21,11 @@ const RECORD_TYPES = ["allocation", "expense", "award"] as const;
 const RECORD_TYPE_SET: ReadonlySet<string> = new Set(RECORD_TYPES);
 type RecordType = (typeof RECORD_TYPES)[number];
 
+// Financial records belong to the SK Treasurer; awards follow the two-person
+// bid decision, which both SK officials take part in.
 const ROLE_PERMISSIONS: Record<RecordType, readonly string[]> = {
-  allocation: ["SK_Chairperson", "SK_Treasurer"],
-  expense: ["SK_Chairperson", "SK_Treasurer"],
+  allocation: ["SK_Treasurer"],
+  expense: ["SK_Treasurer"],
   award: ["SK_Chairperson", "SK_Treasurer"],
 };
 

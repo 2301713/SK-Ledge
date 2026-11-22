@@ -30,7 +30,7 @@ function projectRow(overrides: Partial<ProjectRow> = {}): ProjectRow {
     name: "Barangay Health Center",
     category: "Infrastructure",
     budget: "250000.00",
-    status: "Open",
+    status: "Approved",
     location: null,
     barangay: "Adia, Agoncillo",
     description: null,
@@ -97,7 +97,7 @@ describe("toProject", () => {
       category: "Infrastructure",
       location: "Adia, Agoncillo",
       budget: 250000,
-      status: "Open",
+      status: "Approved",
       acceptingBids: true,
     });
   });
@@ -125,12 +125,19 @@ describe("toProject", () => {
     );
   });
 
-  it.each(["Awarded", "evaluation", "AWARDED"])(
+  it.each(["Awarded", "evaluation", "AWARDED", "Proposed", "Rejected"])(
     "stops accepting bids when the status is %s",
     (status) => {
       expect(toProject(projectRow({ status })).acceptingBids).toBe(false);
     },
   );
+
+  it("requires an explicitly approved status", () => {
+    expect(toProject(projectRow({ status: "Open" })).acceptingBids).toBe(false);
+    expect(toProject(projectRow({ status: "approved" })).acceptingBids).toBe(
+      true,
+    );
+  });
 
   it("stops accepting bids after the deadline", () => {
     const project = toProject(
@@ -142,10 +149,10 @@ describe("toProject", () => {
     expect(project.acceptingBids).toBe(false);
   });
 
-  it("treats a missing deadline as open-ended", () => {
+  it("does not treat a missing deadline as open-ended", () => {
     const project = toProject(projectRow({ bid_deadline: null }));
 
-    expect(project.acceptingBids).toBe(true);
+    expect(project.acceptingBids).toBe(false);
     expect(project.daysLeft).toBeNull();
   });
 });

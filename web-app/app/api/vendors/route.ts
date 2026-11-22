@@ -143,6 +143,7 @@ export async function POST(req: NextRequest) {
           avatar_url: avatarUrl,
           role_type: "Vendor",
           barangay: "N/A",
+          company_name: companyName,
         })
         .eq("id", user.id);
 
@@ -165,6 +166,7 @@ export async function POST(req: NextRequest) {
             barangay: "N/A",
             approval_status: "pending",
             avatar_url: avatarUrl,
+            company_name: companyName,
           },
         ]);
 
@@ -183,26 +185,11 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const { data: vendor, error: vendorError } = await supabaseAdmin
-      .from("vendors")
-      .upsert(
-        { id: user.id, company_name: companyName },
-        { onConflict: "id" },
-      )
-      .select("id, company_name")
-      .single();
-
-    if (vendorError) {
-      console.error("Failed to save vendor company.", {
-        code: vendorError.code,
-      });
-      return errorResponse("Failed to save vendor company.", 500);
-    }
-
     return NextResponse.json(
       {
         data: {
-          ...vendor,
+          id: user.id,
+          company_name: companyName,
           approval_status:
             existingProfile?.approval_status ?? "pending",
         },

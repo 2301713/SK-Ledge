@@ -1,7 +1,7 @@
 "use client";
 
 import LogoLoader from "@/components/LogoLoader";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import SideBar from "@/components/dashboard/SideBar";
 import TopBar from "@/components/dashboard/ui/TopBar";
@@ -9,16 +9,10 @@ import PageHeader from "@/components/dashboard/ui/PageHeader";
 import StatCard from "@/components/dashboard/ui/StatCard";
 import { Card, CardHeader } from "@/components/dashboard/ui/Card";
 import { supabase } from "@/lib/supabase";
-import BroadcastMemoModal from "@/components/dashboard/BroadcastMemoModal";
 import { useAuthStore } from "@/lib/useAuthStore";
 import { useRecordsSync } from "@/lib/useRecordsSync";
 import { sumAmountCentavos } from "@/lib/records";
 import { canonicalizeBarangay } from "@/lib/batangasBarangays";
-import {
-  MEMO_AUDIENCE_LABELS,
-  MEMO_PRIORITY_LABELS,
-  type FederationMemo,
-} from "@/lib/memos";
 import {
   Building2,
   Megaphone,
@@ -57,73 +51,22 @@ interface BarangayRow {
 
 const CLOSED_PROJECT_STATUSES = new Set(["Awarded", "Completed", "Rejected"]);
 
-async function fetchFederationMemos(): Promise<FederationMemo[]> {
-  const { data, error } = await supabase
-    .from("federation_memos")
-    .select("id, sender_id, subject, body, priority, audience, created_at")
-    .order("created_at", { ascending: false })
-    .limit(10);
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return (data ?? []) as FederationMemo[];
-}
-
 export default function SKFederationDashboard() {
   const {
     currentUser,
     isLoading,
     setCurrentUser,
     setIsLoading,
-    isModalOpen,
-    setIsModalOpen,
   } = useAuthStore();
   const router = useRouter();
   const authAttemptedRef = useRef(false);
   const [projects, setProjects] = useState<FederationProject[]>([]);
   const [officials, setOfficials] = useState<FederationOfficial[]>([]);
-  const [memos, setMemos] = useState<FederationMemo[]>([]);
-  const [memosLoading, setMemosLoading] = useState(true);
 
   const { records } = useRecordsSync({
     enabled: Boolean(currentUser),
     limit: 500,
   });
-
-  const loadMemos = useCallback(async () => {
-    try {
-      setMemos(await fetchFederationMemos());
-    } catch (err) {
-      console.error("Failed to load federation memos:", err);
-    } finally {
-      setMemosLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!currentUser) return;
-
-    let cancelled = false;
-
-    void fetchFederationMemos().then(
-      (data) => {
-        if (cancelled) return;
-        setMemos(data);
-        setMemosLoading(false);
-      },
-      (err) => {
-        if (cancelled) return;
-        console.error("Failed to load federation memos:", err);
-        setMemosLoading(false);
-      },
-    );
-
-    return () => {
-      cancelled = true;
-    };
-  }, [currentUser]);
 
   // 1. AUTHENTICATION & ROLE PROTECTION
   useEffect(() => {
@@ -343,8 +286,7 @@ export default function SKFederationDashboard() {
     return [...projects]
       .filter(
         (project) =>
-          project.is_open_for_bidding &&
-          !CLOSED_PROJECT_STATUSES.has(project.status),
+          project.status === "Approved" && project.is_open_for_bidding,
       )
       .sort((a, b) => {
         const aTime = a.bid_deadline ? Date.parse(a.bid_deadline) : Infinity;
@@ -419,15 +361,6 @@ export default function SKFederationDashboard() {
           eyebrow="SK Federation"
           title="Federation Command"
           subtitle={`${today} · Monitor constituent performance and city-wide youth budget utilization.`}
-          actions={
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white shadow-[0_6px_16px_-6px_rgba(1,56,168,0.5)] transition hover:bg-primary/90"
-            >
-              <Megaphone className="h-4 w-4" />
-              Broadcast Memo
-            </button>
-          }
         />
 
         {/* STAT ROW */}
@@ -566,90 +499,7 @@ export default function SKFederationDashboard() {
             </Card>
           </div>
         </div>
-
-        {/* BROADCAST MEMO LOG */}
-        <Card>
-          <CardHeader
-            eyebrow="Communications"
-            title="Broadcast Memo Log"
-            subtitle="Published federation memos, newest first."
-            action={
-              <span className="rounded-full bg-primary/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-primary">
-                {memos.length}
-              </span>
-            }
-          />
-
-          {memosLoading ? (
-            <p className="py-8 text-center text-xs font-medium text-secondary-foreground">
-              Loading memos…
-            </p>
-          ) : memos.length === 0 ? (
-            <div className="flex flex-col items-center py-10 text-center">
-              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl border border-border bg-secondary">
-                <Megaphone className="h-5 w-5 text-secondary-foreground" />
-              </div>
-              <p className="text-sm font-bold text-primary-foreground">
-                No memos published yet
-              </p>
-              <p className="mt-1 text-xs text-secondary-foreground">
-                Published broadcasts will appear here.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {memos.map((memo) => (
-                <div
-                  key={memo.id}
-                  className="rounded-2xl border border-border bg-secondary/30 p-4"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span
-                        className={`rounded-lg px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest ${
-                          memo.priority === "urgent"
-                            ? "bg-danger/10 text-danger"
-                            : memo.priority === "event"
-                              ? "bg-information/10 text-information"
-                              : "bg-secondary text-secondary-foreground"
-                        }`}
-                      >
-                        {MEMO_PRIORITY_LABELS[memo.priority]}
-                      </span>
-                      <span className="text-[10px] font-semibold uppercase tracking-widest text-secondary-foreground">
-                        {MEMO_AUDIENCE_LABELS[memo.audience]}
-                      </span>
-                    </div>
-                    <span className="text-[10px] font-medium text-secondary-foreground">
-                      {new Date(memo.created_at).toLocaleString("en-PH", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                        hour: "numeric",
-                        minute: "2-digit",
-                      })}
-                    </span>
-                  </div>
-                  <p className="mt-2 text-sm font-bold text-primary-foreground">
-                    {memo.subject}
-                  </p>
-                  <p className="mt-1 line-clamp-2 whitespace-pre-line text-xs leading-relaxed text-secondary-foreground">
-                    {memo.body}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-        </Card>
       </main>
-
-      <BroadcastMemoModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSubmitSuccess={() => {
-          void loadMemos();
-        }}
-      />
     </div>
   );
 }

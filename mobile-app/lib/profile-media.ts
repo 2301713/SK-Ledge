@@ -63,6 +63,46 @@ export async function pickAvatarImage(): Promise<AvatarPickResult> {
   };
 }
 
+type AvatarStorageError = {
+  message?: string;
+  statusCode?: string;
+  error?: string;
+};
+
+/** Turns storage/database failures into instructions the vendor can act on. */
+export function describeAvatarError(error: AvatarStorageError): string {
+  const message = (error.message ?? "").toLowerCase();
+  const status = error.statusCode ?? "";
+
+  if (
+    message.includes("row-level security") ||
+    message.includes("permission") ||
+    message.includes("unauthorized") ||
+    status === "401" ||
+    status === "403"
+  ) {
+    return "Photo uploads are blocked for this account. Sign out and sign in again, then retry. If it still fails, contact the SK Federation administrator.";
+  }
+
+  if (message.includes("bucket not found") || status === "404") {
+    return "Photo storage is not set up yet. Please contact the SK Federation administrator.";
+  }
+
+  if (
+    message.includes("maximum allowed size") ||
+    message.includes("too large") ||
+    status === "413"
+  ) {
+    return "That photo is too large. Choose an image smaller than 5 MB.";
+  }
+
+  if (message.includes("mime type") || message.includes("content type")) {
+    return "That file type is not supported. Choose a JPG, PNG or WebP image.";
+  }
+
+  return "Could not upload your photo. Check your connection and try again.";
+}
+
 /**
  * Uploads to avatars/<user id>/… (the only folder the vendor may write to) and
  * stores the public URL on the profile so the web portal shows the same photo.
@@ -74,8 +114,15 @@ export async function uploadAvatar(
   const extension = extensionFor(avatar.mimeType, avatar.fileName);
   const path = `${userId}/avatar-${Date.now()}.${extension}`;
 
-  const response = await fetch(avatar.uri);
-  const arrayBuffer = await response.arrayBuffer();
+  let arrayBuffer: ArrayBuffer;
+  try {
+    const response = await fetch(avatar.uri);
+    arrayBuffer = await response.arrayBuffer();
+  } catch {
+    throw new Error(
+      "Could not read the selected photo. Pick it again from your library.",
+    );
+  }
 
   const { error: uploadError } = await supabase.storage
     .from("avatars")
@@ -85,9 +132,7 @@ export async function uploadAvatar(
     });
 
   if (uploadError) {
-    throw new Error(
-      uploadError.message || "Could not upload your photo. Please try again.",
-    );
+    throw new Error(describeAvatarError(uploadError));
   }
 
   const { data } = supabase.storage.from("avatars").getPublicUrl(path);
@@ -99,7 +144,9 @@ export async function uploadAvatar(
     .eq("id", userId);
 
   if (profileError) {
-    throw new Error(profileError.message || "Could not save your photo.");
+    throw new Error(
+      "Your photo uploaded, but we could not save it to your profile. Please try again.",
+    );
   }
 
   return publicUrl;

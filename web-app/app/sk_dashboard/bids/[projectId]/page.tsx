@@ -1,7 +1,7 @@
 'use client';
 
 import LogoLoader from '@/components/LogoLoader';
-import { use, useCallback, useEffect, useState } from 'react';
+import { use, useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
@@ -25,6 +25,7 @@ import { supabase } from '@/lib/supabase';
 import { UserAccount } from '@/lib/useAuthStore';
 import { SK_LEDGE_ABI, CONTRACT_ADDRESS } from '@/lib/contractConfig';
 import { syncRecord } from '@/lib/syncRecord';
+import { finalizeAward } from '@/lib/finalizeAward';
 import { describeWalletError } from '@/lib/walletErrors';
 import { canonicalizeBarangay } from '@/lib/batangasBarangays';
 import TopBar from '@/components/dashboard/ui/TopBar';
@@ -66,6 +67,20 @@ const formatCurrency = (amount: number) =>
     amount,
   );
 
+const errorMessage = (error: unknown, fallback: string) => {
+  if (typeof error === 'string' && error.trim()) return error;
+  if (error instanceof Error && error.message) return error.message;
+  if (
+    error &&
+    typeof error === 'object' &&
+    'message' in error &&
+    typeof (error as { message?: unknown }).message === 'string'
+  ) {
+    return (error as { message: string }).message;
+  }
+  return fallback;
+};
+
 export default function BidsPage({ params }: { params: Promise<{ projectId: string }> }) {
   const { projectId } = use(params);
   const router = useRouter();
@@ -79,6 +94,7 @@ export default function BidsPage({ params }: { params: Promise<{ projectId: stri
   const [selectedBidId, setSelectedBidId] = useState<string | null>(null);
   const [openingProposalId, setOpeningProposalId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const finalizedAwardTx = useRef<string | null>(null);
 
   // The ledger only accepts registered canonical barangay names.
   const projectBarangay = project?.location
@@ -216,7 +232,12 @@ export default function BidsPage({ params }: { params: Promise<{ projectId: stri
 
     const officialBarangay = canonicalizeBarangay(currentUser.barangay);
     if (projectBarangay && officialBarangay && projectBarangay !== officialBarangay) {
-      router.replace('/sk_dashboard/projects');
+      // Project management is Chairperson-only; Treasurers return to Overview.
+      router.replace(
+        currentUser.role_type === 'SK_Treasurer'
+          ? '/sk_dashboard'
+          : '/sk_dashboard/projects',
+      );
     }
   }, [project, currentUser, projectBarangay, router]);
 
@@ -275,45 +296,57 @@ export default function BidsPage({ params }: { params: Promise<{ projectId: stri
 
   useEffect(() => {
     if (!isTxConfirmed || !txHash || !selectedBidId || !project) return;
+    // React can run effects twice; never finalize the same award twice.
+    if (finalizedAwardTx.current === txHash) return;
+    finalizedAwardTx.current = txHash;
 
     const finalizeAwardInDb = async () => {
       const winningBid = bids.find((b) => b.id === selectedBidId);
       if (!winningBid || !project) return;
 
-      await supabase
-        .from('projects')
-        .update({
+      setActionError(null);
+
+      try {
+        // The project and the winning bid are written together server-side so
+        // the public board never sees a won bid without an awarded project.
+        await finalizeAward({
+          project_id: project.id,
           winning_bid_id: winningBid.id,
-          winning_bidder_name: winningBid.vendor_name,
           award_tx_hash: txHash,
-          status: 'Awarded',
-        })
-        .eq('id', project.id);
+          official_address: address ?? '',
+        });
+      } catch (err) {
+        finalizedAwardTx.current = null;
+        setActionError(
+          `The award transaction is on-chain, but finalizing the award failed: ${errorMessage(
+            err,
+            'the server rejected the request.',
+          )}`,
+        );
+        return;
+      }
 
-      await supabase
-        .from('bids')
-        .update({ status: 'won' })
-        .eq('id', winningBid.id);
-
-      await supabase
-        .from('bids')
-        .update({ status: 'lost' })
-        .eq('project_id', project.id)
-        .neq('id', winningBid.id);
-
-      await syncRecord({
-        type: 'award',
-        blockchain_tx_hash: txHash,
-        contract_address: CONTRACT_ADDRESS,
-        official_address: address ?? '',
-        barangay: projectBarangay ?? '',
-        amount: Math.round(Number(winningBid.amount_php) * 100),
-        purpose: `Award: ${project?.name} to ${winningBid.vendor_name}`,
-        project_id: String(project.id),
-      }).catch((err) => console.error('Failed to sync award record:', err));
+      try {
+        await syncRecord({
+          type: 'award',
+          blockchain_tx_hash: txHash,
+          contract_address: CONTRACT_ADDRESS,
+          official_address: address ?? '',
+          barangay: projectBarangay ?? '',
+          amount: Math.round(Number(winningBid.amount_php) * 100),
+          purpose: `Award: ${project?.name} to ${winningBid.vendor_name}`,
+          project_id: String(project.id),
+        });
+      } catch (err) {
+        setActionError(
+          `The project was marked as awarded, but the on-chain record could not be synced: ${errorMessage(
+            err,
+            'the server rejected the request.',
+          )}`,
+        );
+      }
 
       setSelectedBidId(null);
-      setActionError(null);
       await loadBids();
     };
 
@@ -398,11 +431,15 @@ export default function BidsPage({ params }: { params: Promise<{ projectId: stri
             }
           />
           <Link
-            href="/sk_dashboard/projects"
+            href={
+              userRole === 'SK_Treasurer'
+                ? '/sk_dashboard'
+                : '/sk_dashboard/projects'
+            }
             className="mt-1 inline-flex shrink-0 items-center gap-2 rounded-xl border border-border bg-white px-4 py-2.5 text-sm font-bold text-secondary-foreground transition-all hover:border-primary/30 hover:text-primary"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to Projects
+            {userRole === 'SK_Treasurer' ? 'Back to Overview' : 'Back to Projects'}
           </Link>
         </div>
 
@@ -557,7 +594,7 @@ export default function BidsPage({ params }: { params: Promise<{ projectId: stri
                     </div>
 
                     {/* ACTIONS */}
-                    {project.status !== 'Awarded' &&
+                    {project.status === 'Approved' &&
                       userRole === 'SK_Treasurer' &&
                       bid.status === 'pending' && (
                         <div className="mt-4 flex flex-wrap gap-3 border-t border-border pt-4">
@@ -579,7 +616,7 @@ export default function BidsPage({ params }: { params: Promise<{ projectId: stri
                         </div>
                       )}
 
-                    {project.status !== 'Awarded' &&
+                    {project.status === 'Approved' &&
                       userRole === 'SK_Chairperson' &&
                       bid.status === 'recommended' && (
                         <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-border pt-4">
@@ -647,11 +684,15 @@ export default function BidsPage({ params }: { params: Promise<{ projectId: stri
               Project not found
             </p>
             <Link
-              href="/sk_dashboard/projects"
+              href={
+                userRole === 'SK_Treasurer'
+                  ? '/sk_dashboard'
+                  : '/sk_dashboard/projects'
+              }
               className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-bold text-white transition-all hover:bg-primary/90"
             >
               <ArrowLeft className="h-4 w-4" />
-              Back to Projects
+              {userRole === 'SK_Treasurer' ? 'Back to Overview' : 'Back to Projects'}
             </Link>
           </Card>
         )}

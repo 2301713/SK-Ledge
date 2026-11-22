@@ -19,8 +19,14 @@ const formatBudget = (value: number) => {
 
 export default function MetricsRow({ projects }: { projects: Project[] }) {
   const total = projects.length;
-  const approved = projects.filter((p) => p.status === "Approved").length;
-  const pending = projects.filter((p) => p.status === "Pending").length;
+  const approved = projects.filter((p) =>
+    ["Approved", "Open for Bidding", "Awarded", "Completed"].includes(
+      (p.status ?? "").trim(),
+    ),
+  ).length;
+  const pending = projects.filter((p) =>
+    ["Proposed", "Pending"].includes((p.status ?? "").trim()),
+  ).length;
   const totalBudget = projects.reduce((sum, p) => {
     const raw = p.budget ?? p.amount ?? 0;
     const num = typeof raw === "number" ? raw : parseFloat(raw.replace(/[₱,\s]/g, ""));

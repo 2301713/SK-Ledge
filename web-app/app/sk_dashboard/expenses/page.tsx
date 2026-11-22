@@ -17,6 +17,7 @@ import {
   useAccount,
   usePublicClient,
 } from "wagmi";
+import { sepolia } from "wagmi/chains";
 import { CONTRACT_ADDRESS, SK_LEDGE_ABI } from "@/lib/contractConfig";
 import { syncRecord } from "@/lib/syncRecord";
 import { canonicalizeBarangay } from "@/lib/batangasBarangays";
@@ -106,12 +107,14 @@ export default function ExpensesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [synced, setSynced] = useState(false);
 
-  const { isConnected, address } = useAccount();
+  const { isConnected, address, chainId } = useAccount();
   const publicClient = usePublicClient();
   const {
     data: hash,
+    error: writeError,
     isPending: isWritePending,
     writeContract,
+    reset: resetWriteContract,
   } = useWriteContract();
   const { writeContractAsync: attachHashAsync } = useWriteContract();
   const { isLoading: isConfirming, isSuccess: isConfirmed } =
@@ -119,6 +122,60 @@ export default function ExpensesPage() {
 
   const canonicalBarangay = currentUser?.barangay
     ? canonicalizeBarangay(currentUser.barangay)
+    : null;
+
+  const { data: isAuthorizedOfficial } = useReadContract({
+    address: CONTRACT_ADDRESS,
+    abi: SK_LEDGE_ABI,
+    functionName: "isAuthorizedOfficial",
+    args: address ? [address] : undefined,
+    query: { enabled: Boolean(address) },
+  });
+
+  const { data: isAuthorizedForBarangay } = useReadContract({
+    address: CONTRACT_ADDRESS,
+    abi: SK_LEDGE_ABI,
+    functionName: "isOfficialAuthorizedForBarangay",
+    args: address && canonicalBarangay ? [address, canonicalBarangay] : undefined,
+    query: { enabled: Boolean(address && canonicalBarangay) },
+  });
+
+  const walletMatchesProfile = Boolean(
+    address &&
+      currentUser?.wallet_address &&
+      address.toLowerCase() === currentUser.wallet_address.toLowerCase(),
+  );
+
+  const walletIssue = (() => {
+    if (!isConnected || !address) {
+      return "Connect the wallet bound to your profile before logging an expense.";
+    }
+    if (chainId !== sepolia.id) {
+      return "Switch MetaMask to the Sepolia network before logging an expense.";
+    }
+    if (!currentUser?.wallet_address) {
+      return "No blockchain wallet is bound to your profile. Bind one on the Account page first.";
+    }
+    if (!walletMatchesProfile) {
+      return `The connected wallet ${address} is not the wallet bound to your profile (${currentUser.wallet_address}). Switch accounts in MetaMask.`;
+    }
+    if (isAuthorizedOfficial === false) {
+      return "This wallet has not been authorized as an SK Official by the contract owner. Ask the administrator to authorize it.";
+    }
+    if (isAuthorizedForBarangay === false) {
+      return `This wallet is not authorized for ${canonicalBarangay} by the contract owner. Ask the administrator to grant barangay access.`;
+    }
+    return null;
+  })();
+
+  const writeErrorMessage = writeError
+    ? /user rejected/i.test(writeError.message)
+      ? "You rejected the transaction in MetaMask."
+      : /not an authorized SK Official/i.test(writeError.message)
+        ? "MetaMask is using a wallet that is not authorized as an SK Official. Switch to your bound wallet."
+        : /not authorized for this barangay/i.test(writeError.message)
+          ? `MetaMask is using a wallet that is not authorized for ${canonicalBarangay}. Switch to your bound wallet.`
+          : writeError.message.split("\n")[0]
     : null;
 
   const { data: ceilingRaw } = useReadContract({
@@ -221,7 +278,7 @@ export default function ExpensesPage() {
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .select(
-            "id, username, role_type, full_name, barangay, email, approval_status",
+            "id, username, role_type, full_name, barangay, email, approval_status, wallet_address",
           )
           .eq("id", user.id)
           .single();
@@ -232,11 +289,10 @@ export default function ExpensesPage() {
         }
 
         if (profileData) {
-          if (
-            !["SK_Chairperson", "SK_Treasurer"].includes(profileData.role_type)
-          ) {
+          // Logging expenses is an SK Treasurer responsibility.
+          if (profileData.role_type !== "SK_Treasurer") {
             console.warn(
-              "Unauthorized access: Only SK officials can log expenses.",
+              "Unauthorized access: only the SK Treasurer can log expenses.",
             );
             router.push("/unauthorized");
             return;
@@ -269,6 +325,7 @@ export default function ExpensesPage() {
             barangay: canonicalBarangay,
             email: profileData.email,
             approval_status: profileData.approval_status,
+            wallet_address: profileData.wallet_address || null,
           };
 
           setCurrentUser(profile as UserAccount);
@@ -423,6 +480,8 @@ export default function ExpensesPage() {
       );
       return;
     }
+
+    resetWriteContract();
 
     try {
       pendingReceiptsRef.current = [...receipts];
@@ -644,6 +703,26 @@ export default function ExpensesPage() {
           title="Expense Logger"
           subtitle="Record transactions with digital receipts, secured on the Sepolia ledger."
         />
+
+        {walletIssue && (
+          <div
+            role="alert"
+            className="flex items-start gap-2 rounded-xl border border-danger/30 bg-danger/10 p-4 text-xs font-medium text-danger"
+          >
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+            <span className="break-words">{walletIssue}</span>
+          </div>
+        )}
+
+        {writeErrorMessage && (
+          <div
+            role="alert"
+            className="flex items-start gap-2 rounded-xl border border-danger/30 bg-danger/10 p-4 text-xs font-medium text-danger"
+          >
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+            <span className="break-words">{writeErrorMessage}</span>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* EXPENSE DETAILS */}
@@ -885,7 +964,10 @@ export default function ExpensesPage() {
             <button
               type="submit"
               disabled={
-                isWritePending || isConfirming || !isConnected || ceilingExceeded
+                isWritePending ||
+                isConfirming ||
+                Boolean(walletIssue) ||
+                ceilingExceeded
               }
               className="flex items-center gap-2 rounded-xl bg-primary px-8 py-3 text-sm font-bold text-white shadow-[0_6px_16px_-6px_rgba(1,56,168,0.5)] transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:bg-secondary-foreground/30"
             >

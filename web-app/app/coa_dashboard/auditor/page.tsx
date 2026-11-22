@@ -95,7 +95,7 @@ interface BidProposalRow {
   submitted_on: string | null;
   created_at: string;
   proposal_url: string;
-  vendors: { company_name: string | null } | null;
+  vendor_name: string | null;
 }
 
 export default function AuditorPage() {
@@ -193,7 +193,7 @@ export default function AuditorPage() {
       const { data, error } = await supabase
         .from("bids")
         .select(
-          "id, project_id, contract_title, amount_php, status, submitted_on, created_at, proposal_url, vendors(company_name)",
+          "id, project_id, contract_title, amount_php, status, submitted_on, created_at, proposal_url, vendor_name",
         )
         .not("proposal_url", "is", null)
         .order("created_at", { ascending: false })
@@ -250,7 +250,7 @@ export default function AuditorPage() {
 
   const filteredProposals = proposals.filter((bid) => {
     const query = proposalSearch.toLowerCase();
-    const vendor = (bid.vendors?.company_name || "").toLowerCase();
+    const vendor = (bid.vendor_name || "").toLowerCase();
     const title = (bid.contract_title || "").toLowerCase();
     return vendor.includes(query) || title.includes(query);
   });
@@ -816,7 +816,7 @@ export default function AuditorPage() {
                         className="transition-colors hover:bg-secondary/50"
                       >
                         <td className="px-4 py-4 text-sm font-bold text-primary-foreground">
-                          {bid.vendors?.company_name || "Unknown Vendor"}
+                          {bid.vendor_name || "Unknown Vendor"}
                         </td>
                         <td className="px-4 py-4 text-sm text-secondary-foreground">
                           {bid.contract_title ||
@@ -843,8 +843,7 @@ export default function AuditorPage() {
                             onClick={() =>
                               setProposalPreview({
                                 url: bid.proposal_url,
-                                vendorName:
-                                  bid.vendors?.company_name || "Vendor",
+                                vendorName: bid.vendor_name || "Vendor",
                               })
                             }
                             className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-white shadow-sm transition hover:bg-primary/90"

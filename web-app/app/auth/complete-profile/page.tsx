@@ -13,6 +13,7 @@ import {
   UserCog,
   ArrowRight,
   ChevronDown,
+  Phone,
 } from "lucide-react";
 import {
   BATANGAS_BARANGAYS_BY_MUNICIPALITY,
@@ -22,6 +23,10 @@ import {
   isCanonicalBarangay,
 } from "@/lib/batangasBarangays";
 import LogoLoader from "@/components/LogoLoader";
+import {
+  isValidContactNumber,
+  normalizeContactNumber,
+} from "@/lib/contactNumber";
 
 export default function CompleteProfilePage() {
   const router = useRouter();
@@ -38,6 +43,7 @@ export default function CompleteProfilePage() {
     username: "",
     role_type: "SK_Chairperson",
     barangay: "",
+    contact_number: "",
   });
 
   useEffect(() => {
@@ -120,6 +126,13 @@ export default function CompleteProfilePage() {
         throw new Error("Barangay is required for SK Officials");
       }
 
+      const contactNumber = normalizeContactNumber(formData.contact_number);
+      if (!isValidContactNumber(contactNumber)) {
+        throw new Error(
+          "Enter a valid PH mobile number, e.g. 0917 123 4567.",
+        );
+      }
+
       const canonicalBarangay = isSKRole
         ? canonicalizeBarangay(formData.barangay)
         : null;
@@ -153,6 +166,7 @@ export default function CompleteProfilePage() {
           full_name: user.user_metadata?.full_name || formData.username,
           role_type: formData.role_type,
           barangay: canonicalBarangay ?? "N/A",
+          contact_number: contactNumber,
           approval_status: "pending",
           avatar_url: user.user_metadata?.avatar_url || null,
         },
@@ -168,6 +182,7 @@ export default function CompleteProfilePage() {
             .update({
               username: formData.username,
               barangay: canonicalBarangay ?? "N/A",
+              contact_number: contactNumber,
               avatar_url: user.user_metadata?.avatar_url || null,
             })
             .eq("id", user.id);
@@ -396,6 +411,32 @@ export default function CompleteProfilePage() {
                   }
                   className="w-full bg-slate-50 border-2 border-transparent rounded-2xl pl-12 pr-4 py-4 text-sm font-medium text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none placeholder:text-slate-300"
                   placeholder="e.g. juandelacruz123"
+                />
+              </div>
+            </div>
+
+            {/* CONTACT NUMBER */}
+            <div className="space-y-2">
+              <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                Contact Number
+              </label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-300 group-focus-within:text-primary transition-colors">
+                  <Phone className="w-5 h-5" />
+                </div>
+                <input
+                  type="tel"
+                  inputMode="tel"
+                  required
+                  value={formData.contact_number}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      contact_number: e.target.value,
+                    })
+                  }
+                  className="w-full bg-slate-50 border-2 border-transparent rounded-2xl pl-12 pr-4 py-4 text-sm font-medium text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none placeholder:text-slate-300"
+                  placeholder="0917 123 4567"
                 />
               </div>
             </div>

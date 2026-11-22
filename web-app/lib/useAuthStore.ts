@@ -9,6 +9,7 @@ export interface UserAccount {
   role_type: string;
   barangay: string;
   email?: string;
+  contact_number?: string | null;
   approval_status?: string;
   avatar_url?: string;
   wallet_address?: string | null;

@@ -33,7 +33,6 @@ export default function CeilingPage() {
   const router = useRouter();
 
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
-  const [canManageCeiling, setCanManageCeiling] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [barangayList, setBarangayList] = useState<string[]>([]);
 
@@ -65,20 +64,15 @@ export default function CeilingPage() {
         }
 
         if (profileData) {
-          // Treasurers may view ceilings read-only; only the Chairperson can
-          // change them (the contract also gates the write per wallet).
-          if (
-            profileData.role_type !== "SK_Chairperson" &&
-            profileData.role_type !== "SK_Treasurer"
-          ) {
+          // Budget ceilings are an SK Treasurer responsibility; the project
+          // side belongs to the SK Chairperson.
+          if (profileData.role_type !== "SK_Treasurer") {
             console.warn(
-              "Unauthorized access: only SK officials can view ceilings.",
+              "Unauthorized access: only the SK Treasurer can manage ceilings.",
             );
             router.push("/unauthorized");
             return;
           }
-
-          setCanManageCeiling(profileData.role_type === "SK_Chairperson");
 
           setCurrentUser({
             id: profileData.id,
@@ -296,14 +290,7 @@ export default function CeilingPage() {
             </div>
           </div>
 
-          {canManageCeiling ? (
-            <SetCeilingForm barangay={currentUser?.barangay ?? null} />
-          ) : (
-            <p className="rounded-2xl border border-border bg-secondary/40 p-4 text-xs font-medium text-secondary-foreground">
-              Only the SK Chairperson can change the allocation ceiling for this
-              barangay. You can still review the live ceilings below.
-            </p>
-          )}
+          <SetCeilingForm barangay={currentUser?.barangay ?? null} />
         </Card>
 
         {/* ON-CHAIN DATA TABLE */}

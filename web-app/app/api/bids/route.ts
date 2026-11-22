@@ -3,13 +3,16 @@ import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { parseProposalUrl, PROPOSAL_URL_PREFIX } from "@/lib/bidProposal";
+import {
+  biddingAvailability,
+  BIDDING_NOT_APPROVED_MESSAGE,
+} from "@/lib/projectApproval";
 
 export const runtime = "nodejs";
 
 const TIMELINE_MAX = 120;
 const NOTES_MAX = 1000;
 const PROPOSAL_URL_MAX = 2048;
-const CLOSED_PROJECT_STATUSES = new Set(["Evaluation", "Awarded", "Rejected"]);
 
 const errorResponse = (error: string, status: number) =>
   NextResponse.json({ error }, { status });
@@ -162,7 +165,7 @@ export async function POST(req: NextRequest) {
 
     const { data: profile, error: profileError } = await supabaseAdmin
       .from("profiles")
-      .select("role_type, approval_status")
+      .select("role_type, approval_status, company_name")
       .eq("id", user.id)
       .maybeSingle();
 
@@ -187,20 +190,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { data: vendor, error: vendorError } = await supabaseAdmin
-      .from("vendors")
-      .select("id")
-      .eq("id", user.id)
-      .maybeSingle();
-
-    if (vendorError) {
-      console.error("Failed to load vendor company.", {
-        code: vendorError.code,
-      });
-      return errorResponse("Failed to verify vendor company.", 500);
-    }
-
-    if (!vendor) {
+    if (!profile.company_name?.trim()) {
       return errorResponse(
         "Forbidden. Register your vendor company before submitting bids.",
         403,
@@ -224,33 +214,21 @@ export async function POST(req: NextRequest) {
       return errorResponse("Project was not found.", 404);
     }
 
-    if (!project.is_open_for_bidding) {
+    const availability = biddingAvailability(project);
+    if (!availability.allowed) {
       return errorResponse(
-        "This project is not open for bidding.",
+        availability.reason ?? BIDDING_NOT_APPROVED_MESSAGE,
         409,
       );
     }
 
-    if (project.status && CLOSED_PROJECT_STATUSES.has(project.status)) {
+    if (!project.bid_deadline) {
+      // biddingAvailability already rejects a missing deadline; kept explicit so
+      // the budget check below never runs on an unbounded procurement.
       return errorResponse(
-        "This project is no longer accepting bids.",
+        "This project does not have a valid bidding deadline.",
         409,
       );
-    }
-
-    if (project.bid_deadline) {
-      const deadline = Date.parse(project.bid_deadline);
-      if (Number.isNaN(deadline)) {
-        console.error("Bid project has an invalid deadline.");
-        return errorResponse("Project deadline is invalid.", 500);
-      }
-
-      if (deadline <= Date.now()) {
-        return errorResponse(
-          "The bidding deadline for this project has passed.",
-          409,
-        );
-      }
     }
 
     const approvedBudget = Number(project.budget);

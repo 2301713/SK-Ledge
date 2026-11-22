@@ -59,24 +59,6 @@ const ROLE_LINKS: Record<
       icon: ChartPie,
     },
     {
-      id: "id_32",
-      label: "Allocations",
-      href: "/sk_dashboard/allocations",
-      icon: Coins,
-    },
-    {
-      id: "id_30",
-      label: "Ceilings",
-      href: "/sk_dashboard/ceiling",
-      icon: Sliders,
-    },
-    {
-      id: "id_4",
-      label: "Expenses",
-      href: "/sk_dashboard/expenses",
-      icon: Receipt,
-    },
-    {
       id: "id_5",
       label: "Reports",
       href: "/sk_dashboard/reports",
@@ -95,18 +77,15 @@ const ROLE_LINKS: Record<
       icon: UserCircle,
     },
   ],
+  // Financial controls belong to the Treasurer; projects and proposals belong
+  // to the Chairperson. Pages each role cannot use are not linked here and are
+  // rejected by the route guard.
   SK_Treasurer: [
     {
       id: "id_8",
       label: "Overview",
       href: "/sk_dashboard",
       icon: LayoutDashboard,
-    },
-    {
-      id: "id_9",
-      label: "Projects",
-      href: "/sk_dashboard/projects",
-      icon: FolderKanban,
     },
     {
       id: "id_10",

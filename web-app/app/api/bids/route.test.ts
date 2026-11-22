@@ -61,15 +61,19 @@ async function call(body: unknown) {
 function seedApprovedVendor() {
   db().authUser = { id: VENDOR_ID };
   db().rows.profiles = [
-    { id: VENDOR_ID, role_type: "Vendor", approval_status: "approved" },
+    {
+      id: VENDOR_ID,
+      role_type: "Vendor",
+      approval_status: "approved",
+      company_name: "Acme Trading",
+    },
   ];
-  db().rows.vendors = [{ id: VENDOR_ID }];
   db().rows.projects = [
     {
       id: PROJECT_ID,
       name: "Barangay road repair",
       budget: 5000,
-      status: "Open",
+      status: "Approved",
       is_open_for_bidding: true,
       bid_deadline: FUTURE,
     },
@@ -278,19 +282,9 @@ describe("POST /api/bids bidder eligibility", () => {
     expect(body.error).toContain("pending administrator approval");
   });
 
-  it("returns 500 when the vendor company lookup fails", async () => {
-    seedApprovedVendor();
-    db().errors["vendors:select"] = { code: "XX000" };
-
-    const { status, body } = await call(validBody());
-
-    expect(status).toBe(500);
-    expect(body.error).toBe("Failed to verify vendor company.");
-  });
-
   it("rejects a vendor without a registered company", async () => {
     seedApprovedVendor();
-    db().rows.vendors = [];
+    db().rows.profiles[0].company_name = null;
 
     const { status, body } = await call(validBody());
 
@@ -326,10 +320,12 @@ describe("POST /api/bids project eligibility", () => {
     const { status, body } = await call(validBody());
 
     expect(status).toBe(409);
-    expect(body.error).toContain("not open for bidding");
+    expect(body.error).toContain(
+      "Bidding is available only after the project is approved",
+    );
   });
 
-  it.each(["Rejected", "Awarded", "Evaluation"])(
+  it.each(["Proposed", "Rejected", "Awarded", "Evaluation", "Completed"])(
     "returns 409 when the project status is %s",
     async (status) => {
       db().rows.projects[0].status = status;
@@ -337,9 +333,20 @@ describe("POST /api/bids project eligibility", () => {
       const { status: responseStatus, body } = await call(validBody());
 
       expect(responseStatus).toBe(409);
-      expect(body.error).toContain("no longer accepting bids");
+      expect(body.error).toBe(
+        "This project has not been officially approved for bidding.",
+      );
     },
   );
+
+  it("returns 409 when an approved project has no bidding deadline", async () => {
+    db().rows.projects[0].bid_deadline = null;
+
+    const { status, body } = await call(validBody());
+
+    expect(status).toBe(409);
+    expect(body.error).toContain("does not have a valid bidding deadline");
+  });
 
   it("returns 409 when the bid deadline has passed", async () => {
     db().rows.projects[0].bid_deadline = new Date(Date.now() - 1000).toISOString();
@@ -350,13 +357,15 @@ describe("POST /api/bids project eligibility", () => {
     expect(body.error).toContain("deadline");
   });
 
-  it("returns 500 when the project deadline cannot be parsed", async () => {
+  it("returns 409 when the project deadline cannot be parsed", async () => {
     db().rows.projects[0].bid_deadline = "not-a-date";
 
     const { status, body } = await call(validBody());
 
-    expect(status).toBe(500);
-    expect(body.error).toBe("Project deadline is invalid.");
+    expect(status).toBe(409);
+    expect(body.error).toBe(
+      "This project does not have a valid bidding deadline.",
+    );
   });
 
   it("returns 500 when the project budget is invalid", async () => {

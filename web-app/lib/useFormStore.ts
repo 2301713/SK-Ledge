@@ -2,9 +2,6 @@ import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 
 // TYPES
-export type Priority = "standard" | "urgent" | "event";
-export type Audience = "all" | "chairpersons" | "treasurers" | "barangays";
-
 export interface LoginForm {
   credentials: {
     email: string;
@@ -39,14 +36,6 @@ export interface ProposeProjectForm {
   errors: { [key: string]: string };
 }
 
-export interface BroadcastMemoForm {
-  title: string;
-  content: string;
-  priority: Priority;
-  audience: Audience;
-  requireAck: boolean;
-}
-
 interface FormState {
   // Login Form
   login: LoginForm;
@@ -73,16 +62,6 @@ interface FormState {
   setProposeProjectIsSubmitting: (submitting: boolean) => void;
   setProposeProjectErrors: (errors: { [key: string]: string }) => void;
   resetProposeProjectForm: () => void;
-
-  // Broadcast Memo Modal
-  broadcastMemo: BroadcastMemoForm;
-  setBroadcastMemoTitle: (title: string) => void;
-  setBroadcastMemoContent: (content: string) => void;
-  setBroadcastMemoPriority: (priority: Priority) => void;
-  setBroadcastMemoAudience: (audience: Audience) => void;
-  setBroadcastMemoRequireAck: (require: boolean) => void;
-  setBroadcastMemoForm: (form: Partial<BroadcastMemoForm>) => void;
-  resetBroadcastMemoForm: () => void;
 }
 
 // INITIAL STATE
@@ -115,14 +94,6 @@ const initialProposeProjectForm: ProposeProjectForm = {
   description: "",
   isSubmitting: false,
   errors: {},
-};
-
-const initialBroadcastMemoForm: BroadcastMemoForm = {
-  title: "",
-  content: "",
-  priority: "standard",
-  audience: "all",
-  requireAck: false,
 };
 
 // STORE
@@ -197,35 +168,6 @@ export const useFormStore = create<FormState>()(
         })),
       resetProposeProjectForm: () =>
         set({ proposeProject: initialProposeProjectForm }),
-
-      // BROADCAST MEMO MODAL
-      broadcastMemo: initialBroadcastMemoForm,
-      setBroadcastMemoTitle: (title) =>
-        set((state) => ({
-          broadcastMemo: { ...state.broadcastMemo, title },
-        })),
-      setBroadcastMemoContent: (content) =>
-        set((state) => ({
-          broadcastMemo: { ...state.broadcastMemo, content },
-        })),
-      setBroadcastMemoPriority: (priority) =>
-        set((state) => ({
-          broadcastMemo: { ...state.broadcastMemo, priority },
-        })),
-      setBroadcastMemoAudience: (audience) =>
-        set((state) => ({
-          broadcastMemo: { ...state.broadcastMemo, audience },
-        })),
-      setBroadcastMemoRequireAck: (require) =>
-        set((state) => ({
-          broadcastMemo: { ...state.broadcastMemo, requireAck: require },
-        })),
-      setBroadcastMemoForm: (form) =>
-        set((state) => ({
-          broadcastMemo: { ...state.broadcastMemo, ...form },
-        })),
-      resetBroadcastMemoForm: () =>
-        set({ broadcastMemo: initialBroadcastMemoForm }),
     }),
     {
       name: "form-store",

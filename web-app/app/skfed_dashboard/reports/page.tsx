@@ -188,8 +188,10 @@ export default function SKFederationDashboard() {
   }, [currentUser]);
 
   const reportSummary = useMemo(() => {
-    const completedProjects = projects.filter(
-      (project) => project.status === "Completed",
+    const approvedProjects = projects.filter((project) =>
+      ["Approved", "Open for Bidding", "Awarded", "Completed"].includes(
+        project.status,
+      ),
     ).length;
     const totalFund = projects.reduce(
       (sum, project) => sum + project.budget,
@@ -228,7 +230,7 @@ export default function SKFederationDashboard() {
     }
 
     return {
-      completedProjects,
+      approvedProjects,
       totalFund,
       segments,
       officialsCount: officials.length,
@@ -361,8 +363,8 @@ export default function SKFederationDashboard() {
         {/* STAT ROW */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           <StatCard
-            label="Projects Completed"
-            value={reportSummary.completedProjects}
+            label="Approved Projects"
+            value={reportSummary.approvedProjects}
             icon={TrendingUp}
             variant="brand"
             trend="Across the federation"

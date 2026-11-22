@@ -25,8 +25,11 @@ type OnChainRecord = {
   deployment: "Current" | "Legacy";
 };
 
+const PAGE_SIZE = 10;
+
 export default function OnChainVerifier() {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [page, setPage] = useState(1);
 
   const {
     data: currentRecords,
@@ -67,6 +70,13 @@ export default function OnChainVerifier() {
       deployment: "Legacy" as const,
     })),
   ];
+  const sortedRecords = [...records].reverse();
+  const totalPages = Math.max(1, Math.ceil(sortedRecords.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const paginatedRecords = sortedRecords.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE,
+  );
 
   const totalAllocations = records.filter(
     (r: OnChainRecord) => r.recordType === "Allocation",
@@ -123,7 +133,10 @@ export default function OnChainVerifier() {
                 Refresh
               </button>
               <button
-                onClick={() => setIsExpanded(!isExpanded)}
+                onClick={() => {
+                  setIsExpanded(!isExpanded);
+                  setPage(1);
+                }}
                 className="rounded-xl bg-primary px-4 py-2 text-xs font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary/90 active:scale-95"
               >
                 {isExpanded ? "Collapse" : "View Records"}
@@ -224,11 +237,9 @@ export default function OnChainVerifier() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
-                      {[...records]
-                        .reverse()
-                        .map((record: OnChainRecord) => {
-                          const parsed = parseExpensePurpose(record.purpose);
-                          return (
+                      {paginatedRecords.map((record: OnChainRecord) => {
+                        const parsed = parseExpensePurpose(record.purpose);
+                        return (
                           <tr
                             key={`${record.deployment}-${String(record.id)}`}
                             className="hover:bg-secondary/40 transition-colors"
@@ -261,10 +272,18 @@ export default function OnChainVerifier() {
                               )}
                             </td>
                             <td className="px-4 py-3 text-sm font-bold text-primary-foreground text-right font-mono">
-                              ₱{(Number(record.amount) / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              ₱
+                              {(Number(record.amount) / 100).toLocaleString(
+                                undefined,
+                                {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                },
+                              )}
                             </td>
                             <td className="px-4 py-3 text-xs font-mono text-secondary-foreground">
-                              {record.official.slice(0, 6)}...{record.official.slice(-4)}
+                              {record.official.slice(0, 6)}...
+                              {record.official.slice(-4)}
                             </td>
                             <td className="px-4 py-3">
                               {deploymentBadge(record.deployment)}
@@ -276,10 +295,45 @@ export default function OnChainVerifier() {
                               </span>
                             </td>
                           </tr>
-                          );
-                        })}
+                        );
+                      })}
                     </tbody>
                   </table>
+
+                  {totalPages > 1 && (
+                    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border bg-secondary/20 px-4 py-3">
+                      <p className="text-xs font-semibold text-secondary-foreground">
+                        Showing {(currentPage - 1) * PAGE_SIZE + 1}-
+                        {Math.min(currentPage * PAGE_SIZE, sortedRecords.length)}{" "}
+                        of {sortedRecords.length} records
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setPage((prev) => Math.max(1, prev - 1))
+                          }
+                          disabled={currentPage === 1}
+                          className="rounded-lg border border-border bg-white px-3 py-1.5 text-xs font-bold text-primary-foreground transition hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          Previous
+                        </button>
+                        <span className="text-xs font-bold tabular-nums text-secondary-foreground">
+                          Page {currentPage} of {totalPages}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setPage((prev) => Math.min(totalPages, prev + 1))
+                          }
+                          disabled={currentPage === totalPages}
+                          className="rounded-lg border border-border bg-white px-3 py-1.5 text-xs font-bold text-primary-foreground transition hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

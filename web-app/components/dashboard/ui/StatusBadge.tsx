@@ -2,7 +2,14 @@ const STATUS_MAP: Record<
   string,
   { pill: string; dot: string; label: string }
 > = {
+  proposed: { pill: "bg-pending/10 text-pending", dot: "bg-pending", label: "Proposed" },
   approved: { pill: "bg-success/10 text-success", dot: "bg-success", label: "Approved" },
+  "open for bidding": {
+    pill: "bg-information/10 text-information",
+    dot: "bg-information",
+    label: "Open for Bidding",
+  },
+  awarded: { pill: "bg-ongoing/10 text-ongoing", dot: "bg-ongoing", label: "Awarded" },
   completed: { pill: "bg-success/10 text-success", dot: "bg-success", label: "Completed" },
   rejected: { pill: "bg-danger/10 text-danger", dot: "bg-danger", label: "Rejected" },
   voided: {
