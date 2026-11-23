@@ -44,9 +44,52 @@ type LegacyRecord = Pick<
 
 const PAGE_SIZE = 10;
 
+const RECORD_TYPE_BADGE: Record<string, string> = {
+  Allocation: "bg-primary/10 text-primary",
+  Expense: "bg-pending/10 text-pending",
+  Award: "bg-success/10 text-success",
+};
+
+/** Keeps Allocation, Expense and Award visually distinguishable. */
+const recordTypeBadgeClass = (recordType: string) =>
+  RECORD_TYPE_BADGE[recordType] ?? "bg-secondary text-secondary-foreground";
+
+function RecordFilter({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: readonly string[];
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="flex items-center gap-2 rounded-xl border border-border bg-white px-3 py-2">
+      <span className="text-[10px] font-bold uppercase tracking-wider text-secondary-foreground">
+        {label}
+      </span>
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="cursor-pointer bg-transparent text-xs font-bold text-primary-foreground outline-none"
+      >
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
 export default function OnChainVerifier() {
   const [isExpanded, setIsExpanded] = useState(false);
   const [page, setPage] = useState(1);
+  const [typeFilter, setTypeFilter] = useState("All");
+  const [deploymentFilter, setDeploymentFilter] = useState("All");
 
   const {
     data: currentRecords,
@@ -101,9 +144,30 @@ export default function OnChainVerifier() {
     })),
   ];
   const sortedRecords = [...records].reverse();
-  const totalPages = Math.max(1, Math.ceil(sortedRecords.length / PAGE_SIZE));
+
+  const typeOptions = [
+    "All",
+    ...Array.from(new Set(records.map((record) => record.recordType))).sort(
+      (a, b) => a.localeCompare(b),
+    ),
+  ];
+  const deploymentOptions = [
+    "All",
+    "Current",
+    ...(hasLegacy ? ["Legacy"] : []),
+  ];
+
+  const filteredRecords = sortedRecords.filter((record) => {
+    const matchesType =
+      typeFilter === "All" || record.recordType === typeFilter;
+    const matchesDeployment =
+      deploymentFilter === "All" || record.deployment === deploymentFilter;
+    return matchesType && matchesDeployment;
+  });
+
+  const totalPages = Math.max(1, Math.ceil(filteredRecords.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
-  const paginatedRecords = sortedRecords.slice(
+  const paginatedRecords = filteredRecords.slice(
     (currentPage - 1) * PAGE_SIZE,
     currentPage * PAGE_SIZE,
   );
@@ -226,6 +290,29 @@ export default function OnChainVerifier() {
           {/* Expanded Records Table */}
           {isExpanded && (
             <div className="px-6 pb-5 sm:px-7">
+              {!isLoading && records.length > 0 && (
+                <div className="mb-4 flex flex-wrap items-center gap-2">
+                  <RecordFilter
+                    label="Type"
+                    value={typeFilter}
+                    options={typeOptions}
+                    onChange={(value) => {
+                      setTypeFilter(value);
+                      setPage(1);
+                    }}
+                  />
+                  <RecordFilter
+                    label="Deployment"
+                    value={deploymentFilter}
+                    options={deploymentOptions}
+                    onChange={(value) => {
+                      setDeploymentFilter(value);
+                      setPage(1);
+                    }}
+                  />
+                </div>
+              )}
+
               {isLoading ? (
                 <div className="text-center py-8 text-secondary-foreground">
                   <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
@@ -234,6 +321,10 @@ export default function OnChainVerifier() {
               ) : records.length === 0 ? (
                 <div className="text-center py-8 text-secondary-foreground bg-secondary/40 rounded-2xl border border-border">
                   <p className="text-sm">No records found on-chain yet.</p>
+                </div>
+              ) : filteredRecords.length === 0 ? (
+                <div className="text-center py-8 text-secondary-foreground bg-secondary/40 rounded-2xl border border-border">
+                  <p className="text-sm">No records match the selected filters.</p>
                 </div>
               ) : (
                 <div className="overflow-x-auto rounded-2xl border border-border">
@@ -279,11 +370,7 @@ export default function OnChainVerifier() {
                             </td>
                             <td className="px-4 py-3">
                               <span
-                                className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                  record.recordType === "Allocation"
-                                    ? "bg-primary/10 text-primary"
-                                    : "bg-tertiary/30 text-primary-foreground"
-                                }`}
+                                className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${recordTypeBadgeClass(record.recordType)}`}
                               >
                                 {record.recordType}
                               </span>
@@ -334,8 +421,8 @@ export default function OnChainVerifier() {
                     <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border bg-secondary/20 px-4 py-3">
                       <p className="text-xs font-semibold text-secondary-foreground">
                         Showing {(currentPage - 1) * PAGE_SIZE + 1}-
-                        {Math.min(currentPage * PAGE_SIZE, sortedRecords.length)}{" "}
-                        of {sortedRecords.length} records
+                        {Math.min(currentPage * PAGE_SIZE, filteredRecords.length)}{" "}
+                        of {filteredRecords.length} records
                       </p>
                       <div className="flex items-center gap-2">
                         <button

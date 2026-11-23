@@ -7,7 +7,6 @@ import {
   ChevronRight,
   CheckCircle2,
   FileText,
-  Mic,
   MapPin,
   Layers,
   Radio,
@@ -42,6 +41,16 @@ interface ProjectRow {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+/** A project can cover several barangays, stored semicolon-separated. */
+const splitBarangays = (value: string): string[] =>
+  value
+    .split(";")
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+const uniqueSorted = (values: string[]): string[] =>
+  Array.from(new Set(values)).sort((a, b) => a.localeCompare(b));
+
 const formatDate = (value: string | null): string => {
   if (!value) return "—";
   const date = new Date(value);
@@ -70,6 +79,7 @@ const toBiddingProject = (row: ProjectRow): BiddingProject => {
     id: row.id,
     name: row.name,
     location: row.location || row.barangay || "",
+    barangay: row.barangay || row.location || "",
     abc: Number(row.budget),
     status,
     deadline: formatDate(row.bid_deadline),
@@ -124,6 +134,8 @@ export default function BiddingPortal() {
     null,
   );
   const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [barangayFilter, setBarangayFilter] = useState("All");
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const [vendorName, setVendorName] = useState("");
   const [vendorCompany, setVendorCompany] = useState("");
@@ -161,11 +173,38 @@ export default function BiddingPortal() {
 
 
 
-  const filteredProjects = projects.filter(
-    (project) =>
-      project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      project.location.toLowerCase().includes(searchQuery.toLowerCase()),
+  const statusOptions = useMemo(
+    () => ["All", ...uniqueSorted(projects.map((project) => project.status))],
+    [projects],
   );
+
+  const barangayOptions = useMemo(
+    () => [
+      "All",
+      ...uniqueSorted(
+        projects.flatMap((project) => splitBarangays(project.barangay)),
+      ),
+    ],
+    [projects],
+  );
+
+  const filteredProjects = useMemo(() => {
+    const term = searchQuery.trim().toLowerCase();
+
+    return projects.filter((project) => {
+      const matchesSearch =
+        !term ||
+        project.name.toLowerCase().includes(term) ||
+        project.location.toLowerCase().includes(term);
+      const matchesStatus =
+        statusFilter === "All" || project.status === statusFilter;
+      const matchesBarangay =
+        barangayFilter === "All" ||
+        splitBarangays(project.barangay).includes(barangayFilter);
+
+      return matchesSearch && matchesStatus && matchesBarangay;
+    });
+  }, [projects, searchQuery, statusFilter, barangayFilter]);
 
   const openBidsCount = projects.filter(
     (project) => project.status === "Accepting Bids",
@@ -253,14 +292,24 @@ export default function BiddingPortal() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
-              <div className="mx-3 h-5 w-px bg-border" />
-              <Mic className="h-4 w-4 cursor-pointer text-secondary-foreground transition hover:text-primary" />
             </div>
 
             <div className="flex items-center gap-4 rounded-2xl border border-border bg-white px-4 py-2 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-              <FilterGroup label="Status" value="All" />
+              <FilterGroup
+                label="Status"
+                value={statusFilter}
+                options={statusOptions}
+                onChange={setStatusFilter}
+                disabled={isLoading}
+              />
               <span className="h-6 w-px bg-border" />
-              <FilterGroup label="Barangay" value="All" />
+              <FilterGroup
+                label="Barangay"
+                value={barangayFilter}
+                options={barangayOptions}
+                onChange={setBarangayFilter}
+                disabled={isLoading}
+              />
             </div>
           </div>
 
@@ -431,7 +480,7 @@ export default function BiddingPortal() {
                     No open procurement projects found
                   </p>
                   <p className="mt-1 text-xs text-secondary-foreground">
-                    Try a different project name or barangay.
+                    Try a different keyword, status, or barangay.
                   </p>
                 </div>
               )}
