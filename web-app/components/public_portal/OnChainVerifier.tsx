@@ -2,7 +2,12 @@
 
 import { useState } from "react";
 import { useReadContract } from "wagmi";
-import { CONTRACT_ADDRESS, LEGACY_CONTRACT_ADDRESS, SK_LEDGE_ABI } from "@/lib/contractConfig";
+import {
+  CONTRACT_ADDRESS,
+  LEGACY_CONTRACT_ADDRESS,
+  LEGACY_SK_LEDGE_ABI,
+  SK_LEDGE_ABI,
+} from "@/lib/contractConfig";
 import { parseExpensePurpose } from "@/lib/formatExpensePurpose";
 import {
   ShieldCheck,
@@ -25,6 +30,18 @@ type OnChainRecord = {
   deployment: "Current" | "Legacy";
 };
 
+// The legacy contract returns a narrower struct; only these fields are read.
+type LegacyRecord = Pick<
+  OnChainRecord,
+  | "id"
+  | "official"
+  | "barangay"
+  | "amount"
+  | "timestamp"
+  | "purpose"
+  | "recordType"
+>;
+
 const PAGE_SIZE = 10;
 
 export default function OnChainVerifier() {
@@ -44,6 +61,8 @@ export default function OnChainVerifier() {
 
   // The legacy deployment is optional: without a configured address these
   // reads stay disabled and the explorer shows the current contract alone.
+  // It needs its own ABI — an older record struct without the approval,
+  // void and predecessor fields, which the current ABI cannot decode.
   const hasLegacy = Boolean(LEGACY_CONTRACT_ADDRESS);
 
   const {
@@ -53,7 +72,7 @@ export default function OnChainVerifier() {
     isRefetching: isRefetchingLegacy,
   } = useReadContract({
     address: LEGACY_CONTRACT_ADDRESS,
-    abi: SK_LEDGE_ABI,
+    abi: LEGACY_SK_LEDGE_ABI,
     functionName: "getAllRecords",
     query: { enabled: hasLegacy },
   });
@@ -70,8 +89,14 @@ export default function OnChainVerifier() {
       ...r,
       deployment: "Current" as const,
     })),
-    ...((legacyRecords as OnChainRecord[] | undefined) ?? []).map((r) => ({
-      ...r,
+    ...((legacyRecords as readonly LegacyRecord[] | undefined) ?? []).map((r) => ({
+      id: r.id,
+      official: r.official,
+      barangay: r.barangay,
+      amount: r.amount,
+      timestamp: r.timestamp,
+      purpose: r.purpose,
+      recordType: r.recordType,
       deployment: "Legacy" as const,
     })),
   ];

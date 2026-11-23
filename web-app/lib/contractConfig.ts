@@ -1,4 +1,5 @@
 export { SK_LEDGE_ABI } from "./contractAbi.generated";
+export { LEGACY_SK_LEDGE_ABI } from "./legacyContractAbi";
 
 export const CONTRACT_ADDRESS = (process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ||
   "0x0000000000000000000000000000000000000000") as `0x${string}`;
