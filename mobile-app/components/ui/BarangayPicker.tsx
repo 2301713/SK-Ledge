@@ -132,7 +132,7 @@ export default function BarangayPicker({
             <FlatList
               data={options}
               keyExtractor={(item) => item}
-              keyboardShouldPersistTaps="handled"
+              keyboardShouldPersistTaps="always"
               initialNumToRender={20}
               className="pb-2"
               ListHeaderComponent={

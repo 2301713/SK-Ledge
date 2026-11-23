@@ -36,7 +36,6 @@ import {
   Alert,
   Image,
   KeyboardAvoidingView,
-  Platform,
   RefreshControl,
   ScrollView,
   Text,
@@ -364,13 +363,13 @@ export default function Profile() {
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior="padding"
       >
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
+        keyboardShouldPersistTaps="always"
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
