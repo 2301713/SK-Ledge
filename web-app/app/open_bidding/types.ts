@@ -4,6 +4,8 @@ export interface BiddingProject {
   id: string;
   name: string;
   location: string;
+  /** Raw `barangay` column, used by the board's barangay filter. */
+  barangay: string;
   abc: number;
   status: string;
   deadline: string;
@@ -20,6 +22,9 @@ export interface BiddingProject {
 export interface FilterGroupProps {
   label: string;
   value: string;
+  options: readonly string[];
+  onChange: (value: string) => void;
+  disabled?: boolean;
 }
 
 export interface StatCardProps {
