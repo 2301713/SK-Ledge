@@ -18,6 +18,7 @@ import {
   ActivityIndicator,
   Image,
   KeyboardAvoidingView,
+  Platform,
   ScrollView,
   StatusBar,
   Text,
@@ -172,7 +173,7 @@ export default function CompleteVendorProfileScreen() {
     <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
       <StatusBar barStyle="dark-content" />
       <KeyboardAvoidingView
-        behavior="padding"
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
         className="flex-1"
       >
         <ScrollView

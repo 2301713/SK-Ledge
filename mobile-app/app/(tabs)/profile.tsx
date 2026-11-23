@@ -36,6 +36,7 @@ import {
   Alert,
   Image,
   KeyboardAvoidingView,
+  Platform,
   RefreshControl,
   ScrollView,
   Text,
@@ -361,7 +362,10 @@ export default function Profile() {
       />
       </Animated.View>
 
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }}
