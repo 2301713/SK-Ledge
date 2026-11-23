@@ -13,7 +13,7 @@ import { supabase } from "@/lib/supabase";
 import { useFonts } from "expo-font";
 import { StatusBar } from "expo-status-bar";
 import { Stack, usePathname, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export const unstable_settings = {
   anchor: "(tabs)",
@@ -23,6 +23,7 @@ export default function RootLayout() {
   const router = useRouter();
   const pathname = usePathname(); // Switched from useSegments
   const [sessionChecked, setSessionChecked] = useState(false);
+  const pathnameRef = useRef(pathname);
   const [fontsLoaded] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
@@ -32,15 +33,21 @@ export default function RootLayout() {
     Inter_900Black,
   });
 
+  // Read through a ref so a new route never re-creates the auth subscription.
   useEffect(() => {
-    const handleRouting = (session: any) => {
+    pathnameRef.current = pathname;
+  }, [pathname]);
+
+  const handleRouting = useCallback(
+    (session: { user: unknown } | null) => {
       // Clean, straightforward string matching. No tuple type errors!
       // OAuth screens manage their own navigation: the callback still needs a
       // session while it verifies the vendor role, and a new Google account
       // must be allowed to finish its application while signed in.
-      const isAuthFlowScreen = pathname.startsWith("/auth/");
+      const currentPath = pathnameRef.current;
+      const isAuthFlowScreen = currentPath.startsWith("/auth/");
       const isAuthScreen =
-        pathname === "/" || pathname === "/register" || isAuthFlowScreen;
+        currentPath === "/" || currentPath === "/register" || isAuthFlowScreen;
 
       if (!session && !isAuthScreen) {
         // User is NOT logged in, but trying to access private screens -> Kick to Login
@@ -49,8 +56,11 @@ export default function RootLayout() {
         // User IS logged in, but sitting on Login/Register -> Push to Dashboard
         router.replace("/(tabs)/home");
       }
-    };
+    },
+    [router],
+  );
 
+  useEffect(() => {
     // 1. Check the session immediately when the app loads
     supabase.auth.getSession().then(({ data: { session } }) => {
       handleRouting(session);
@@ -67,7 +77,7 @@ export default function RootLayout() {
     return () => {
       subscription.unsubscribe();
     };
-  }, [router, pathname]);
+  }, [handleRouting]);
 
   if (!sessionChecked || !fontsLoaded) return null;
 
