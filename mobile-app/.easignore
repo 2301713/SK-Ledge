@@ -1,0 +1,12 @@
+# Copy everything from your .gitignore first (if using .easignore, EAS ignores .gitignore)
+node_modules/
+.expo/
+dist/
+web-build/
+
+# Exclude local build outputs and large media/design files
+*.apk
+*.aab
+*.ipa
+android/app/build/
+ios/build/
