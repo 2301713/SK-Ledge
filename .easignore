@@ -1,13 +1,31 @@
-cat << 'EOF' > ../.easignore
+# Dependencies (across root and all subfolders)
 **/node_modules/
+
+# Version control & Expo caches
 **/.git/
 **/.expo/
+**/.expo-shared/
+
+# Native build folders & outputs (EAS generates these cleanly in the cloud)
 **/android/
 **/ios/
 **/dist/
 **/web-build/
 **/.next/
-_.apk
-_.aab
-\*.ipa
-EOF
+**/build/
+
+# Compiled binaries & archives
+*.apk
+*.aab
+*.ipa
+*.zip
+*.tar.gz
+
+# Logs, environment files & OS clutter
+*.log
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+.env*.local
+.DS_Store
+Thumbs.db
