@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/lib/useToast";
 import {
-  CircleAlert,
   Loader2,
   ShieldCheck,
   User,
@@ -32,7 +31,6 @@ export default function CompleteProfilePage() {
   const router = useRouter();
   const toast = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
   const [userEmail, setUserEmail] = useState("");
   const [isSessionReady, setIsSessionReady] = useState(false);
   const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
@@ -78,8 +76,8 @@ export default function CompleteProfilePage() {
         }
 
         setHasCheckedAuth(true);
-        setError(
-          "We could not load your Google session yet. Please go back and try the sign-in step again.",
+        toast.error(
+          "We could not load your Google session. Sign in again to continue.",
         );
         return;
       }
@@ -90,7 +88,7 @@ export default function CompleteProfilePage() {
     return () => {
       isMounted = false;
     };
-  }, [router]);
+  }, [router, toast]);
 
   const isSKRole =
     formData.role_type === "SK_Chairperson" ||
@@ -99,7 +97,6 @@ export default function CompleteProfilePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError("");
 
     try {
       // Get current user
@@ -192,14 +189,13 @@ export default function CompleteProfilePage() {
       }
 
       toast.success(
-        "Profile completed! Pending admin approval. Redirecting...",
+        "Profile saved. Your account is pending admin approval — we are sending you back to sign in.",
       );
       setTimeout(() => router.replace("/login"), 1500);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "An unexpected error occurred";
-      setError(message);
-      toast.error(message);
+      toast.error(`Could not save your profile — ${message}`);
     } finally {
       setIsLoading(false);
     }
@@ -260,18 +256,6 @@ export default function CompleteProfilePage() {
               Just a few more details to get started.
             </p>
           </header>
-
-          {/* ERROR ALERT */}
-          {error && (
-            <div className="mb-6 rounded-2xl bg-danger/10 p-4 border border-danger/20 flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
-              <span className="text-danger mt-0.5">
-                <CircleAlert className="w-5 h-5" />
-              </span>
-              <p className="text-sm font-semibold text-danger leading-snug">
-                {error}
-              </p>
-            </div>
-          )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* EMAIL (READ-ONLY) */}

@@ -1,31 +1,31 @@
-"use client";
-
-import { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
-import { FileText, ShieldCheck, X } from "lucide-react";
+/**
+ * Single source of truth for the public legal pages (/terms and /privacy).
+ * Both the standalone pages and any in-app link read from here.
+ */
 
 export type LegalDocument = "terms" | "privacy";
 
-interface LegalSection {
+export interface LegalSection {
   title: string;
   paragraphs?: string[];
   bullets?: string[];
 }
 
-interface LegalContent {
+export interface LegalContent {
   label: string;
   title: string;
-  icon: typeof FileText;
+  summary: string;
   sections: LegalSection[];
 }
 
-const LAST_UPDATED = "November 20, 2026";
+export const LAST_UPDATED = "November 20, 2026";
 
-const LEGAL_CONTENT: Record<LegalDocument, LegalContent> = {
+export const LEGAL_CONTENT: Record<LegalDocument, LegalContent> = {
   terms: {
     label: "Terms of Service",
     title: "Terms of Service",
-    icon: FileText,
+    summary:
+      "The rules for using SK-Ledge: who may sign in, what you may do with the platform, how on-chain records behave, and the limits of our liability.",
     sections: [
       {
         title: "Acceptance of Terms",
@@ -125,7 +125,8 @@ const LEGAL_CONTENT: Record<LegalDocument, LegalContent> = {
   privacy: {
     label: "Privacy Policy",
     title: "Privacy Policy",
-    icon: ShieldCheck,
+    summary:
+      "What personal data SK-Ledge collects (including Google sign-in data), how it is used, shared, and protected, and the rights you hold under the Philippine Data Privacy Act of 2012.",
     sections: [
       {
         title: "Introduction",
@@ -141,6 +142,14 @@ const LEGAL_CONTENT: Record<LegalDocument, LegalContent> = {
           "Authentication and wallet data, including wallet addresses, signatures, and session metadata.",
           "Financial and governance records, including budgets, expenses, payees, supporting documents, and audit findings submitted through the Platform.",
           "Usage and technical data such as IP address, browser and device information, pages visited, and timestamps.",
+        ],
+      },
+      {
+        title: "Google Sign-In and Google User Data",
+        paragraphs: [
+          "You sign in with Google. When you do, Google shares your basic profile with us: your name, email address, and profile picture. We request only the openid, email, and profile scopes — we do not request access to Gmail, Drive, Calendar, Contacts, or any other Google service.",
+          "We use that information only to create and identify your SK-Ledge account, display your name and avatar, send account-related notices, and enforce role-based access. We do not sell Google user data, use it for advertising, or use it to train machine-learning models.",
+          "Google user data is stored with our database provider and kept while your account exists. You can revoke SK-Ledge's access at any time from your Google Account permissions page, and you can ask us to delete your account data at hello@skledge.ph. SK-Ledge's use of information received from Google APIs adheres to the Google API Services User Data Policy, including the Limited Use requirements.",
         ],
       },
       {
@@ -225,177 +234,3 @@ const LEGAL_CONTENT: Record<LegalDocument, LegalContent> = {
     ],
   },
 };
-
-interface LegalModalProps {
-  initialDocument: LegalDocument;
-  onClose: () => void;
-}
-
-export default function LegalModal({
-  initialDocument,
-  onClose,
-}: LegalModalProps) {
-  const [activeDocument, setActiveDocument] =
-    useState<LegalDocument>(initialDocument);
-  const closeButtonRef = useRef<HTMLButtonElement>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  const content = LEGAL_CONTENT[activeDocument];
-  const Icon = content.icon;
-
-  useEffect(() => {
-    const previouslyFocused = document.activeElement as HTMLElement | null;
-    closeButtonRef.current?.focus();
-
-    return () => previouslyFocused?.focus();
-  }, []);
-
-  useEffect(() => {
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    return () => {
-      document.body.style.overflow = originalOverflow;
-    };
-  }, []);
-
-  useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") onClose();
-    }
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
-
-  useEffect(() => {
-    scrollRef.current?.scrollTo({ top: 0 });
-  }, [activeDocument]);
-
-  return createPortal(
-    <div
-      className="fixed inset-0 z-[100] flex items-end justify-center bg-slate-950/70 p-4 backdrop-blur-sm sm:items-center"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="legal-modal-title"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
-    >
-      <div className="animate-fadein flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-white/10 bg-slate-950 shadow-2xl shadow-black/40 motion-reduce:animate-none">
-        <div className="flex items-start justify-between gap-4 border-b border-white/8 px-6 py-5 sm:px-8">
-          <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-tertiary/15">
-              <Icon className="h-5 w-5 text-tertiary" />
-            </div>
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
-                Legal
-              </p>
-              <h2
-                id="legal-modal-title"
-                className="text-lg font-extrabold tracking-tight text-white sm:text-xl"
-              >
-                {content.title}
-              </h2>
-              <p className="mt-0.5 text-xs text-slate-500">
-                Last updated {LAST_UPDATED}
-              </p>
-            </div>
-          </div>
-          <button
-            ref={closeButtonRef}
-            type="button"
-            onClick={onClose}
-            aria-label="Close legal dialog"
-            className="rounded-xl p-2 text-slate-400 transition hover:bg-white/8 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-tertiary"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-
-        <div className="flex gap-1 border-b border-white/8 px-6 sm:px-8">
-          {(Object.keys(LEGAL_CONTENT) as LegalDocument[]).map((document) => (
-            <button
-              key={document}
-              type="button"
-              onClick={() => setActiveDocument(document)}
-              aria-current={
-                activeDocument === document ? "page" : undefined
-              }
-              className={`-mb-px border-b-2 px-1 py-3 text-xs font-bold transition-colors ${
-                activeDocument === document
-                  ? "border-tertiary text-white"
-                  : "border-transparent text-slate-500 hover:text-slate-300"
-              }`}
-            >
-              {LEGAL_CONTENT[document].label}
-            </button>
-          ))}
-        </div>
-
-        <div
-          ref={scrollRef}
-          className="thin-scrollbar overflow-y-auto px-6 py-6 sm:px-8"
-        >
-          <div className="space-y-6">
-            {content.sections.map((section, index) => (
-              <section key={section.title}>
-                <h3 className="flex items-baseline gap-2 text-sm font-bold text-white">
-                  <span className="text-[10px] font-black tabular-nums text-tertiary">
-                    {String(index + 1).padStart(2, "0")}
-                  </span>
-                  {section.title}
-                </h3>
-                {section.paragraphs?.map((paragraph) => (
-                  <p
-                    key={paragraph}
-                    className="mt-2 text-xs leading-relaxed text-slate-400"
-                  >
-                    {paragraph}
-                  </p>
-                ))}
-                {section.bullets ? (
-                  <ul className="mt-2 space-y-1.5">
-                    {section.bullets.map((bullet) => (
-                      <li
-                        key={bullet}
-                        className="flex gap-2 text-xs leading-relaxed text-slate-400"
-                      >
-                        <span
-                          aria-hidden="true"
-                          className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-tertiary"
-                        />
-                        {bullet}
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-              </section>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between gap-3 border-t border-white/8 bg-slate-900/50 px-6 py-4 sm:px-8">
-          <p className="text-xs text-slate-500">
-            Questions?{" "}
-            <a
-              href="mailto:hello@skledge.ph"
-              className="text-slate-300 transition-colors hover:text-white"
-            >
-              hello@skledge.ph
-            </a>
-          </p>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-tertiary"
-          >
-            Close
-          </button>
-        </div>
-      </div>
-    </div>,
-    document.body,
-  );
-}

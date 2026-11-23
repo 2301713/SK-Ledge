@@ -2,12 +2,12 @@
 
 import LogoLoader from "@/components/LogoLoader";
 import Image from "next/image";
+import Link from "next/link";
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 import { useToast } from "@/lib/useToast";
 import {
-  CircleAlert,
   ShieldCheck,
   CheckCircle2,
   Lock,
@@ -51,10 +51,10 @@ function LoginPageContent() {
 
     if (error.toLowerCase().includes("database error saving new user")) {
       toast.error(
-        "Supabase could not create the new Google account. This usually means the Supabase Auth tables need to be reset/reinitialized before sign-up can work again.",
+        "Google sign-in could not create your account. Supabase Auth needs its tables reinitialized before new sign-ups can work.",
       );
     } else {
-      toast.error(error);
+      toast.error(`Google sign-in did not complete — ${error}`);
     }
   }, [error, toast]);
 
@@ -78,8 +78,8 @@ function LoginPageContent() {
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Google sign-in failed";
-      setError(message);
-      toast.error(message);
+      // Toast only: the inline banner duplicated this same message.
+      toast.error(`Could not reach Google sign-in — ${message}`);
     } finally {
       setIsLoading(false);
     }
@@ -274,16 +274,6 @@ function LoginPageContent() {
             </p>
           </div>
 
-          {/* ERROR ALERT */}
-          {error && (
-            <div className="mb-6 flex items-start gap-3 rounded-xl border border-danger/30 bg-danger/10 p-4">
-              <CircleAlert className="mt-0.5 h-5 w-5 shrink-0 text-danger" />
-              <p className="text-sm font-medium leading-snug text-danger">
-                {error}
-              </p>
-            </div>
-          )}
-
           {/* GOOGLE SIGN-IN BUTTON */}
           <button
             type="button"
@@ -325,6 +315,24 @@ function LoginPageContent() {
           <p className="mt-3 flex items-center justify-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.15em] text-secondary-foreground/70">
             <Lock className="h-3 w-3" />
             Authorized personnel only · Secure OAuth
+          </p>
+
+          <p className="mt-3 text-center text-[11px] leading-relaxed text-secondary-foreground">
+            By continuing with Google, you agree to our{" "}
+            <Link
+              href="/terms"
+              className="font-semibold text-primary underline decoration-primary/30 underline-offset-2 hover:decoration-primary"
+            >
+              Terms of Service
+            </Link>{" "}
+            and{" "}
+            <Link
+              href="/privacy"
+              className="font-semibold text-primary underline decoration-primary/30 underline-offset-2 hover:decoration-primary"
+            >
+              Privacy Policy
+            </Link>
+            .
           </p>
 
           {/* ACCESS STEPS */}

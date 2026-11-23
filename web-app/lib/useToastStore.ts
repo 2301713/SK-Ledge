@@ -26,7 +26,8 @@ export const useToastStore = create<ToastState>()(
 
       addToast: (toast) => {
         const id = `toast-${Date.now()}-${Math.random()}`;
-        const duration = toast.duration ?? 4000; // default 4 seconds
+        // Errors usually carry a reason worth reading, so they linger longer.
+        const duration = toast.duration ?? (toast.type === "error" ? 6000 : 4000);
 
         set((state) => ({
           toasts: [...state.toasts, { ...toast, id, duration }],

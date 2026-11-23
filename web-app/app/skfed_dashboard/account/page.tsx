@@ -27,15 +27,11 @@ export default function AccountPage() {
     isLoading,
     isEditing,
     isSaving,
-    error,
-    successMsg,
     userProfile,
     setCurrentUser,
     setIsLoading,
     setIsEditing,
     setIsSaving,
-    setError,
-    setSuccessMsg,
     setUserProfile,
   } = useAuthStore();
 
@@ -123,8 +119,6 @@ export default function AccountPage() {
     if (!userProfile) return;
 
     setIsSaving(true);
-    setError("");
-    setSuccessMsg("");
 
     const rawContact = (userProfile.contact_number || "").trim();
     const contactNumber = rawContact
@@ -132,7 +126,9 @@ export default function AccountPage() {
       : null;
 
     if (contactNumber && !isValidContactNumber(contactNumber)) {
-      setError("Enter a valid PH mobile number, e.g. 0917 123 4567.");
+      toast.error(
+        "That mobile number does not look right. Use the 0917 123 4567 format.",
+      );
       setIsSaving(false);
       return;
     }
@@ -157,14 +153,12 @@ export default function AccountPage() {
         });
       }
 
-      setSuccessMsg("Account details updated successfully.");
-      toast.success("Account details updated successfully!");
+      toast.success("Profile updated — your name and contact number are saved.");
       setIsEditing(false);
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Failed to update profile.";
-      setError(message);
-      toast.error(message);
+        err instanceof Error ? err.message : "Please try again.";
+      toast.error(`Could not save your profile — ${message}`);
     } finally {
       setIsSaving(false);
     }
@@ -232,20 +226,6 @@ export default function AccountPage() {
           title="Account Settings"
           subtitle="Manage your profile and system credentials."
         />
-
-        {/* ALERTS */}
-        {error && (
-          <div className="flex items-center gap-3 rounded-xl border border-danger/30 bg-danger/10 px-5 py-4 text-sm font-medium text-danger">
-            <AlertCircle className="h-5 w-5 shrink-0" />
-            {error}
-          </div>
-        )}
-        {successMsg && (
-          <div className="flex items-center gap-3 rounded-xl border border-success/30 bg-success/10 px-5 py-4 text-sm font-medium text-success">
-            <CheckCircleIcon />
-            {successMsg}
-          </div>
-        )}
 
         {/* PROFILE OVERVIEW CARD */}
         <Card className="relative overflow-hidden">
@@ -383,8 +363,6 @@ export default function AccountPage() {
               <button
                 onClick={() => {
                   setIsEditing(false);
-                  setError("");
-                  setSuccessMsg("");
                   // Reset name to original state
                   if (currentUser) {
                     setUserProfile({
@@ -417,22 +395,5 @@ export default function AccountPage() {
         </Card>
       </main>
     </div>
-  );
-}
-
-function CheckCircleIcon() {
-  return (
-    <svg
-      className="h-5 w-5 shrink-0"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M21.801 10A10 10 0 1 1 17 3.335" />
-      <path d="m9 11 3 3L22 4" />
-    </svg>
   );
 }
