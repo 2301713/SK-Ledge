@@ -369,5 +369,5 @@ export function reportFileName(
   const prefix =
     kind === "liquidation" ? "liquidation-report" : "financial-summary";
 
-  return `${prefix}_${slug}_${startDate}_${endDate}.csv`;
+  return `${prefix}_${slug}_${startDate}_${endDate}.pdf`;
 }

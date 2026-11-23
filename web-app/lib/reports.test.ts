@@ -241,10 +241,10 @@ describe("CSV output", () => {
 describe("reportFileName", () => {
   it("slugifies the barangay and includes the period", () => {
     expect(reportFileName("liquidation", "Adia, Agoncillo", "2026-01-01", "2026-03-31")).toBe(
-      "liquidation-report_adia-agoncillo_2026-01-01_2026-03-31.csv",
+      "liquidation-report_adia-agoncillo_2026-01-01_2026-03-31.pdf",
     );
     expect(reportFileName("financial-summary", "Peñarrubia", "2026-01-01", "2026-01-31")).toBe(
-      "financial-summary_penarrubia_2026-01-01_2026-01-31.csv",
+      "financial-summary_penarrubia_2026-01-01_2026-01-31.pdf",
     );
   });
 });

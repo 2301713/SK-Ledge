@@ -33,6 +33,13 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 .md
+# ...but the database docs stay visible
+supabase/*
+
+# supabase CLI local state (the migrations themselves are tracked)
+# /supabase/.temp/
+# /supabase/.branches/
+# /supabase/supabase/
 
 # vercel
 .vercel

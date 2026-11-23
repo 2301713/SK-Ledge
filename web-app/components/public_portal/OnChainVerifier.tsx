@@ -42,22 +42,27 @@ export default function OnChainVerifier() {
     functionName: "getAllRecords",
   });
 
+  // The legacy deployment is optional: without a configured address these
+  // reads stay disabled and the explorer shows the current contract alone.
+  const hasLegacy = Boolean(LEGACY_CONTRACT_ADDRESS);
+
   const {
     data: legacyRecords,
     isLoading: legacyLoading,
     refetch: refetchLegacy,
     isRefetching: isRefetchingLegacy,
   } = useReadContract({
-    address: LEGACY_CONTRACT_ADDRESS as `0x${string}`,
+    address: LEGACY_CONTRACT_ADDRESS,
     abi: SK_LEDGE_ABI,
     functionName: "getAllRecords",
+    query: { enabled: hasLegacy },
   });
 
-  const isLoading = currentLoading || legacyLoading;
-  const isRefetching = isRefetchingCurrent || isRefetchingLegacy;
+  const isLoading = currentLoading || (hasLegacy && legacyLoading);
+  const isRefetching = isRefetchingCurrent || (hasLegacy && isRefetchingLegacy);
   const refetch = () => {
     refetchCurrent();
-    refetchLegacy();
+    if (hasLegacy) refetchLegacy();
   };
 
   const records: OnChainRecord[] = [
@@ -345,13 +350,17 @@ export default function OnChainVerifier() {
               <p className="text-[10px] text-secondary-foreground font-mono">
                 Current: {CONTRACT_ADDRESS}
               </p>
-              <p className="text-[10px] text-secondary-foreground font-mono">
-                Legacy: {LEGACY_CONTRACT_ADDRESS}
-              </p>
+              {hasLegacy && (
+                <p className="text-[10px] text-secondary-foreground font-mono">
+                  Legacy: {LEGACY_CONTRACT_ADDRESS}
+                </p>
+              )}
             </div>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
               <span className="text-[10px] text-secondary-foreground font-semibold uppercase tracking-widest">
-                Aggregated across both deployments
+                {hasLegacy
+                  ? "Aggregated across both deployments"
+                  : "Current deployment only"}
               </span>
               <a
                 href={`https://sepolia.etherscan.io/address/${CONTRACT_ADDRESS}`}

@@ -1,5 +1,5 @@
 /**
- * Verifies a completed Sepolia journey after "Sync ledger" has run.
+ * Verifies a completed Sepolia journey after "Reconcile ledger" has run.
  *
  * Usage:
  *   node scripts/verify-journey.mjs [path-to-e2e-evidence.json]
@@ -129,7 +129,7 @@ if (recordIds.length > 0) {
       console.error(
         "      The signing wallet has no Supabase profile. Bind it at " +
           "/sk_dashboard/account (or use E2E_OFFICIAL_PRIVATE_KEY for an already-bound wallet), " +
-          "then click Sync ledger and run this verifier again.",
+          "then click Reconcile ledger and run this verifier again.",
       );
     }
   } else {

@@ -140,6 +140,11 @@ export default function SKUploadPage() {
             email: profileData.email,
             approval_status: profileData.approval_status,
           } as UserAccount);
+
+          // Load the vault here rather than in an effect keyed on
+          // `currentUser`: this call runs after an await, so its state
+          // updates never cascade into the render that just committed.
+          void loadVaultDocuments(profileData.id);
         }
       } catch (err) {
         console.error("Unexpected error:", err);
@@ -149,13 +154,7 @@ export default function SKUploadPage() {
     };
 
     fetchUserProfile();
-  }, [router]);
-
-  useEffect(() => {
-    if (currentUser) {
-      void loadVaultDocuments(currentUser.id);
-    }
-  }, [currentUser, loadVaultDocuments]);
+  }, [router, loadVaultDocuments]);
 
   // FILE HANDLERS
   const processFiles = (files: File[], type: "receipts" | "reports") => {

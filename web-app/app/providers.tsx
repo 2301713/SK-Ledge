@@ -16,7 +16,9 @@ export const config = createConfig({
     }),
   ],
   transports: {
-    [sepolia.id]: http(),
+    // Optional: point reads/writes at your own Sepolia endpoint. Without it
+    // wagmi falls back to the chain's default public RPC.
+    [sepolia.id]: http(process.env.NEXT_PUBLIC_SEPOLIA_RPC_URL || undefined),
   },
   ssr: true,
 });

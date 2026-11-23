@@ -516,7 +516,7 @@ async function main(): Promise<void> {
   console.log(`Evidence: ${evidencePath}`);
   console.log(`Records: ${evidence.records.map((r) => `${r.type}#${r.id}`).join(", ")}`);
   console.log(
-    "Next: open the web app, click Sync ledger (COA/Admin), then run `npm run verify:journey` in web-app.",
+    "Next: open the web app, click Reconcile ledger (COA/Admin), then run `npm run verify:journey` in web-app.",
   );
 }
 

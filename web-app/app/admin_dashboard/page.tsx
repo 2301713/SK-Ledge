@@ -246,9 +246,14 @@ export default function AdminDashboardPage() {
     );
   }, [approvedAccounts, search]);
 
-  useEffect(() => {
+  // Reset the page during render instead of in an effect, so changing the
+  // search never paints a stale page number first (see React's "adjusting
+  // state when props change" pattern).
+  const [previousSearch, setPreviousSearch] = useState(search);
+  if (previousSearch !== search) {
+    setPreviousSearch(search);
     setApprovedPage(1);
-  }, [search]);
+  }
 
   const approvedTotalPages = Math.max(
     1,

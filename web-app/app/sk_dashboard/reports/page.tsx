@@ -15,8 +15,6 @@ import {
   buildReport,
   formatPercent,
   formatPesos,
-  reportFileName,
-  reportToCsv,
   type GeneratedReport,
   type ReceiptLookup,
   type ReportKind,
@@ -92,19 +90,10 @@ async function fetchReceiptsByExpense(
   return lookup;
 }
 
-function downloadCsv(fileName: string, csv: string) {
-  // The BOM keeps Excel from misreading the file as ANSI.
-  const blob = new Blob(["\uFEFF", csv], {
-    type: "text/csv;charset=utf-8",
-  });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = fileName;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+/** jsPDF is large, so it is only fetched when a report is actually downloaded. */
+async function downloadReportPdf(report: GeneratedReport) {
+  const { downloadReportPdf: download } = await import("@/lib/reportPdf");
+  download(report);
 }
 
 export default function ReportsPage() {
@@ -606,21 +595,11 @@ export default function ReportsPage() {
                         </div>
                         <button
                           type="button"
-                          onClick={() =>
-                            downloadCsv(
-                              reportFileName(
-                                report.kind,
-                                report.meta.barangay,
-                                report.meta.periodStart,
-                                report.meta.periodEnd,
-                              ),
-                              reportToCsv(report),
-                            )
-                          }
+                          onClick={() => void downloadReportPdf(report)}
                           className="flex items-center justify-center gap-2 rounded-xl border border-primary px-4 py-2 text-sm font-bold text-primary transition-colors hover:bg-primary hover:text-white"
                         >
                           <Download size={16} />
-                          Download CSV
+                          Download PDF
                         </button>
                       </div>
                     );
