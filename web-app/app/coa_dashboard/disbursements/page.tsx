@@ -14,7 +14,7 @@ import { useAuthStore } from "@/lib/useAuthStore";
 import { useRecordsSync } from "@/lib/useRecordsSync";
 import { useToast } from "@/lib/useToast";
 import AuditReviewModal from "@/components/coa/AuditReviewModal";
-import { downloadCsv } from "@/lib/downloadCsv";
+import { downloadTablePdf } from "@/lib/reportPdf";
 import {
   AUDIT_COMPLIANCE_LABELS,
   AUDIT_STATUS_LABELS,
@@ -245,8 +245,14 @@ export default function DisbursementsPage() {
   };
 
   const exportReport = () => {
-    downloadCsv("coa-pending-disbursements.csv", [
-      [
+    downloadTablePdf({
+      fileName: `coa-pending-disbursements_${new Date().toISOString().slice(0, 10)}.pdf`,
+      title: "COA Pending Disbursements",
+      subtitle: [
+        `Generated: ${new Date().toLocaleString("en-PH", { timeZone: "Asia/Manila" })}`,
+        `${filtered.length} vouchers`,
+      ],
+      head: [
         "DV Reference",
         "Payee",
         "Barangay",
@@ -258,7 +264,7 @@ export default function DisbursementsPage() {
         "Findings",
         "Transaction",
       ],
-      ...filtered.map((item) => [
+      rows: filtered.map((item) => [
         item.id,
         item.payee,
         item.brgy,
@@ -270,7 +276,8 @@ export default function DisbursementsPage() {
         item.audit?.findings ?? "",
         item.txHash ?? "",
       ]),
-    ]);
+      rightAligned: [4],
+    });
   };
 
   const cleanCount = disbursements.filter(

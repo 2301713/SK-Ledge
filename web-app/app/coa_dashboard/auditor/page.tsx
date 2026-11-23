@@ -15,7 +15,7 @@ import { UserAccount } from "@/lib/useAuthStore";
 import { useRecordsSync } from "@/lib/useRecordsSync";
 import type { LedgerRecord } from "@/lib/records";
 import { VerifiedTransaction, ProjectStatus } from "../types";
-import { downloadCsv } from "@/lib/downloadCsv";
+import { downloadTablePdf } from "@/lib/reportPdf";
 import {
   ShieldCheck,
   Search,
@@ -364,9 +364,14 @@ export default function AuditorPage() {
   });
 
   const exportTransactions = () => {
-    downloadCsv("coa-audit-transactions.csv", [
-      ["Date", "Vendor", "Category", "Status", "Amount (PHP)", "Reference"],
-      ...filteredTransactions.map((tx) => [
+    const stamp = new Date().toLocaleString("en-PH", { timeZone: "Asia/Manila" });
+
+    downloadTablePdf({
+      fileName: `coa-audit-transactions_${new Date().toISOString().slice(0, 10)}.pdf`,
+      title: "COA Audit Transactions",
+      subtitle: [`Generated: ${stamp}`, `${filteredTransactions.length} transactions`],
+      head: ["Date", "Vendor", "Category", "Status", "Amount (PHP)", "Reference"],
+      rows: filteredTransactions.map((tx) => [
         tx.date,
         tx.vendor,
         tx.category,
@@ -374,12 +379,18 @@ export default function AuditorPage() {
         tx.amount.toFixed(2),
         tx.blockchainHash,
       ]),
-    ]);
+      rightAligned: [4],
+    });
   };
 
   const exportProjects = () => {
-    downloadCsv("coa-project-oversight.csv", [
-      [
+    const stamp = new Date().toLocaleString("en-PH", { timeZone: "Asia/Manila" });
+
+    downloadTablePdf({
+      fileName: `coa-project-oversight_${new Date().toISOString().slice(0, 10)}.pdf`,
+      title: "COA Project Oversight",
+      subtitle: [`Generated: ${stamp}`, `${projects.length} projects`],
+      head: [
         "Project",
         "Status",
         "Budget (PHP)",
@@ -387,7 +398,7 @@ export default function AuditorPage() {
         "Compliance (%)",
         "Last audit",
       ],
-      ...projects.map((project) => [
+      rows: projects.map((project) => [
         project.name,
         project.status,
         project.budget.toFixed(2),
@@ -395,7 +406,8 @@ export default function AuditorPage() {
         project.complianceScore ?? "",
         project.lastAudit,
       ]),
-    ]);
+      rightAligned: [2, 3, 4],
+    });
   };
 
   const formatCurrency = (amount: number) => {

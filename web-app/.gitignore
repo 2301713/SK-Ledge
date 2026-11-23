@@ -33,13 +33,9 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 .md
-# ...but the database docs stay visible
-supabase/*
-
-# supabase CLI local state (the migrations themselves are tracked)
-# /supabase/.temp/
-# /supabase/.branches/
-# /supabase/supabase/
+# Supabase project folder (migrations, linked CLI state) stays local only:
+# it is not part of the deployed app and is never committed.
+/supabase/
 
 # vercel
 .vercel

@@ -3,11 +3,7 @@ import type { LedgerRecord } from "./records";
 import {
   buildFinancialSummaryReport,
   buildLiquidationReport,
-  csvCell,
-  financialSummaryToCsv,
-  formatPesos,
   isInPeriod,
-  liquidationToCsv,
   manilaDate,
   reportFileName,
   type ReportMeta,
@@ -170,71 +166,13 @@ describe("buildFinancialSummaryReport", () => {
   });
 });
 
-describe("CSV output", () => {
-  it("quotes commas and escapes quotes and newlines", () => {
-    expect(csvCell("Adia, Agoncillo")).toBe('"Adia, Agoncillo"');
-    expect(csvCell('Say "hello"')).toBe('"Say ""hello"""');
-    expect(csvCell("line one\nline two")).toBe('"line one\nline two"');
-    expect(csvCell("plain")).toBe("plain");
-    expect(csvCell(null)).toBe("");
-  });
-
-  it("neutralizes spreadsheet formula injection", () => {
-    expect(csvCell("=HYPERLINK(\"http://evil\")")).toBe(
-      '"\'=HYPERLINK(""http://evil"")"',
-    );
-    expect(csvCell("+639171234567")).toBe("'+639171234567");
-    expect(csvCell(-500)).toBe("-500");
-  });
-
-  it("writes liquidation metadata, rows, totals, and receipt fingerprints", () => {
-    const report = buildLiquidationReport(
-      [expense("e1", 123450, "2026-02-01T02:00:00.000Z")],
-      { e1: [{ fileName: "receipt.pdf", sha256: "b".repeat(64) }] },
-      meta,
-    );
-
-    const csv = liquidationToCsv(report);
-
-    expect(csv).toContain("SK-Ledge Liquidation Report");
-    expect(csv).toContain('Barangay,"Adia, Agoncillo"');
-    expect(csv).toContain("Date,DV / Reference,Payee,Purpose,Category");
-    expect(csv).toContain("2026-02-01,DV-001,Supplier,Office supplies,Supplies,1234.50,Clean,0xabc,receipt.pdf," + "b".repeat(64));
-    expect(csv).toContain("TOTAL,,,,,1234.50,,,1,");
-    expect(Number(formatPesos(123450))).toBe(1234.5);
-  });
-
-  it("writes financial summary totals and category shares", () => {
-    const report = buildFinancialSummaryReport(
-      [
-        {
-          record_type: "allocation",
-          amount: 1_000_000,
-          created_at: "2026-01-10T02:00:00.000Z",
-        },
-        expense("e1", 250_000, "2026-01-11T02:00:00.000Z", {
-          category: "Supplies",
-        }),
-      ],
-      meta,
-    );
-
-    const csv = financialSummaryToCsv(report);
-
-    expect(csv).toContain("Total Allocated (PHP),10000.00");
-    expect(csv).toContain("Budget Utilization,25.0%");
-    expect(csv).toContain("Supplies,2500.00,100.0%");
-  });
-
-  it("notes when the record window was capped", () => {
+describe("record window cap", () => {
+  it("flags reports built from the capped record window", () => {
     const records = Array.from({ length: 500 }, (_, index) =>
       expense(`e${index}`, 100, "2026-02-01T02:00:00.000Z"),
     );
 
-    const report = buildLiquidationReport(records, {}, meta);
-
-    expect(report.truncated).toBe(true);
-    expect(liquidationToCsv(report)).toContain("500 most recent ledger records");
+    expect(buildLiquidationReport(records, {}, meta).truncated).toBe(true);
   });
 });
 

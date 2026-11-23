@@ -24,7 +24,7 @@ import { useReadContract } from "wagmi";
 import { CONTRACT_ADDRESS, SK_LEDGE_ABI } from "@/lib/contractConfig";
 import { canonicalizeBarangay } from "@/lib/batangasBarangays";
 import { useRecordsSync } from "@/lib/useRecordsSync";
-import { downloadCsv } from "@/lib/downloadCsv";
+import { downloadTablePdf } from "@/lib/reportPdf";
 
 interface AbiypProject {
   id: string;
@@ -207,22 +207,29 @@ export default function ABYIPPage() {
   }, [projects, expenseRecords, selectedYear]);
 
   const exportCategoryBreakdown = () => {
-    downloadCsv(`abyip-category-breakdown-${selectedYear}.csv`, [
-      [
+    downloadTablePdf({
+      fileName: `abyip-category-breakdown-${selectedYear}.pdf`,
+      title: `ABYIP Category Breakdown ${selectedYear}`,
+      subtitle: [
+        `Generated: ${new Date().toLocaleString("en-PH", { timeZone: "Asia/Manila" })}`,
+        `${budgetCeilings.length} categories`,
+      ],
+      head: [
         "Category",
         "Allocation (PHP)",
         "Spent (PHP)",
         "Utilization (%)",
         "Status",
       ],
-      ...budgetCeilings.map((item) => [
+      rows: budgetCeilings.map((item) => [
         item.category,
         item.allocation.toFixed(2),
         item.spent.toFixed(2),
         item.percentage,
         item.status,
       ]),
-    ]);
+      rightAligned: [1, 2, 3],
+    });
   };
 
   const totalAllocation = budgetCeilings.reduce(

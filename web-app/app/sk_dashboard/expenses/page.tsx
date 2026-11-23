@@ -234,6 +234,15 @@ export default function ExpensesPage() {
   const [storedReceipts, setStoredReceipts] = useState<StoredReceipt[]>([]);
   const [isFilingReceipts, setIsFilingReceipts] = useState(false);
   const pendingReceiptsRef = useRef<UploadedFile[]>([]);
+  // Held in refs so the receipt-filing effect does not re-run (and re-upload)
+  // when wagmi hands back a new client instance.
+  const publicClientRef = useRef(publicClient);
+  const attachHashRef = useRef(attachHashAsync);
+
+  useEffect(() => {
+    publicClientRef.current = publicClient;
+    attachHashRef.current = attachHashAsync;
+  }, [publicClient, attachHashAsync]);
   const [dragActive, setDragActive] = useState(false);
   const submitRef = useRef<{
     barangay: string;
@@ -627,7 +636,9 @@ export default function ExpensesPage() {
       }
 
       if (ONCHAIN_RECEIPT_HASH_ENABLED && stored.length > 0) {
-        if (!recordId || !publicClient) {
+        const client = publicClientRef.current;
+
+        if (!recordId || !client) {
           toast.warning(
             "Receipts were filed, but the on-chain fingerprint could not be attached because the ledger record id is unavailable.",
           );
@@ -636,7 +647,7 @@ export default function ExpensesPage() {
 
           for (const receipt of stored) {
             try {
-              const attachTx = await attachHashAsync({
+              const attachTx = await attachHashRef.current({
                 address: CONTRACT_ADDRESS,
                 abi: SK_LEDGE_ABI,
                 functionName: "attachDocumentHash",
@@ -645,7 +656,7 @@ export default function ExpensesPage() {
                   `0x${receipt.sha256}` as `0x${string}`,
                 ],
               });
-              await publicClient.waitForTransactionReceipt({ hash: attachTx });
+              await client.waitForTransactionReceipt({ hash: attachTx });
             } catch (err) {
               hashFailures += 1;
               console.error("Failed to attach receipt fingerprint on-chain:", err);
