@@ -1,6 +1,9 @@
 import "dotenv/config";
 import { ethers } from "ethers";
 import hre from "hardhat";
+import { BATANGAS_BARANGAYS } from "../../web-app/lib/batangasBarangays.js";
+
+const READ_RETRY_ATTEMPTS = 5;
 
 function requiredEnvironmentValue(name: string): string {
   const value = process.env[name]?.trim();
@@ -42,6 +45,47 @@ function addressList(name: string): string[] {
   return [...new Set(addresses.map((address) => ethers.getAddress(address)))];
 }
 
+function isAllBarangays(value: string): boolean {
+  const normalized = value.trim().toLowerCase();
+  return normalized === "all" || normalized === "*";
+}
+
+function isRateLimitError(error: unknown): boolean {
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    (error as { code?: unknown }).code === 429
+  ) {
+    return true;
+  }
+
+  const message = error instanceof Error ? error.message : String(error);
+  return /429|rate.?limit|compute units per second|throughput/i.test(message);
+}
+
+async function readWithRetry<T>(
+  description: string,
+  read: () => Promise<T>
+): Promise<T> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await read();
+    } catch (error) {
+      if (!isRateLimitError(error) || attempt >= READ_RETRY_ATTEMPTS) {
+        throw error;
+      }
+
+      const delaySeconds = attempt * 2;
+      console.log(
+        `${description} was rate-limited; retrying in ${delaySeconds}s (${attempt}/${READ_RETRY_ATTEMPTS - 1}).`
+      );
+      await new Promise((resolve) =>
+        setTimeout(resolve, delaySeconds * 1000)
+      );
+    }
+  }
+}
+
 async function submitAndConfirm(
   description: string,
   createTransaction: () => Promise<ethers.TransactionResponse>
@@ -49,7 +93,7 @@ async function submitAndConfirm(
   let response: ethers.TransactionResponse | null = null;
   let lastError: unknown;
 
-  for (let attempt = 1; attempt <= 5; attempt++) {
+  for (let attempt = 1; attempt <= 8; attempt++) {
     try {
       response = await createTransaction();
       break;
@@ -64,7 +108,18 @@ async function submitAndConfirm(
       ) {
         const delaySeconds = attempt * 3;
         console.log(
-          `RPC reported an in-flight transaction limit. Waiting ${delaySeconds}s before retry ${attempt}/5.`
+          `RPC reported an in-flight transaction limit. Waiting ${delaySeconds}s before retry ${attempt}/8.`
+        );
+        await new Promise((resolve) =>
+          setTimeout(resolve, delaySeconds * 1000)
+        );
+        continue;
+      }
+
+      if (isRateLimitError(error)) {
+        const delaySeconds = attempt * 5;
+        console.log(
+          `RPC rate limited. Waiting ${delaySeconds}s before retry ${attempt}/8.`
         );
         await new Promise((resolve) =>
           setTimeout(resolve, delaySeconds * 1000)
@@ -88,6 +143,8 @@ async function submitAndConfirm(
     throw new Error(`${description} failed or was not confirmed.`);
   }
   console.log(`${description} confirmed in block ${receipt.blockNumber}.`);
+  // Pace requests to avoid RPC rate limits during large batch runs.
+  await new Promise((resolve) => setTimeout(resolve, 150));
 }
 
 async function main(): Promise<void> {
@@ -129,6 +186,14 @@ async function main(): Promise<void> {
   );
   const officialBarangayName =
     process.env.TARGET_OFFICIAL_BARANGAY_NAME?.trim();
+  const authorizeAllBarangays =
+    officialBarangayName !== undefined &&
+    isAllBarangays(officialBarangayName);
+  const officialBarangayNames = authorizeAllBarangays
+    ? [...BATANGAS_BARANGAYS]
+    : officialBarangayName
+      ? [officialBarangayName]
+      : [];
   const approverAddress = process.env.TARGET_APPROVER_ADDRESS?.trim();
   const barangay = process.env.BARANGAY_NAME?.trim();
   const ceilingValue = process.env.ALLOCATION_CEILING_CENTAVOS?.trim();
@@ -142,10 +207,10 @@ async function main(): Promise<void> {
   }
   if (
     Boolean(officialBarangayAddresses.length) !==
-    Boolean(officialBarangayName)
+    Boolean(officialBarangayNames.length)
   ) {
     throw new Error(
-      "Set official barangay addresses and TARGET_OFFICIAL_BARANGAY_NAME to configure barangay access."
+      "Set official barangay addresses and TARGET_OFFICIAL_BARANGAY_NAME (a barangay name, ALL, or *) to configure barangay access."
     );
   }
   if (Boolean(barangay) !== Boolean(ceilingValue)) {
@@ -191,30 +256,88 @@ async function main(): Promise<void> {
     }
   }
 
-  if (officialBarangayAddresses.length && officialBarangayName) {
+  if (officialBarangayAddresses.length && officialBarangayNames.length) {
     const authorized = authorizationStatus(
       "OFFICIAL_BARANGAY_AUTHORIZATION_STATUS"
     );
-    for (const address of officialBarangayAddresses) {
-      await submitAndConfirm(
-        `Set barangay access for ${address} to ${officialBarangayName}: ${authorized}`,
-        () =>
-          contract.setOfficialBarangayAuthorization(
-            address,
-            officialBarangayName,
-            authorized
-          )
+
+    if (authorizeAllBarangays) {
+      const registeredCount = await readWithRetry(
+        "Check canonical barangay count",
+        () => contract.canonicalBarangayCount()
       );
-      if (
-        (await contract.isOfficialAuthorizedForBarangay(
-          address,
-          officialBarangayName
-        )) !== authorized
-      ) {
+      if (registeredCount < BigInt(officialBarangayNames.length)) {
         throw new Error(
-          "Official barangay authorization did not match the requested status."
+          `Only ${registeredCount} canonical barangays are registered; run "npm run register-barangays" before authorizing ALL.`
         );
       }
+      console.log(
+        `Authorizing ${officialBarangayAddresses.length} official(s) for all ${officialBarangayNames.length} canonical barangays (${authorized ? "grant" : "revoke"}).`
+      );
+    }
+
+    const totalTargets =
+      officialBarangayAddresses.length * officialBarangayNames.length;
+    let processed = 0;
+    let skipped = 0;
+
+    for (const address of officialBarangayAddresses) {
+      for (const officialBarangayName of officialBarangayNames) {
+        processed++;
+
+        const current = await readWithRetry(
+          `Check barangay access for ${address} to ${officialBarangayName}`,
+          () =>
+            contract.isOfficialAuthorizedForBarangay(
+              address,
+              officialBarangayName
+            )
+        );
+        if (current === authorized) {
+          skipped++;
+          if (totalTargets > 1) {
+            console.log(
+              `[${processed}/${totalTargets}] ${address} is already ${authorized ? "authorized" : "revoked"} for ${officialBarangayName}; skipping.`
+            );
+          }
+          continue;
+        }
+
+        await submitAndConfirm(
+          `Set barangay access for ${address} to ${officialBarangayName}: ${authorized}`,
+          () =>
+            contract.setOfficialBarangayAuthorization(
+              address,
+              officialBarangayName,
+              authorized
+            )
+        );
+
+        const applied = await readWithRetry(
+          `Verify barangay access for ${address} to ${officialBarangayName}`,
+          () =>
+            contract.isOfficialAuthorizedForBarangay(
+              address,
+              officialBarangayName
+            )
+        );
+        if (applied !== authorized) {
+          throw new Error(
+            "Official barangay authorization did not match the requested status."
+          );
+        }
+        if (totalTargets > 1) {
+          console.log(
+            `[${processed}/${totalTargets}] ${address} is now ${authorized ? "authorized" : "revoked"} for ${officialBarangayName}.`
+          );
+        }
+      }
+    }
+
+    if (skipped) {
+      console.log(
+        `Skipped ${skipped} barangay authorization target(s) that were already in the requested state.`
+      );
     }
   }
 

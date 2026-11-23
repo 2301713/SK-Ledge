@@ -33,7 +33,12 @@ before reporting success. Set both `TARGET_OFFICIAL_BARANGAY_ADDRESS` and
 `TARGET_OFFICIAL_BARANGAY_NAME` to assign or revoke one official's access to a
 registered barangay; its status is independent of the global authorization
 setting. Barangay names are resolved through the canonical registry, so
-registered aliases refer to the same barangay.
+registered aliases refer to the same barangay. Set
+`TARGET_OFFICIAL_BARANGAY_NAME=ALL` (or `*`) to grant or revoke the addresses for
+every canonical Batangas barangay in one run; the script skips any grant that is
+already in the requested state. This sends one transaction per address/barangay
+pair that is not already in that state, so authorizing all 851 barangays for
+three wallets can require up to 2,553 transactions.
 
 To authorize several officials for the same barangay, use comma-separated
 Ethereum addresses:
