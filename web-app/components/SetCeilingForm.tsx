@@ -10,6 +10,8 @@ import {
 import { CONTRACT_ADDRESS, SK_LEDGE_ABI } from "@/lib/contractConfig";
 import { describeWalletError } from "@/lib/walletErrors";
 import { Settings, Loader2, CheckCircle2, AlertTriangle } from "lucide-react";
+import Select from "@/components/ui/Select";
+import AmountPreview from "@/components/AmountPreview";
 import {
   BATANGAS_BARANGAY_IDENTITIES,
   canonicalizeBarangay,
@@ -115,18 +117,19 @@ export default function SetCeilingForm({ barangay }: SetCeilingFormProps) {
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
               <Settings className="h-5 w-5 text-secondary-foreground" />
             </div>
-            <select
+            <Select
+              leading
               value={canonicalBarangay}
               disabled
+              onChange={() => {}}
               aria-describedby="ceiling-barangay-note"
-              className={`${inputClass} cursor-not-allowed bg-secondary/60 text-secondary-foreground`}
             >
               <option value={canonicalBarangay}>
                 {identity
                   ? `${identity.barangay}, ${identity.municipality}`
                   : canonicalBarangay}
               </option>
-            </select>
+            </Select>
           </div>
           <p
             id="ceiling-barangay-note"
@@ -156,6 +159,7 @@ export default function SetCeilingForm({ barangay }: SetCeilingFormProps) {
               className={inputClass}
             />
           </div>
+          <AmountPreview value={ceiling} />
         </div>
       </div>
 

@@ -36,6 +36,8 @@ import {
   PROJECT_STATUS,
 } from '@/lib/projectApproval';
 import ProjectApprovalModal from '@/components/projects/ProjectApprovalModal';
+import Select from '@/components/ui/Select';
+import AmountPreview from '@/components/AmountPreview';
 
 interface Project {
   id: number;
@@ -309,8 +311,8 @@ export default function ProjectsPage() {
                   <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                     <Tag className="h-5 w-5 text-secondary-foreground" />
                   </div>
-                  <select
-                    className={inputClass}
+                  <Select
+                    leading
                     value={formData.category}
                     onChange={(e) =>
                       setFormData({ ...formData, category: e.target.value })
@@ -325,7 +327,7 @@ export default function ProjectsPage() {
                         {cat}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
               </div>
 
@@ -337,8 +339,8 @@ export default function ProjectsPage() {
                   <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                     <Calendar className="h-5 w-5 text-secondary-foreground" />
                   </div>
-                  <select
-                    className={inputClass}
+                  <Select
+                    leading
                     value={formData.fiscal_year}
                     onChange={(e) =>
                       setFormData({ ...formData, fiscal_year: e.target.value })
@@ -353,7 +355,7 @@ export default function ProjectsPage() {
                         {year}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
               </div>
 
@@ -377,6 +379,7 @@ export default function ProjectsPage() {
                     required
                   />
                 </div>
+                <AmountPreview value={formData.budget} />
               </div>
             </div>
 

@@ -22,6 +22,8 @@ import { CONTRACT_ADDRESS, SK_LEDGE_ABI } from "@/lib/contractConfig";
 import { syncRecord } from "@/lib/syncRecord";
 import { canonicalizeBarangay } from "@/lib/batangasBarangays";
 import { sumBarangayCentavos } from "@/lib/spending";
+import Select from "@/components/ui/Select";
+import AmountPreview from "@/components/AmountPreview";
 import {
   RECEIPT_MAX_FILES,
   buildReceiptUrl,
@@ -764,6 +766,7 @@ export default function ExpensesPage() {
                     placeholder="0.00"
                   />
                 </div>
+                <AmountPreview value={form.amount} />
               </div>
 
               {/* DATE */}
@@ -814,12 +817,12 @@ export default function ExpensesPage() {
                   <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                     <Tag className="h-5 w-5 text-secondary-foreground" />
                   </div>
-                  <select
+                  <Select
+                    leading
                     value={form.category}
                     onChange={(e) =>
                       handleInputChange("category", e.target.value)
                     }
-                    className={inputClass}
                   >
                     <option value="">Select category</option>
                     {CATEGORIES.map((category) => (
@@ -827,7 +830,7 @@ export default function ExpensesPage() {
                         {category}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
               </div>
 
@@ -840,10 +843,10 @@ export default function ExpensesPage() {
                   <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                     <Tag className="h-5 w-5 text-secondary-foreground" />
                   </div>
-                  <select
+                  <Select
+                    leading
                     value={form.projectId}
                     onChange={(e) => handleProjectChange(e.target.value)}
-                    className={inputClass}
                   >
                     <option value="">Not linked to a project</option>
                     {projects.map((project) => (
@@ -851,7 +854,7 @@ export default function ExpensesPage() {
                         {project.name} ({project.fiscal_year})
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
                 <p className="text-[10px] text-secondary-foreground">
                   Linking an expense to a project attributes its amount to that

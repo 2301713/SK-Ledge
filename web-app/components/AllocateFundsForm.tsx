@@ -31,6 +31,9 @@ import { useToast } from "@/lib/useToast";
 import { syncRecord } from "@/lib/syncRecord";
 import { describeWalletError } from "@/lib/walletErrors";
 import { canonicalizeBarangay } from "@/lib/batangasBarangays";
+import Select from "@/components/ui/Select";
+import AmountPreview from "@/components/AmountPreview";
+import { describePesoInput } from "@/lib/money";
 
 const STEPS = [
   { n: 1, label: "Project" },
@@ -276,6 +279,9 @@ export default function AllocateFundsForm({
     }
   }, [isConfirmed, hash, toast, refetchCeiling, refetchAllocated]);
 
+  const describedAmount = describePesoInput(amountPhp);
+  const amountDescription = describedAmount.ok ? describedAmount.text : "";
+
   const formatCurrency = (val: string) => {
     const num = parseFloat(val);
     if (isNaN(num)) return "₱0.00";
@@ -377,10 +383,9 @@ export default function AllocateFundsForm({
                   <Layers className="w-4 h-4 text-primary" />
                   Category
                 </label>
-                <select
+                <Select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  className="w-full px-4 py-3.5 bg-white border border-border rounded-2xl text-primary-foreground text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all cursor-pointer"
                 >
                   <option value="Health & Sports">Health & Sports</option>
                   <option value="Education & Training">Education & Training</option>
@@ -388,7 +393,7 @@ export default function AllocateFundsForm({
                   <option value="Youth Empowerment">Youth Empowerment</option>
                   <option value="Disaster Relief">Disaster Relief</option>
                   <option value="Administrative">Administrative</option>
-                </select>
+                </Select>
               </div>
 
               <button
@@ -426,12 +431,7 @@ export default function AllocateFundsForm({
                     className="w-full pl-9 pr-4 py-4 bg-white border border-border rounded-2xl text-primary-foreground text-2xl font-black placeholder:text-secondary-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                   />
                 </div>
-                <p className="text-xs text-secondary-foreground mt-2">
-                  Formatted preview:{" "}
-                  <strong className="text-primary-foreground font-bold">
-                    {formatCurrency(amountPhp)}
-                  </strong>
-                </p>
+                <AmountPreview value={amountPhp} />
                 {ceilingKnown && hasCeiling && (
                   <p className="mt-2 rounded-xl border border-border bg-secondary/40 px-3 py-2 text-xs text-secondary-foreground">
                     Remaining ceiling for {barangay}:{" "}
@@ -496,6 +496,9 @@ export default function AllocateFundsForm({
                       {formatCurrency(amountPhp)}
                     </span>
                   </div>
+                  <p className="text-right text-[11px] leading-snug text-secondary-foreground">
+                    {amountDescription}
+                  </p>
                   {ceilingKnown && hasCeiling && (
                     <>
                       <div className="flex justify-between">

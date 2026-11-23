@@ -11,6 +11,10 @@ import {
   isProjectApproved,
   type Project,
 } from "@/lib/projects";
+import {
+  describePesoInput,
+  parsePesoInput,
+} from "@/lib/money";
 import * as DocumentPicker from "expo-document-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
@@ -58,6 +62,21 @@ export default function SubmitBidPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Spelling out the typed amount keeps "1,500" and "1,500.50" distinct before
+  // the bid is submitted, since both are valid bids but very different offers.
+  const parsedAmount = parsePesoInput(amount);
+  const describedAmount = parsedAmount.ok ? describePesoInput(amount) : null;
+  const amountPreview = !amount.trim()
+    ? null
+    : parsedAmount.ok
+      ? {
+          ok: true as const,
+          text: describedAmount?.ok ? describedAmount.text : "",
+          centavos: parsedAmount.centavos,
+          hasCentavos: parsedAmount.hasCentavos,
+        }
+      : { ok: false as const, error: parsedAmount.error };
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
@@ -394,6 +413,10 @@ export default function SubmitBidPage() {
               <Text className="font-inter-medium mt-1.5 text-xs text-danger">
                 {fieldErrors.amount}
               </Text>
+            ) : amountPreview && !amountPreview.ok ? (
+              <Text className="font-inter-medium mt-1.5 text-xs text-danger">
+                {amountPreview.error}
+              </Text>
             ) : (
               <View className="mt-1.5 flex-row items-center gap-1.5">
                 <Info size={12} color="#64748B" />
@@ -402,6 +425,21 @@ export default function SubmitBidPage() {
                 </Text>
               </View>
             )}
+            {amountPreview?.ok ? (
+              <View className="mt-2 flex-row items-start gap-2 rounded-xl border border-border bg-secondary/40 px-3 py-2">
+                <CheckCircle size={14} color="#10B981" style={{ marginTop: 1 }} />
+                <View className="flex-1">
+                  <Text className="font-inter-semibold text-[11px] leading-4 text-primary-foreground">
+                    {amountPreview.text}
+                  </Text>
+                  <Text className="font-inter mt-0.5 text-[10px] text-secondary-foreground">
+                    {amountPreview.hasCentavos
+                      ? `Recorded as ${amountPreview.centavos.toLocaleString("en-PH")} centavos.`
+                      : `Whole pesos — recorded as ${amountPreview.centavos.toLocaleString("en-PH")} centavos.`}
+                  </Text>
+                </View>
+              </View>
+            ) : null}
           </View>
 
           <View className="mb-5">

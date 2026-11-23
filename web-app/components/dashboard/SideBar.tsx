@@ -255,7 +255,7 @@ export default function Sidebar({
         </div>
 
         {/* MENU */}
-        <nav className="thin-scrollbar flex-1 overflow-y-auto">
+        <nav className="no-scrollbar flex-1 overflow-y-auto">
           <SectionLabel>Menu</SectionLabel>
           {navLinks.length > 0 ? (
             <div className="space-y-1">

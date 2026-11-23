@@ -5,9 +5,9 @@ import {
   ScrollText,
   Inbox,
   MapPin,
-  ChevronDown,
 } from "lucide-react";
 import StatusBadge from "./StatusBadge";
+import Select from "@/components/ui/Select";
 
 const PAGE_SIZE = 10;
 
@@ -96,11 +96,12 @@ export default function ProjectRegistry({
                   Filter projects by barangay
                 </label>
                 <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-secondary-foreground" />
-                <select
+                <Select
+                  compact
+                  leading
                   id="public-barangay-filter"
                   value={barangayFilter}
                   onChange={(e) => onBarangayFilterChange(e.target.value)}
-                  className="w-full appearance-none rounded-xl border border-border bg-white py-2.5 pl-9 pr-8 text-xs text-primary-foreground outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
                 >
                   <option value="">All barangays</option>
                   {barangayOptions.map((barangay) => (
@@ -108,8 +109,7 @@ export default function ProjectRegistry({
                       {barangay}
                     </option>
                   ))}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-secondary-foreground" />
+                </Select>
               </div>
 
               <div className="relative w-full md:w-72">

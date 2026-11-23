@@ -25,6 +25,7 @@ import { CONTRACT_ADDRESS, SK_LEDGE_ABI } from "@/lib/contractConfig";
 import { canonicalizeBarangay } from "@/lib/batangasBarangays";
 import { useRecordsSync } from "@/lib/useRecordsSync";
 import { downloadTablePdf } from "@/lib/reportPdf";
+import Select from "@/components/ui/Select";
 
 interface AbiypProject {
   id: string;
@@ -401,10 +402,12 @@ export default function ABYIPPage() {
               <span className="text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
                 Fiscal Year
               </span>
-              <select
+              <Select
+                plain
+                wrapperClassName="w-auto"
+                aria-label="Fiscal year"
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(e.target.value)}
-                className="cursor-pointer bg-transparent text-sm font-bold text-primary-foreground outline-none"
               >
                 {Array.from(
                   { length: 5 },
@@ -414,7 +417,7 @@ export default function ABYIPPage() {
                     {year}
                   </option>
                 ))}
-              </select>
+              </Select>
             </label>
           }
         />

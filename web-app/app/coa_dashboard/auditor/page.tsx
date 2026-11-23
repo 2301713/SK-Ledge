@@ -16,6 +16,7 @@ import { useRecordsSync } from "@/lib/useRecordsSync";
 import type { LedgerRecord } from "@/lib/records";
 import { VerifiedTransaction, ProjectStatus } from "../types";
 import { downloadTablePdf } from "@/lib/reportPdf";
+import Select from "@/components/ui/Select";
 import {
   ShieldCheck,
   Search,
@@ -597,16 +598,17 @@ export default function AuditorPage() {
                       className="w-52 rounded-xl border border-border bg-white py-2 pl-9 pr-3 text-sm text-primary-foreground outline-none transition placeholder:text-secondary-foreground focus:border-primary focus:ring-2 focus:ring-primary/10"
                     />
                   </div>
-                  <select
+                  <Select
+                    compact
+                    aria-label="Filter records by status"
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="rounded-xl border border-border bg-white px-3 py-2 text-sm text-primary-foreground outline-none transition focus:border-primary"
                   >
                     <option value="all">All</option>
                     <option value="verified">Verified</option>
                     <option value="pending">Pending</option>
                     <option value="flagged">Flagged</option>
-                  </select>
+                  </Select>
                 </div>
               }
             />

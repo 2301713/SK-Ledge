@@ -12,7 +12,6 @@ import {
   MapPin,
   UserCog,
   ArrowRight,
-  ChevronDown,
   Phone,
 } from "lucide-react";
 import {
@@ -23,6 +22,7 @@ import {
   isCanonicalBarangay,
 } from "@/lib/batangasBarangays";
 import LogoLoader from "@/components/LogoLoader";
+import Select from "@/components/ui/Select";
 import {
   isValidContactNumber,
   normalizeContactNumber,
@@ -128,9 +128,7 @@ export default function CompleteProfilePage() {
 
       const contactNumber = normalizeContactNumber(formData.contact_number);
       if (!isValidContactNumber(contactNumber)) {
-        throw new Error(
-          "Enter a valid PH mobile number, e.g. 0917 123 4567.",
-        );
+        throw new Error("Enter a valid PH mobile number, e.g. 0917 123 4567.");
       }
 
       const canonicalBarangay = isSKRole
@@ -303,7 +301,8 @@ export default function CompleteProfilePage() {
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-300 group-focus-within:text-primary transition-colors">
                   <UserCog className="w-5 h-5" />
                 </div>
-                <select
+                <Select
+                  leading
                   value={formData.role_type}
                   onChange={(e) =>
                     setFormData({
@@ -311,13 +310,12 @@ export default function CompleteProfilePage() {
                       role_type: e.target.value,
                     })
                   }
-                  className="w-full bg-slate-50 border-2 border-transparent rounded-2xl pl-12 pr-4 py-4 text-sm font-medium text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none appearance-none cursor-pointer"
                 >
                   <option value="SK_Chairperson">SK Chairperson</option>
                   <option value="SK_Treasurer">SK Treasurer</option>
                   <option value="SK_Federation">SK Federation</option>
                   <option value="COA">COA</option>
-                </select>
+                </Select>
               </div>
               <p className="text-xs text-slate-500">
                 Admin accounts are created by an existing administrator.
@@ -334,7 +332,8 @@ export default function CompleteProfilePage() {
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-300 group-focus-within:text-primary transition-colors">
                     <MapPin className="w-5 h-5" />
                   </div>
-                  <select
+                  <Select
+                    leading
                     required
                     value={selectedMunicipality}
                     onChange={(e) => {
@@ -345,7 +344,6 @@ export default function CompleteProfilePage() {
                       setSelectedMunicipality(municipality);
                       setFormData({ ...formData, barangay: "" });
                     }}
-                    className="w-full appearance-none bg-slate-50 border-2 border-transparent rounded-2xl pl-12 pr-12 py-4 text-sm font-medium text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none cursor-pointer"
                   >
                     <option value="" disabled>
                       Select your municipality or city
@@ -355,22 +353,18 @@ export default function CompleteProfilePage() {
                         {municipality}
                       </option>
                     ))}
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-slate-400">
-                    <ChevronDown className="h-5 w-5" />
-                  </div>
+                  </Select>
                 </div>
                 <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
                   Barangay
                 </label>
-                <select
+                <Select
                   required
                   disabled={!selectedMunicipality}
                   value={formData.barangay}
                   onChange={(e) =>
                     setFormData({ ...formData, barangay: e.target.value })
                   }
-                  className="w-full appearance-none bg-slate-50 border-2 border-transparent rounded-2xl px-4 py-4 text-sm font-medium text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <option value="" disabled>
                     Select your barangay
@@ -386,7 +380,7 @@ export default function CompleteProfilePage() {
                         </option>
                       );
                     })}
-                </select>
+                </Select>
               </div>
             )}
 
@@ -436,7 +430,7 @@ export default function CompleteProfilePage() {
                     })
                   }
                   className="w-full bg-slate-50 border-2 border-transparent rounded-2xl pl-12 pr-4 py-4 text-sm font-medium text-primary focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none placeholder:text-slate-300"
-                  placeholder="0917 123 4567"
+                  placeholder="09171234567"
                 />
               </div>
             </div>
