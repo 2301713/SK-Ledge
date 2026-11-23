@@ -1,12 +1,15 @@
 # Dependencies (across root and all subfolders)
-**/node_modules/
+
+\*\*/node_modules/
 
 # Version control & Expo caches
+
 **/.git/
 **/.expo/
-**/.expo-shared/
+\*\*/.expo-shared/
 
 # Native build folders & outputs (EAS generates these cleanly in the cloud)
+
 **/android/
 **/ios/
 **/dist/
@@ -15,17 +18,28 @@
 **/build/
 
 # Compiled binaries & archives
-*.apk
-*.aab
-*.ipa
-*.zip
-*.tar.gz
+
+_.apk
+_.aab
+_.ipa
+_.zip
+\*.tar.gz
 
 # Logs, environment files & OS clutter
-*.log
-npm-debug.*
-yarn-debug.*
-yarn-error.*
-.env*.local
+
+_.log
+npm-debug._
+yarn-debug._
+yarn-error._
+.env\*.local
 .DS_Store
 Thumbs.db
+
+# Sibling projects & docs not needed for mobile build
+
+web-app/
+blockchain/
+docs/
+_.md
+_.png
+EOF
