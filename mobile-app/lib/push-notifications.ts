@@ -1,27 +1,44 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import Constants from "expo-constants";
+import Constants, { ExecutionEnvironment } from "expo-constants";
 import * as Device from "expo-device";
-import {
-  AndroidImportance,
-  getExpoPushTokenAsync,
-  getPermissionsAsync,
-  requestPermissionsAsync,
-  setNotificationChannelAsync,
-  setNotificationHandler,
-} from "expo-notifications";
 import { Platform } from "react-native";
 import { supabase } from "@/lib/supabase";
 
+type NotificationsModule = typeof import("expo-notifications");
+
 const TOKEN_STORAGE_KEY = "skledge.pushToken";
 
-setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
+// Expo Go does not ship the push-notification native module, so a top-level
+// `import "expo-notifications"` throws before any screen can render. Load it
+// lazily and skip it entirely in Expo Go; a missing module must never crash
+// the route that imports this file.
+const isExpoGo =
+  Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+
+let notificationsModule: Promise<NotificationsModule | null> | null = null;
+
+function loadNotifications(): Promise<NotificationsModule | null> {
+  if (isExpoGo) return Promise.resolve(null);
+
+  notificationsModule ??= import("expo-notifications")
+    .then((module) => {
+      module.setNotificationHandler({
+        handleNotification: async () => ({
+          shouldShowBanner: true,
+          shouldShowList: true,
+          shouldPlaySound: true,
+          shouldSetBadge: false,
+        }),
+      });
+      return module;
+    })
+    .catch((error: unknown) => {
+      console.warn("Push notifications are unavailable in this build.", error);
+      return null;
+    });
+
+  return notificationsModule;
+}
 
 const EAS_PROJECT_ID =
   process.env.EXPO_PUBLIC_EAS_PROJECT_ID ??
@@ -38,22 +55,25 @@ let inFlight: Promise<string | null> | null = null;
 async function requestToken(): Promise<string | null> {
   if (!Device.isDevice || !EAS_PROJECT_ID) return null;
 
+  const notifications = await loadNotifications();
+  if (!notifications) return null;
+
   if (Platform.OS === "android") {
-    await setNotificationChannelAsync("default", {
+    await notifications.setNotificationChannelAsync("default", {
       name: "Default",
-      importance: AndroidImportance.HIGH,
+      importance: notifications.AndroidImportance.HIGH,
     });
   }
 
-  const existing = await getPermissionsAsync();
+  const existing = await notifications.getPermissionsAsync();
   let status = existing.status;
   if (status !== "granted") {
-    status = (await requestPermissionsAsync()).status;
+    status = (await notifications.requestPermissionsAsync()).status;
   }
   if (status !== "granted") return null;
 
   const token = (
-    await getExpoPushTokenAsync({ projectId: EAS_PROJECT_ID })
+    await notifications.getExpoPushTokenAsync({ projectId: EAS_PROJECT_ID })
   ).data;
 
   cachedToken = token;
