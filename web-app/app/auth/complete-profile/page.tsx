@@ -288,10 +288,10 @@ export default function CompleteProfilePage() {
                 <Select
                   leading
                   value={formData.role_type}
-                  onChange={(e) =>
+                  onChange={(roleType) =>
                     setFormData({
                       ...formData,
-                      role_type: e.target.value,
+                      role_type: roleType,
                     })
                   }
                 >
@@ -320,10 +320,10 @@ export default function CompleteProfilePage() {
                     leading
                     required
                     value={selectedMunicipality}
-                    onChange={(e) => {
+                    onChange={(municipalityValue) => {
                       const municipality =
                         BATANGAS_MUNICIPALITIES.find(
-                          (option) => option === e.target.value,
+                          (option) => option === municipalityValue,
                         ) ?? "";
                       setSelectedMunicipality(municipality);
                       setFormData({ ...formData, barangay: "" });
@@ -346,8 +346,8 @@ export default function CompleteProfilePage() {
                   required
                   disabled={!selectedMunicipality}
                   value={formData.barangay}
-                  onChange={(e) =>
-                    setFormData({ ...formData, barangay: e.target.value })
+                  onChange={(barangay) =>
+                    setFormData({ ...formData, barangay })
                   }
                 >
                   <option value="" disabled>

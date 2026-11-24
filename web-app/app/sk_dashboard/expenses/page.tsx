@@ -820,8 +820,8 @@ export default function ExpensesPage() {
                   <Select
                     leading
                     value={form.category}
-                    onChange={(e) =>
-                      handleInputChange("category", e.target.value)
+                    onChange={(category) =>
+                      handleInputChange("category", category)
                     }
                   >
                     <option value="">Select category</option>
@@ -846,7 +846,7 @@ export default function ExpensesPage() {
                   <Select
                     leading
                     value={form.projectId}
-                    onChange={(e) => handleProjectChange(e.target.value)}
+                    onChange={(projectId) => handleProjectChange(projectId)}
                   >
                     <option value="">Not linked to a project</option>
                     {projects.map((project) => (

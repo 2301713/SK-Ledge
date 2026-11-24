@@ -407,7 +407,7 @@ export default function ABYIPPage() {
                 wrapperClassName="w-auto"
                 aria-label="Fiscal year"
                 value={selectedYear}
-                onChange={(e) => setSelectedYear(e.target.value)}
+                onChange={(year) => setSelectedYear(year)}
               >
                 {Array.from(
                   { length: 5 },

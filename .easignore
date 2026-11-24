@@ -1,45 +1,51 @@
-# Dependencies (across root and all subfolders)
+# Only relevant when EAS uploads the repository root. The mobile build runs
+# from mobile-app/, which has its own .easignore.
+#
+# The previous version of this file was written with escaped wildcards
+# (\*\*/node_modules/, _.md, _.png) plus a trailing EOF line, so it matched
+# almost nothing and every build uploaded node_modules for the whole monorepo.
+#
+# Do not ignore *.png globally: mobile-app/assets/*.png contains the app icon,
+# splash image and logo.
 
-\*\*/node_modules/
+# Dependencies everywhere (each package installs them on the build server)
+**/node_modules/
 
-# Version control & Expo caches
-
+# Version control and tool caches
+.git/
 **/.git/
 **/.expo/
-\*\*/.expo-shared/
+**/.expo-shared/
+.freebuff/
 
-# Native build folders & outputs (EAS generates these cleanly in the cloud)
-
-**/android/
-**/ios/
+# Generated build output
 **/dist/
 **/web-build/
 **/.next/
 **/build/
+**/android/
+**/ios/
+**/.kotlin/
 
-# Compiled binaries & archives
+# Archives and compiled binaries
+*.apk
+*.aab
+*.ipa
+*.zip
+*.tar.gz
 
-_.apk
-_.aab
-_.ipa
-_.zip
-\*.tar.gz
-
-# Logs, environment files & OS clutter
-
-_.log
-npm-debug._
-yarn-debug._
-yarn-error._
-.env\*.local
+# Logs, env files, OS clutter
+*.log
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+.env
+.env*.local
+*.tsbuildinfo
 .DS_Store
 Thumbs.db
 
-# Sibling projects & docs not needed for mobile build
-
+# Non-mobile sibling projects and local documentation
 web-app/
 blockchain/
 docs/
-_.md
-_.png
-EOF

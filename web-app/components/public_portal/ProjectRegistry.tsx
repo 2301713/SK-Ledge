@@ -101,7 +101,7 @@ export default function ProjectRegistry({
                   leading
                   id="public-barangay-filter"
                   value={barangayFilter}
-                  onChange={(e) => onBarangayFilterChange(e.target.value)}
+                  onChange={(barangay) => onBarangayFilterChange(barangay)}
                 >
                   <option value="">All barangays</option>
                   {barangayOptions.map((barangay) => (

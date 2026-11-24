@@ -8,6 +8,7 @@ import {
 } from "wagmi";
 import { sepolia } from "wagmi/chains";
 import { CONTRACT_ADDRESS, SK_LEDGE_ABI } from "@/lib/contractConfig";
+import Select from "@/components/ui/Select";
 import { useToast } from "@/lib/useToast";
 import { syncRecord } from "@/lib/syncRecord";
 import {
@@ -164,12 +165,12 @@ export function RecordForm({ onSuccessRefresh }: RecordFormProps) {
         <label className="text-sm font-medium" htmlFor="barangay">
           Barangay
         </label>
-        <select
+        <Select
           id="barangay"
+          name="barangay"
           disabled={isProcessing}
-          className="p-2 border rounded-md"
           value={barangay}
-          onChange={(e) => setBarangay(e.target.value)}
+          onChange={setBarangay}
           required
         >
           <option value="" disabled>
@@ -180,7 +181,7 @@ export function RecordForm({ onSuccessRefresh }: RecordFormProps) {
               {identity.barangay}, {identity.municipality}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
 
       <div className="flex flex-col space-y-1">
@@ -215,13 +216,11 @@ export function RecordForm({ onSuccessRefresh }: RecordFormProps) {
         <label className="text-sm font-medium" htmlFor="type">
           Type
         </label>
-        <select
+        <Select
           id="type"
           disabled={isProcessing}
-          className="p-2 border rounded-md bg-white"
           value={recordType}
-          onChange={(e) => {
-            const value = e.target.value;
+          onChange={(value) => {
             if (
               value === "Expense" ||
               value === "Allocation" ||
@@ -234,7 +233,7 @@ export function RecordForm({ onSuccessRefresh }: RecordFormProps) {
           <option value="Expense">Expense</option>
           <option value="Allocation">Allocation</option>
           <option value="Award">Award</option>
-        </select>
+        </Select>
       </div>
 
       {formError && <p className="text-sm text-red-600 font-medium">{formError}</p>}

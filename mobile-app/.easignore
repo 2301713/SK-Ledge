@@ -1,0 +1,46 @@
+# Files EAS Build must NOT upload. .easignore replaces .gitignore for the
+# archive, so everything the app needs to build is kept and only generated or
+# local-only files are excluded.
+#
+# Do not add *.png or *.md here: mobile-app/assets/*.png holds the app icon,
+# splash image and logo, which the build needs.
+
+# Dependencies are installed on the build server
+node_modules/
+
+# Expo / Metro / bundle output
+.expo/
+.expo-shared/
+dist/
+web-build/
+.metro-health-check*
+expo-env.d.ts
+
+# Native projects (EAS generates them in the cloud)
+/android/
+/ios/
+.kotlin/
+
+# Signing material and certificates
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.pem
+*.orig.*
+
+# Local env files (values come from EAS environment variables)
+.env
+.env*.local
+
+# Logs, caches, OS clutter
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+*.tsbuildinfo
+.DS_Store
+Thumbs.db
+
+# Local scratch
+app-example

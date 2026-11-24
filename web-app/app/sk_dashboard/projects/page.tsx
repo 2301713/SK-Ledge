@@ -183,6 +183,13 @@ export default function ProjectsPage() {
       return;
     }
 
+    // The category select is a custom listbox, so the browser form validation
+    // that a native <select required> provided is enforced here instead.
+    if (!formData.category) {
+      setFormError('Select a project category.');
+      return;
+    }
+
     const { error } = await supabase.from('projects').insert([
       {
         name: formData.name,
@@ -314,8 +321,8 @@ export default function ProjectsPage() {
                   <Select
                     leading
                     value={formData.category}
-                    onChange={(e) =>
-                      setFormData({ ...formData, category: e.target.value })
+                    onChange={(category) =>
+                      setFormData({ ...formData, category })
                     }
                     required
                   >
@@ -342,8 +349,8 @@ export default function ProjectsPage() {
                   <Select
                     leading
                     value={formData.fiscal_year}
-                    onChange={(e) =>
-                      setFormData({ ...formData, fiscal_year: e.target.value })
+                    onChange={(fiscalYear) =>
+                      setFormData({ ...formData, fiscal_year: fiscalYear })
                     }
                     required
                   >

@@ -602,7 +602,7 @@ export default function AuditorPage() {
                     compact
                     aria-label="Filter records by status"
                     value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
+                    onChange={(status) => setStatusFilter(status)}
                   >
                     <option value="all">All</option>
                     <option value="verified">Verified</option>

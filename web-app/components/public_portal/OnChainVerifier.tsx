@@ -8,6 +8,7 @@ import {
   LEGACY_SK_LEDGE_ABI,
   SK_LEDGE_ABI,
 } from "@/lib/contractConfig";
+import Select from "@/components/ui/Select";
 import { parseExpensePurpose } from "@/lib/formatExpensePurpose";
 import {
   ShieldCheck,
@@ -66,22 +67,25 @@ function RecordFilter({
   onChange: (value: string) => void;
 }) {
   return (
-    <label className="flex items-center gap-2 rounded-xl border border-border bg-white px-3 py-2">
+    <div className="flex items-center gap-2 rounded-xl border border-border bg-white px-3 py-2">
       <span className="text-[10px] font-bold uppercase tracking-wider text-secondary-foreground">
         {label}
       </span>
-      <select
+      <Select
+        plain
+        compact
+        aria-label={label}
         value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="cursor-pointer bg-transparent text-xs font-bold text-primary-foreground outline-none"
+        onChange={onChange}
+        wrapperClassName="w-auto"
       >
         {options.map((option) => (
           <option key={option} value={option}>
             {option}
           </option>
         ))}
-      </select>
-    </label>
+      </Select>
+    </div>
   );
 }
 

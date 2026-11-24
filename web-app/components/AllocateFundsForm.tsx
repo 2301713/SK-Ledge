@@ -385,7 +385,7 @@ export default function AllocateFundsForm({
                 </label>
                 <Select
                   value={category}
-                  onChange={(e) => setCategory(e.target.value)}
+                  onChange={(nextCategory) => setCategory(nextCategory)}
                 >
                   <option value="Health & Sports">Health & Sports</option>
                   <option value="Education & Training">Education & Training</option>
