@@ -13,3 +13,5 @@ node_modules
 
 # Supabase migrations now live in web-app/supabase/ (see web-app/.gitignore)
 .github/
+
+*.xlsx
