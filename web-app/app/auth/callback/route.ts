@@ -102,11 +102,17 @@ export async function GET(request: NextRequest) {
   }
 
   // 3. If there is no profile row yet, keep the user on the completion form.
+  // Only SK officials need a barangay; COA and Admin are province-wide, and a
+  // COA account deliberately left without one must still reach its dashboard.
+  const needsBarangay =
+    profileData?.role_type === "SK_Chairperson" ||
+    profileData?.role_type === "SK_Treasurer";
+
   if (
     !profileData ||
     profileError ||
     profileData.role_type === "pending" ||
-    profileData.barangay === null
+    (needsBarangay && profileData.barangay === null)
   ) {
     console.warn("Profile is incomplete; sending to complete-profile");
     return NextResponse.redirect(
@@ -125,13 +131,8 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // 5. Update their timestamp (just like you did in the email login logic)
-  await supabase
-    .from("profiles")
-    .update({ created_at: new Date().toISOString() })
-    .eq("id", authData.user.id);
-
-  // 6. Route them to the correct dashboard based on their role
+  // 5. Route them to the correct dashboard based on their role. (A login
+  // must not rewrite profiles.created_at: that is the account creation time.)
   switch (profileData.role_type) {
     case "SK_Chairperson":
     case "SK_Treasurer":

@@ -227,6 +227,12 @@ export async function GET(req: NextRequest) {
           .order("created_at", { ascending: false })
           .limit(limit);
 
+        // The public projection carries no voided flag, so a voided
+        // expense must never reach the public portal totals.
+        if (isPublicScope && recordType === "expense") {
+          query = query.eq("voided", false);
+        }
+
         if (scopedBarangay) {
           query = query.eq("barangay", scopedBarangay);
         }
