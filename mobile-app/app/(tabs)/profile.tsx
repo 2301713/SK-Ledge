@@ -6,7 +6,6 @@ import ScreenHeader from "@/components/ui/ScreenHeader";
 import { ProfileDetailsSkeleton } from "@/components/ui/Skeletons";
 import StatusBadge from "@/components/ui/StatusBadge";
 import {
-  deactivateVendorAccount,
   fetchMyProfile,
   getErrorMessage,
   updateVendorProfile,
@@ -24,10 +23,8 @@ import {
   Pencil,
   Phone,
   ShieldCheck,
-  Trash2,
   User,
 } from "lucide-react-native";
-import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import {
@@ -35,6 +32,7 @@ import {
   Alert,
   Image,
   KeyboardAvoidingView,
+  Platform,
   RefreshControl,
   ScrollView,
   Text,
@@ -71,11 +69,9 @@ const DetailRow = ({
 );
 
 export default function Profile() {
-  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
-  const [deleting, setDeleting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState(false);
   const [error, setError] = useState("");
@@ -284,41 +280,6 @@ export default function Profile() {
     }
   };
 
-  const handleDeleteAccount = () => {
-    Alert.alert(
-      "Delete your account?",
-      "Your vendor account will be disabled and you will be signed out. Your bids and procurement records are kept on file for audit. Contact the SK Federation or system administrator if you need access restored.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete account",
-          style: "destructive",
-          onPress: async () => {
-            setError("");
-            setSuccess("");
-            setDeleting(true);
-
-            try {
-              await unregisterPushToken();
-              await deactivateVendorAccount();
-              await supabase.auth.signOut();
-              router.replace("/");
-            } catch (err) {
-              setError(
-                getErrorMessage(
-                  err,
-                  "Could not delete your account. Please try again.",
-                ),
-              );
-            } finally {
-              setDeleting(false);
-            }
-          },
-        },
-      ],
-    );
-  };
-
   const companyName =
     profile?.company_name ||
     profile?.full_name ||
@@ -341,7 +302,7 @@ export default function Profile() {
             className="h-12 w-12 items-center justify-center overflow-hidden rounded-2xl bg-primary"
             activeOpacity={0.85}
             onPress={handleChangeAvatar}
-            disabled={avatarSaving || deleting}
+            disabled={avatarSaving}
             accessibilityRole="button"
             accessibilityLabel={
               profile?.avatar_url
@@ -376,7 +337,7 @@ export default function Profile() {
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior="padding"
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
       <ScrollView
         style={{ flex: 1 }}
@@ -639,33 +600,6 @@ export default function Profile() {
                   </>
                 )}
               </TouchableOpacity>
-
-              {/* ACCOUNT REMOVAL */}
-              <View className="mt-4 rounded-xl border border-border bg-white p-4">
-                <Text className="font-inter-bold text-[10px] uppercase tracking-[0.16em] text-secondary-foreground">
-                  Delete account
-                </Text>
-                <Text className="font-inter mt-1 text-[11px] leading-[17px] text-secondary-foreground">
-                  Deleting your account disables vendor sign-in and stops push
-                  notifications. Your bids and procurement records stay on file
-                  for audit.
-                </Text>
-                <TouchableOpacity
-                  className="mt-3 flex-row items-center justify-center gap-2 rounded-lg border border-danger/20 py-2.5"
-                  onPress={handleDeleteAccount}
-                  disabled={deleting || signingOut}
-                  activeOpacity={0.75}
-                >
-                  {deleting ? (
-                    <ActivityIndicator color="#DC2626" />
-                  ) : (
-                    <Trash2 size={14} color="#DC2626" />
-                  )}
-                  <Text className="font-inter-bold text-[10px] uppercase tracking-[0.12em] text-danger">
-                    Delete my account
-                  </Text>
-                </TouchableOpacity>
-              </View>
 
               <Text className="font-inter-semibold mt-6 text-center text-[9px] uppercase tracking-[0.18em] text-secondary-foreground/60">
                 SK-Ledge · Vendor Portal · v1.0.0
