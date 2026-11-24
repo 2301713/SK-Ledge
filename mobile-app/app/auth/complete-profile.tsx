@@ -19,6 +19,7 @@ import {
   ActivityIndicator,
   Image,
   KeyboardAvoidingView,
+  Platform,
   ScrollView,
   StatusBar,
   Text,
@@ -192,7 +193,7 @@ export default function CompleteVendorProfileScreen() {
     <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
       <StatusBar barStyle="dark-content" />
       <KeyboardAvoidingView
-        behavior="padding"
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
         className="flex-1"
       >
         <ScrollView
@@ -244,7 +245,11 @@ export default function CompleteVendorProfileScreen() {
           <View className="flex-1 bg-background px-6 pb-10 pt-6">
             {error ? (
               <View className="mb-5 flex-row items-start gap-3 rounded-xl border border-danger/25 bg-danger/[0.07] p-4">
-                <CircleAlert size={18} color="#DC2626" style={{ marginTop: 1 }} />
+                <CircleAlert
+                  size={18}
+                  color="#DC2626"
+                  style={{ marginTop: 1 }}
+                />
                 <Text className="font-inter-medium flex-1 text-[12px] leading-5 text-danger">
                   {error}
                 </Text>

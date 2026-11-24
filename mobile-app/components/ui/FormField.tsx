@@ -1,6 +1,7 @@
 import { Eye, EyeOff, type LucideIcon } from "lucide-react-native";
 import React, { useRef, useState } from "react";
 import {
+  Platform,
   Text,
   TextInput,
   TouchableOpacity,
@@ -53,14 +54,17 @@ export default function FormField({
               ? "border-primary bg-white"
               : "border-border bg-white"
         }`}
+        // The focus glow uses shadow props, which on Android force a software
+        // layer on the container. Re-applying it on focus makes Android drop
+        // the TextInput's focus (taps then land on a neighbouring field), so
+        // the glow stays iOS-only; Android relies on the primary border.
         style={
-          focused && !error
+          Platform.OS === "ios" && focused && !error
             ? {
                 shadowColor: "#0138A8",
                 shadowOffset: { width: 0, height: 0 },
                 shadowOpacity: 0.08,
                 shadowRadius: 6,
-                elevation: 1,
               }
             : undefined
         }
