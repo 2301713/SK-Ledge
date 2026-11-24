@@ -30,7 +30,9 @@ expo-env.d.ts
 *.pem
 *.orig.*
 
-# Local env files (values come from EAS environment variables)
+# Local env files. This one also carries the service-role key and database
+# password, so it must stay out of the archive. The EXPO_PUBLIC_* values the
+# bundle needs are configured as EAS environment variables instead.
 .env
 .env*.local
 

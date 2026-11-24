@@ -39,11 +39,15 @@
 npm-debug.*
 yarn-debug.*
 yarn-error.*
-.env
-.env*.local
 *.tsbuildinfo
 .DS_Store
 Thumbs.db
+
+# Env files never enter the archive: mobile-app/.env also holds the Supabase
+# service-role key, the database password and an Expo token. Build-time values
+# come from the EAS environment (preview) instead.
+.env
+.env*.local
 
 # Non-mobile sibling projects and local documentation
 web-app/
