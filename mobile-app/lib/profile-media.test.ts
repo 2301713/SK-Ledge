@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   getPublicUrl: vi.fn(),
   updateEq: vi.fn(),
   update: vi.fn(),
+  getSession: vi.fn(),
 }));
 
 vi.mock("expo-image-picker", () => ({
@@ -16,6 +17,9 @@ vi.mock("expo-image-picker", () => ({
 
 vi.mock("@/lib/supabase", () => ({
   supabase: {
+    auth: {
+      getSession: mocks.getSession,
+    },
     storage: {
       from: () => ({
         upload: mocks.upload,
@@ -36,6 +40,15 @@ beforeEach(() => {
   mocks.update.mockReturnValue({ eq: mocks.updateEq });
   mocks.updateEq.mockResolvedValue({ error: null });
   mocks.upload.mockResolvedValue({ error: null });
+  mocks.getSession.mockResolvedValue({
+    data: {
+      session: {
+        user: { id: "u1", role: "authenticated" },
+        access_token: "session-token",
+      },
+    },
+    error: null,
+  });
   mocks.getPublicUrl.mockReturnValue({
     data: { publicUrl: "https://cdn.example/avatars/u1/avatar.png" },
   });
@@ -133,7 +146,11 @@ describe("uploadAvatar", () => {
     expect(mocks.upload).toHaveBeenCalledTimes(1);
     const [path, body, options] = mocks.upload.mock.calls[0];
     expect(path).toMatch(/^u1\/avatar-\d+\.png$/);
-    expect(options).toMatchObject({ contentType: "image/png", upsert: true });
+    expect(options).toMatchObject({
+      contentType: "image/png",
+      upsert: false,
+      headers: { Authorization: "Bearer session-token" },
+    });
     expect(body).toBeInstanceOf(ArrayBuffer);
     expect(mocks.update).toHaveBeenCalledWith({
       avatar_url: "https://cdn.example/avatars/u1/avatar.png",
@@ -150,6 +167,33 @@ describe("uploadAvatar", () => {
     });
 
     expect(mocks.upload.mock.calls[0][0]).toMatch(/^u1\/avatar-\d+\.jpg$/);
+  });
+
+  it("refuses to upload without a signed-in session", async () => {
+    mocks.getSession.mockResolvedValue({
+      data: { session: null },
+      error: null,
+    });
+
+    await expect(
+      uploadAvatar("u1", {
+        uri: "file:///tmp/photo.png",
+        mimeType: "image/png",
+        fileName: "photo.png",
+      }),
+    ).rejects.toThrow(/session expired/);
+    expect(mocks.upload).not.toHaveBeenCalled();
+  });
+
+  it("rejects a folder that does not match the signed-in user", async () => {
+    await expect(
+      uploadAvatar("other-user", {
+        uri: "file:///tmp/photo.png",
+        mimeType: "image/png",
+        fileName: "photo.png",
+      }),
+    ).rejects.toThrow(/account changed/);
+    expect(mocks.upload).not.toHaveBeenCalled();
   });
 
   it("surfaces a storage failure", async () => {

@@ -27,6 +27,7 @@ import {
 import React, { useCallback, useState } from "react";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import {
+  Image,
   RefreshControl,
   ScrollView,
   Text,
@@ -38,6 +39,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function HomePage() {
   const router = useRouter();
   const [companyName, setCompanyName] = useState("Vendor");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
@@ -58,11 +60,12 @@ export default function HomePage() {
 
       const profile = await fetchMyProfile(user.id);
       setCompanyName(
-        profile?.full_name ||
-          user.user_metadata?.company_name ||
+        profile?.company_name ||
+          profile?.full_name ||
           user.email?.split("@")[0] ||
           "Vendor",
       );
+      setAvatarUrl(profile?.avatar_url ?? null);
 
       if ((profile?.approval_status ?? "").toLowerCase() === "approved") {
         registerPushToken().catch(() => {
@@ -151,10 +154,18 @@ export default function HomePage() {
                 </View>
               ) : null}
             </TouchableOpacity>
-            <View className="h-11 w-11 items-center justify-center rounded-full bg-primary">
-              <Text className="font-inter-black text-[18px] text-white">
-                {companyName.charAt(0).toUpperCase()}
-              </Text>
+            <View className="h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-primary">
+              {avatarUrl ? (
+                <Image
+                  source={{ uri: avatarUrl }}
+                  style={{ width: 44, height: 44 }}
+                  resizeMode="cover"
+                />
+              ) : (
+                <Text className="font-inter-black text-[18px] text-white">
+                  {companyName.charAt(0).toUpperCase()}
+                </Text>
+              )}
               <View className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white bg-success" />
             </View>
           </View>

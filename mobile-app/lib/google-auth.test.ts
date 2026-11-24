@@ -31,7 +31,8 @@ import type { VendorProfile } from "./projects";
 function profile(overrides: Partial<VendorProfile> = {}): VendorProfile {
   return {
     id: "vendor-1",
-    full_name: "Acme Trading",
+    full_name: "Juan Dela Cruz",
+    company_name: "Acme Trading",
     email: "vendor@example.com",
     role_type: "Vendor",
     barangay: "N/A",

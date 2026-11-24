@@ -11,6 +11,7 @@ import {
   Mail,
   Phone,
   ShieldCheck,
+  User,
 } from "lucide-react-native";
 import React, { useEffect, useState } from "react";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
@@ -34,6 +35,7 @@ const normalizeContactNumber = (value: string) => {
 
 export default function CompleteVendorProfileScreen() {
   const router = useRouter();
+  const [registeredName, setRegisteredName] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [contactNumber, setContactNumber] = useState("");
   const [email, setEmail] = useState("");
@@ -41,6 +43,7 @@ export default function CompleteVendorProfileScreen() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [fieldError, setFieldError] = useState("");
+  const [companyError, setCompanyError] = useState("");
   const [contactError, setContactError] = useState("");
 
   useEffect(() => {
@@ -69,7 +72,7 @@ export default function CompleteVendorProfileScreen() {
               : "";
 
         if (suggested && !suggested.includes("@")) {
-          setCompanyName(suggested);
+          setRegisteredName(suggested);
         }
       })
       .catch((err) => {
@@ -89,11 +92,26 @@ export default function CompleteVendorProfileScreen() {
   const handleSubmit = async () => {
     setError("");
     setFieldError("");
+    setCompanyError("");
     setContactError("");
 
-    const name = companyName.trim();
-    if (!name) {
-      setFieldError("Enter your registered company or vendor name.");
+    const name = registeredName.trim();
+    if (name.length < 2) {
+      setFieldError("Enter your registered name (at least 2 characters).");
+      return;
+    }
+    if (name.length > 120) {
+      setFieldError("Use 120 characters or fewer.");
+      return;
+    }
+
+    const company = companyName.trim();
+    if (company.length < 2) {
+      setCompanyError("Enter your company or vendor name.");
+      return;
+    }
+    if (company.length > 120) {
+      setCompanyError("Use 120 characters or fewer.");
       return;
     }
 
@@ -124,6 +142,7 @@ export default function CompleteVendorProfileScreen() {
         id: user.id,
         email: user.email,
         full_name: name,
+        company_name: company,
         contact_number: contact,
         role_type: "Vendor",
         barangay: "N/A",
@@ -140,6 +159,7 @@ export default function CompleteVendorProfileScreen() {
           .from("profiles")
           .update({
             full_name: name,
+            company_name: company,
             contact_number: contact,
             avatar_url: avatarUrl,
           })
@@ -157,7 +177,7 @@ export default function CompleteVendorProfileScreen() {
       await supabase.auth.signOut();
       router.replace({
         pathname: "/register",
-        params: { submitted: "1", company: name },
+        params: { submitted: "1", company },
       });
     } catch (err) {
       setError(
@@ -214,8 +234,8 @@ export default function CompleteVendorProfileScreen() {
                   Complete your vendor profile
                 </Text>
                 <Text className="font-inter mt-1.5 max-w-[320px] text-[13px] leading-5 text-secondary-foreground">
-                  Your account is connected. Confirm the company name that
-                  should appear on your SK-Ledge bids.
+                  Your account is connected. Confirm your registered name and
+                  the company name that should appear on your SK-Ledge bids.
                 </Text>
               </View>
             </Animated.View>
@@ -251,16 +271,31 @@ export default function CompleteVendorProfileScreen() {
 
                 <View className="gap-4">
                   <FormField
+                    label="Registered Name"
+                    icon={User}
+                    value={registeredName}
+                    onChangeText={(value) => {
+                      setRegisteredName(value);
+                      setFieldError("");
+                      setError("");
+                    }}
+                    placeholder="Juan Dela Cruz"
+                    error={fieldError}
+                    autoCapitalize="words"
+                    editable={!saving && !loadingUser}
+                  />
+
+                  <FormField
                     label="Company / Vendor Name"
                     icon={Briefcase}
                     value={companyName}
                     onChangeText={(value) => {
                       setCompanyName(value);
-                      setFieldError("");
+                      setCompanyError("");
                       setError("");
                     }}
                     placeholder="Acme Trading Corp."
-                    error={fieldError}
+                    error={companyError}
                     autoCapitalize="words"
                     editable={!saving && !loadingUser}
                   />

@@ -1,5 +1,4 @@
 import { canonicalizeBarangay } from "@/lib/batangasBarangays";
-import PasswordSecurityCard from "@/components/profile/PasswordSecurityCard";
 import BarangayPicker from "@/components/ui/BarangayPicker";
 import FormField from "@/components/ui/FormField";
 import PrimaryButton from "@/components/ui/PrimaryButton";
@@ -13,7 +12,6 @@ import {
   updateVendorProfile,
   type VendorProfile,
 } from "@/lib/projects";
-import { updatePassword } from "@/lib/password-reset";
 import { pickAvatarImage, uploadAvatar } from "@/lib/profile-media";
 import { unregisterPushToken } from "@/lib/push-notifications";
 import { supabase } from "@/lib/supabase";
@@ -27,6 +25,7 @@ import {
   Phone,
   ShieldCheck,
   Trash2,
+  User,
 } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
@@ -84,10 +83,12 @@ export default function Profile() {
   const [profile, setProfile] = useState<VendorProfile | null>(null);
   const [email, setEmail] = useState("");
   const [nameDraft, setNameDraft] = useState("");
+  const [companyDraft, setCompanyDraft] = useState("");
   const [contactDraft, setContactDraft] = useState("");
   const [barangayDraft, setBarangayDraft] = useState("");
   const [fieldErrors, setFieldErrors] = useState<{
     name?: string;
+    company?: string;
     contact?: string;
     barangay?: string;
   }>({});
@@ -165,6 +166,7 @@ export default function Profile() {
 
   const startEditing = () => {
     setNameDraft(profile?.full_name ?? "");
+    setCompanyDraft(profile?.company_name ?? "");
     setContactDraft(profile?.contact_number ?? "");
     setBarangayDraft(
       profile?.barangay && profile.barangay !== "N/A"
@@ -186,13 +188,20 @@ export default function Profile() {
   const validateDraft = () => {
     const next: typeof fieldErrors = {};
     const name = nameDraft.trim();
+    const company = companyDraft.trim();
     const contact = contactDraft.trim();
     const barangay = barangayDraft.trim();
 
     if (name.length < 2) {
-      next.name = "Enter your registered company or vendor name.";
+      next.name = "Enter your registered name.";
     } else if (name.length > 120) {
       next.name = "Use 120 characters or fewer.";
+    }
+
+    if (company.length < 2) {
+      next.company = "Enter your company or vendor name.";
+    } else if (company.length > 120) {
+      next.company = "Use 120 characters or fewer.";
     }
 
     if (contact) {
@@ -229,6 +238,7 @@ export default function Profile() {
     try {
       const updated = await updateVendorProfile({
         fullName: nameDraft.trim(),
+        companyName: companyDraft.trim(),
         contactNumber: contactDraft.trim(),
         barangay: barangayDraft.trim(),
       });
@@ -310,7 +320,10 @@ export default function Profile() {
   };
 
   const companyName =
-    profile?.full_name || email.split("@")[0] || "Vendor account";
+    profile?.company_name ||
+    profile?.full_name ||
+    email.split("@")[0] ||
+    "Vendor account";
   const approvalStatus = profile?.approval_status ?? "pending";
   const isApproved = approvalStatus.toLowerCase() === "approved";
 
@@ -423,12 +436,22 @@ export default function Profile() {
                 {editing ? (
                   <View className="gap-4 pt-1">
                     <FormField
-                      label="Company / Vendor Name"
-                      icon={Building2}
+                      label="Registered Name"
+                      icon={User}
                       value={nameDraft}
                       onChangeText={setNameDraft}
-                      placeholder="Acme Trading Corp."
+                      placeholder="Juan Dela Cruz"
                       error={fieldErrors.name}
+                      autoCapitalize="words"
+                      editable={!saving}
+                    />
+                    <FormField
+                      label="Company / Vendor Name"
+                      icon={Building2}
+                      value={companyDraft}
+                      onChangeText={setCompanyDraft}
+                      placeholder="Acme Trading Corp."
+                      error={fieldErrors.company}
                       autoCapitalize="words"
                       editable={!saving}
                     />
@@ -515,9 +538,14 @@ export default function Profile() {
                     </View>
 
                     <DetailRow
-                      icon={Building2}
+                      icon={User}
                       label="Registered name"
-                      value={companyName}
+                      value={profile?.full_name || companyName}
+                    />
+                    <DetailRow
+                      icon={Building2}
+                      label="Company name"
+                      value={profile?.company_name || "Not set"}
                     />
                     <DetailRow
                       icon={Mail}
@@ -592,21 +620,6 @@ export default function Profile() {
                   />
                 </View>
               </View>
-
-              <PasswordSecurityCard
-                onChangePassword={updatePassword}
-                onOpen={() => {
-                  setError("");
-                  setSuccess("");
-                }}
-                onSaved={() =>
-                  setSuccess("Password updated. Use it the next time you sign in.")
-                }
-                onError={(message) => {
-                  setSuccess("");
-                  setError(message);
-                }}
-              />
 
               {/* LOGOUT */}
               <TouchableOpacity

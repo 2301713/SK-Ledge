@@ -86,6 +86,7 @@ export interface BidNotification {
 export interface VendorProfile {
   id: string;
   full_name: string | null;
+  company_name: string | null;
   email: string | null;
   role_type: string | null;
   barangay: string | null;
@@ -97,6 +98,7 @@ export interface VendorProfile {
 
 export interface VendorProfileUpdate {
   full_name: string;
+  company_name: string;
   contact_number: string | null;
   barangay: string;
 }
@@ -429,7 +431,7 @@ export async function fetchMyProfile(userId: string): Promise<VendorProfile | nu
   const { data, error } = await supabase
     .from("profiles")
     .select(
-      "id, full_name, email, role_type, barangay, contact_number, approval_status, account_status, avatar_url",
+      "id, full_name, company_name, email, role_type, barangay, contact_number, approval_status, account_status, avatar_url",
     )
     .eq("id", userId)
     .maybeSingle();
@@ -445,11 +447,13 @@ export async function deactivateVendorAccount(): Promise<void> {
 
 export async function updateVendorProfile(input: {
   fullName: string;
+  companyName: string;
   contactNumber: string;
   barangay: string;
 }): Promise<VendorProfileUpdate> {
   const { data, error } = await supabase.rpc("update_vendor_profile", {
     p_full_name: input.fullName,
+    p_company_name: input.companyName,
     p_contact_number: input.contactNumber,
     p_barangay: input.barangay,
   });

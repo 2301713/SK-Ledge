@@ -81,7 +81,7 @@ export function describeAvatarError(error: AvatarStorageError): string {
     status === "401" ||
     status === "403"
   ) {
-    return "Photo uploads are blocked for this account. Sign out and sign in again, then retry. If it still fails, contact the SK Federation administrator.";
+    return "Photo uploads are blocked for this account. Ask the SK Federation administrator to enable the photo storage permissions for your account.";
   }
 
   if (message.includes("bucket not found") || status === "404") {
@@ -111,8 +111,39 @@ export async function uploadAvatar(
   userId: string,
   avatar: PickedAvatar,
 ): Promise<string> {
+  // Storage policies scope writes to the signed-in user's folder. Reading the
+  // session here both refreshes an expiring token and guarantees the folder we
+  // write to is the one auth.uid() reports.
+  const { data: sessionData, error: sessionError } =
+    await supabase.auth.getSession();
+  const session = sessionData.session;
+  const ownerId = session?.user?.id;
+  const isDev = typeof __DEV__ !== "undefined" && __DEV__;
+
+  if (sessionError || !ownerId || !session?.access_token) {
+    throw new Error(
+      "Your session expired before the upload. Sign in again, then retry.",
+    );
+  }
+
+  if (isDev) {
+    console.log("[avatars] uploading with session", {
+      userId: ownerId,
+      role: session.user.role,
+      tokenExpiresAt: session.expires_at,
+      nowSeconds: Math.floor(Date.now() / 1000),
+      tokenPresent: Boolean(session.access_token),
+    });
+  }
+
+  if (ownerId !== userId) {
+    throw new Error(
+      "Your account changed while uploading. Reopen your profile and try again.",
+    );
+  }
+
   const extension = extensionFor(avatar.mimeType, avatar.fileName);
-  const path = `${userId}/avatar-${Date.now()}.${extension}`;
+  const path = `${ownerId}/avatar-${Date.now()}.${extension}`;
 
   let arrayBuffer: ArrayBuffer;
   try {
@@ -124,15 +155,41 @@ export async function uploadAvatar(
     );
   }
 
+  if (!arrayBuffer || arrayBuffer.byteLength === 0) {
+    throw new Error(
+      "Could not read the selected photo. Pick it again from your library.",
+    );
+  }
+
+  // Each upload gets a fresh file name, so an upsert (and the UPDATE policy it
+  // needs) is unnecessary. The bearer token is passed explicitly so the row is
+  // written as this user even if the client cannot read the stored session
+  // when the request is built, which otherwise fails the folder RLS check.
   const { error: uploadError } = await supabase.storage
     .from("avatars")
     .upload(path, arrayBuffer, {
       contentType: avatar.mimeType,
-      upsert: true,
+      upsert: false,
+      headers: { Authorization: `Bearer ${session.access_token}` },
     });
 
   if (uploadError) {
-    throw new Error(describeAvatarError(uploadError));
+    // The friendly text hides which storage rule failed. Development builds
+    // append the raw server message and status so the cause is diagnosable.
+    if (isDev) {
+      console.warn("[avatars] upload failed", {
+        message: uploadError.message,
+        statusCode: uploadError.statusCode,
+        bucket: "avatars",
+        path,
+      });
+    }
+
+    const detail = isDev
+      ? ` [${uploadError.statusCode ?? "no status"}: ${uploadError.message}]`
+      : "";
+
+    throw new Error(`${describeAvatarError(uploadError)}${detail}`);
   }
 
   const { data } = supabase.storage.from("avatars").getPublicUrl(path);
