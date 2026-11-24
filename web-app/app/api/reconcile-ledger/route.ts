@@ -240,6 +240,15 @@ export async function POST() {
     };
     const unmapped: UnmappedRecord[] = [];
     const mirroredIds: number[] = [];
+    // Allocation and award rows have no voided column, so a voided record cannot
+    // be represented in the mirror at all: drop the row instead of leaving it
+    // looking active. Expenses keep their row because the column exists.
+    const voidedStaleIds: Record<ReconcileTable, number[]> = {
+      allocations: [],
+      expenses: [],
+      awards: [],
+    };
+    const voidedIds: number[] = [];
 
     ledgerRecords.forEach((record) => {
       const table =
@@ -248,23 +257,37 @@ export async function POST() {
         ? profileIdByWallet.get(record.official.toLowerCase())
         : undefined;
 
+      if (record.voided) {
+        voidedIds.push(Number(record.id));
+      }
+
       if (!table) {
-        unmapped.push({
-          id: Number(record.id),
-          recordType: record.recordType,
-          official: record.official,
-          reason: "unsupported_record_type",
-        });
+        // Voided history is not an actionable sync gap.
+        if (!record.voided) {
+          unmapped.push({
+            id: Number(record.id),
+            recordType: record.recordType,
+            official: record.official,
+            reason: "unsupported_record_type",
+          });
+        }
         return;
       }
 
       if (!userId) {
-        unmapped.push({
-          id: Number(record.id),
-          recordType: record.recordType,
-          official: record.official,
-          reason: "official_not_bound",
-        });
+        if (!record.voided) {
+          unmapped.push({
+            id: Number(record.id),
+            recordType: record.recordType,
+            official: record.official,
+            reason: "official_not_bound",
+          });
+        }
+        return;
+      }
+
+      if (record.voided && table !== "expenses") {
+        voidedStaleIds[table].push(Number(record.id));
         return;
       }
 
@@ -304,6 +327,24 @@ export async function POST() {
       }
     }
 
+    for (const table of ["allocations", "awards"] as const) {
+      const staleIds = voidedStaleIds[table];
+      if (staleIds.length === 0) continue;
+
+      const { error: staleError } = await supabaseAdmin
+        .from(table)
+        .delete()
+        .eq("contract_address", CONTRACT_ADDRESS)
+        .in("blockchain_record_id", staleIds);
+
+      if (staleError) {
+        console.error(`Failed to drop voided ${table} rows.`, {
+          code: staleError.code,
+        });
+        return errorResponse(`Failed to drop voided ${table} rows.`, 500);
+      }
+    }
+
     // Gap bookkeeping is secondary: a failure here must not claim the mirrored
     // rows failed.
     const now = new Date().toISOString();
@@ -330,12 +371,13 @@ export async function POST() {
       }
     }
 
-    if (mirroredIds.length > 0) {
+    const resolvedGapIds = [...mirroredIds, ...voidedIds];
+    if (resolvedGapIds.length > 0) {
       const { error: resolveError } = await supabaseAdmin
         .from("ledger_sync_gaps")
         .delete()
         .eq("contract_address", CONTRACT_ADDRESS)
-        .in("blockchain_record_id", mirroredIds);
+        .in("blockchain_record_id", resolvedGapIds);
 
       if (resolveError) {
         gapsPersisted = false;
