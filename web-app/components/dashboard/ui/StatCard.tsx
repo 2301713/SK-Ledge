@@ -24,15 +24,15 @@ export default function StatCard({
 
   return (
     <div
-      className={`flex flex-col gap-4 rounded-3xl p-6 ${
+      className={`stat-card flex min-w-0 flex-col gap-4 rounded-3xl p-6 ${
         isBrand
           ? "bg-primary text-white shadow-[0_8px_28px_-10px_rgba(1,56,168,0.45)]"
           : "border border-border bg-white text-primary-foreground shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(15,23,42,0.10)]"
       } ${className}`}
     >
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex min-w-0 items-center justify-between gap-3">
         <p
-          className={`text-xs font-semibold uppercase tracking-widest ${
+          className={`min-w-0 text-xs font-semibold uppercase tracking-widest ${
             isBrand ? "text-white/70" : "text-secondary-foreground"
           }`}
         >
@@ -50,7 +50,7 @@ export default function StatCard({
       </div>
 
       <div
-        className={`text-4xl font-bold tracking-tight ${
+        className={`stat-card-value font-bold tracking-tight ${
           isBrand ? "text-white" : "text-primary-foreground"
         }`}
       >
@@ -59,7 +59,7 @@ export default function StatCard({
 
       {trend && (
         <div
-          className={`flex items-center gap-1.5 text-xs font-medium ${
+          className={`flex min-w-0 items-center gap-1.5 text-xs font-medium ${
             isBrand ? "text-white/75" : "text-secondary-foreground"
           }`}
         >

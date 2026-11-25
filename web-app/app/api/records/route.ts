@@ -227,6 +227,15 @@ export async function GET(req: NextRequest) {
           .order("created_at", { ascending: false })
           .limit(limit);
 
+        // Only surface rows written against the active contract. Older rows
+        // stay in the database for history but must not appear in the ledger
+        // after a fresh deployment.
+        const activeContractAddress =
+          process.env.NEXT_PUBLIC_CONTRACT_ADDRESS?.trim();
+        if (activeContractAddress) {
+          query = query.eq("contract_address", activeContractAddress);
+        }
+
         // The public projection carries no voided flag, so a voided
         // expense must never reach the public portal totals.
         if (isPublicScope && recordType === "expense") {

@@ -164,3 +164,21 @@ html {
 .thin-scrollbar::-webkit-scrollbar-thumb:hover {
   background-color: var(--color-secondary-foreground);
 }
+/* Dashboard stat values scale with the card width instead of the viewport, so
+   long currency strings stay inside the card when the grid narrows. */
+.stat-card {
+  container-type: inline-size;
+}
+
+.stat-card-value {
+  font-size: clamp(1rem, 10.5cqi, 2.25rem);
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+
+@supports not (container-type: inline-size) {
+  .stat-card-value {
+    font-size: 1.5rem;
+  }
+}

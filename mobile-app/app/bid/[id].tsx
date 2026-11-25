@@ -353,7 +353,12 @@ export default function BidDetailPage() {
             <Text className="font-inter-bold text-[9px] uppercase tracking-[0.16em] text-primary">
               Bid amount
             </Text>
-            <Text className="font-inter-black mt-2 text-[30px] tracking-tight text-primary-foreground">
+            <Text
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.6}
+              className="font-inter-black mt-2 text-[30px] tracking-tight text-primary-foreground"
+            >
               {formatPeso(bid.amount_php)}
             </Text>
           </View>

@@ -195,7 +195,7 @@ const ROLE_LINKS: Record<
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-secondary-foreground">
+    <p className="hidden px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-secondary-foreground lg:block">
       {children}
     </p>
   );
@@ -235,16 +235,16 @@ export default function Sidebar({
 
   return (
     <>
-      <aside className="sticky top-4 z-50 flex h-[calc(100vh-2rem)] w-65 shrink-0 flex-col rounded-3xl border border-border bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_32px_-16px_rgba(15,23,42,0.12)]">
+      <aside className="sticky top-4 z-50 flex h-[calc(100vh-2rem)] w-20 shrink-0 flex-col rounded-3xl border border-border bg-white p-3 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_32px_-16px_rgba(15,23,42,0.12)] lg:w-65 lg:p-5">
         {/* BRAND */}
-        <div className="flex items-center gap-3 px-2 pb-6 pt-1">
+        <div className="flex items-center justify-center gap-3 px-0 pb-6 pt-1 lg:justify-start lg:px-2">
           <Image
             src="/skledge-logo.png"
             height={40}
             width={40}
             alt="SK-Ledge Logo"
           />
-          <div>
+          <div className="hidden lg:block">
             <p className="text-lg font-bold leading-none tracking-tight text-primary-foreground">
               SK-Ledge
             </p>
@@ -266,7 +266,8 @@ export default function Sidebar({
                   <Link
                     key={link.id}
                     href={link.href}
-                    className={`group relative flex items-center gap-3 rounded-2xl px-3 py-2.5 transition-all ${
+                    title={link.label}
+                    className={`group relative flex items-center justify-center gap-3 rounded-2xl px-2 py-2.5 transition-all lg:justify-start lg:px-3 ${
                       isActive ? "bg-primary/5" : "hover:bg-secondary"
                     }`}
                   >
@@ -283,7 +284,7 @@ export default function Sidebar({
                       <Icon className="h-5 w-5" />
                     </span>
                     <span
-                      className={`text-sm font-semibold ${
+                      className={`hidden text-sm font-semibold lg:inline ${
                         isActive ? "text-primary" : "text-primary-foreground"
                       }`}
                     >
@@ -303,8 +304,8 @@ export default function Sidebar({
         {/* GENERAL */}
         <div className="pt-5">
           <SectionLabel>General</SectionLabel>
-          <div className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-secondary/40 p-3">
-            <div className="flex min-w-0 items-center gap-3">
+          <div className="flex flex-col items-center gap-2 rounded-2xl border border-border bg-secondary/40 p-2 lg:flex-row lg:justify-between lg:gap-3 lg:p-3">
+            <div className="flex min-w-0 items-center gap-3 lg:flex-1">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary text-sm font-bold text-white">
                 {resolvedAvatarUrl ? (
                   <Image
@@ -318,7 +319,7 @@ export default function Sidebar({
                   userName.charAt(0).toUpperCase()
                 )}
               </div>
-              <div className="min-w-0">
+              <div className="hidden min-w-0 lg:block">
                 <p
                   className="truncate text-sm font-semibold text-primary-foreground"
                   title={userName}

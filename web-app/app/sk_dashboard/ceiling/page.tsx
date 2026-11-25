@@ -321,6 +321,7 @@ export default function CeilingPage() {
               </div>
             ) : (
               <>
+                <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
                   <thead className="border-b border-border text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
                     <tr>
@@ -450,6 +451,7 @@ export default function CeilingPage() {
                     })}
                   </tbody>
                 </table>
+                </div>
 
                 <div className="flex flex-col gap-2 border-t border-border bg-secondary/20 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                   <p className="text-[10px] font-medium text-secondary-foreground">

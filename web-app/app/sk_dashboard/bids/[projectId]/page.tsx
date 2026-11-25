@@ -542,7 +542,7 @@ export default function BidsPage({ params }: { params: Promise<{ projectId: stri
                           )}
                         </div>
 
-                        <p className="mt-3 text-3xl font-bold tracking-tight text-primary-foreground">
+                        <p className="mt-3 break-words text-2xl font-bold tracking-tight text-primary-foreground tabular-nums sm:text-3xl">
                           {formatCurrency(Number(bid.amount_php))}
                         </p>
 

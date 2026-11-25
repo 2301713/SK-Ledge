@@ -43,6 +43,9 @@ export default function StatCard({
       </View>
 
       <Text
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.6}
         className={`font-inter-extrabold text-4xl tracking-tight ${
           isBrand ? "text-white" : "text-primary-foreground"
         }`}

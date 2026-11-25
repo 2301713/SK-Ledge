@@ -210,7 +210,12 @@ export default function HomePage() {
                 </>
               ) : (
                 <>
-                  <Text className="font-inter-black text-[22px] leading-none tracking-tight text-primary-foreground">
+                  <Text
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.6}
+                    className="font-inter-black text-[22px] leading-none tracking-tight text-primary-foreground"
+                  >
                     {stat.value}
                   </Text>
                   <Text className="font-inter-bold mt-1.5 text-[9px] uppercase tracking-[0.1em] text-secondary-foreground">
