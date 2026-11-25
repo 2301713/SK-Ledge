@@ -257,7 +257,7 @@ export default function ProjectsPage() {
         />
 
         {/* STAT ROW */}
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 xl:gap-6">
           <StatCard
             label="Total Proposed Budget"
             value={formatCurrency(totalBudget)}
@@ -421,21 +421,28 @@ export default function ProjectsPage() {
         </Card>
 
         {/* PROJECTS LIST */}
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 xl:gap-6">
           {projects.map((project) => (
             <Card
               key={project.id}
               className="transition-all hover:shadow-[0_8px_30px_-12px_rgba(1,56,168,0.25)]"
             >
-              <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+              <div className="flex flex-col gap-4">
                 <div className="min-w-0">
-                  <h3 className="text-lg font-bold tracking-tight text-primary-foreground">
+                  <h3 className="break-words text-lg font-bold tracking-tight text-primary-foreground">
                     {project.name}
                   </h3>
-                  <p className="mt-1 text-sm text-secondary-foreground">
-                    {project.category} • {formatCurrency(project.budget || 0)}
-                    {project.location ? ` • ${project.location}` : ''}
-                  </p>
+                  <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-secondary-foreground">
+                    <span>{project.category}</span>
+                    <span aria-hidden="true">•</span>
+                    <span>{formatCurrency(project.budget || 0)}</span>
+                    {project.location && (
+                      <>
+                        <span aria-hidden="true">•</span>
+                        <span className="break-words">{project.location}</span>
+                      </>
+                    )}
+                  </div>
 
                   <div className="mt-3 flex flex-wrap items-center gap-2">
                     <StatusBadge
@@ -483,34 +490,38 @@ export default function ProjectsPage() {
                 </div>
 
                 {project.award_tx_hash && (
-                  <div className="shrink-0 rounded-2xl border border-success/30 bg-success/10 px-4 py-3">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-success">
-                      Awarded On-Chain
-                    </p>
-                    <p className="mt-0.5 text-sm font-bold text-primary-foreground">
-                      {project.winning_bidder_name || 'N/A'}
-                    </p>
-                    <a
-                      href={`https://sepolia.etherscan.io/tx/${project.award_tx_hash}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
-                    >
-                      <ExternalLink className="h-3 w-3" />
-                      View transaction
-                    </a>
+                  <div className="w-full rounded-2xl border border-success/30 bg-success/10 px-4 py-3">
+                    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-success">
+                          Awarded On-Chain
+                        </p>
+                        <p className="mt-0.5 break-words text-sm font-bold text-primary-foreground">
+                          {project.winning_bidder_name || 'N/A'}
+                        </p>
+                      </div>
+                      <a
+                        href={`https://sepolia.etherscan.io/tx/${project.award_tx_hash}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-primary hover:underline"
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                        View transaction
+                      </a>
+                    </div>
                   </div>
                 )}
               </div>
 
-              <div className="mt-4 flex flex-wrap items-center justify-end gap-2 border-t border-border pt-4">
+              <div className="mt-4 flex flex-col gap-2 border-t border-border pt-4 sm:flex-row sm:flex-wrap sm:justify-end">
                 {currentUser?.role_type === 'SK_Chairperson' &&
                   project.status !== PROJECT_STATUS.awarded &&
                   project.status !== PROJECT_STATUS.completed && (
                     <button
                       type="button"
                       onClick={() => setReviewProject(project)}
-                      className="inline-flex items-center gap-2 rounded-xl border border-border bg-white px-4 py-2 text-sm font-bold text-primary-foreground transition-all hover:bg-secondary"
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-white px-4 py-2 text-center text-sm font-bold text-primary-foreground transition-all hover:bg-secondary sm:w-auto"
                     >
                       <ShieldCheck className="h-4 w-4" />
                       {project.status === PROJECT_STATUS.proposed
@@ -523,7 +534,7 @@ export default function ProjectsPage() {
                   project.award_tx_hash) && (
                   <Link
                     href={`/sk_dashboard/bids/${project.id}`}
-                    className="inline-flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2 text-sm font-bold text-primary transition-all hover:bg-primary hover:text-white"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2 text-center text-sm font-bold text-primary transition-all hover:bg-primary hover:text-white sm:w-auto"
                   >
                     <Gavel className="h-4 w-4" />
                     View Bids

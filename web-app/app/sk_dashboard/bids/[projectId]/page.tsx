@@ -420,7 +420,7 @@ export default function BidsPage({ params }: { params: Promise<{ projectId: stri
           hideSearch
         />
 
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <PageHeader
             eyebrow="Bids & Awards"
             title={project ? `Bids for: ${project.name}` : 'Bids'}
@@ -436,7 +436,7 @@ export default function BidsPage({ params }: { params: Promise<{ projectId: stri
                 ? '/sk_dashboard'
                 : '/sk_dashboard/projects'
             }
-            className="mt-1 inline-flex shrink-0 items-center gap-2 rounded-xl border border-border bg-white px-4 py-2.5 text-sm font-bold text-secondary-foreground transition-all hover:border-primary/30 hover:text-primary"
+            className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl border border-border bg-white px-4 py-2.5 text-sm font-bold text-secondary-foreground transition-all hover:border-primary/30 hover:text-primary sm:mt-1 sm:w-auto"
           >
             <ArrowLeft className="h-4 w-4" />
             {userRole === 'SK_Treasurer' ? 'Back to Overview' : 'Back to Projects'}
@@ -485,7 +485,7 @@ export default function BidsPage({ params }: { params: Promise<{ projectId: stri
             )}
 
             {/* STAT ROW */}
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 xl:gap-6">
               <StatCard
                 label="Total Bids"
                 value={bids.length}
@@ -526,12 +526,12 @@ export default function BidsPage({ params }: { params: Promise<{ projectId: stri
                     }`}
                   >
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-secondary">
                             <Building2 className="h-5 w-5 text-secondary-foreground" />
                           </div>
-                          <h3 className="text-lg font-bold tracking-tight text-primary-foreground">
+                          <h3 className="min-w-0 break-words text-lg font-bold tracking-tight text-primary-foreground">
                             {bid.vendor_name}
                           </h3>
                           {bid.status === 'won' && (
@@ -597,19 +597,19 @@ export default function BidsPage({ params }: { params: Promise<{ projectId: stri
                     {project.status === 'Approved' &&
                       userRole === 'SK_Treasurer' &&
                       bid.status === 'pending' && (
-                        <div className="mt-4 flex flex-wrap gap-3 border-t border-border pt-4">
+                        <div className="mt-4 flex flex-col gap-2 border-t border-border pt-4 sm:flex-row sm:flex-wrap sm:gap-3">
                           <button
                             onClick={() =>
                               handleStatusUpdate(bid.id, 'recommended')
                             }
-                            className="inline-flex items-center gap-2 rounded-xl bg-pending px-4 py-2 text-xs font-bold tracking-wide text-white transition-all hover:bg-pending/90 active:scale-95"
+                            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-pending px-4 py-2 text-xs font-bold tracking-wide text-white transition-all hover:bg-pending/90 active:scale-95 sm:w-auto"
                           >
                             <Trophy className="h-4 w-4" />
                             Recommend
                           </button>
                           <button
                             onClick={() => handleStatusUpdate(bid.id, 'lost')}
-                            className="inline-flex items-center gap-2 rounded-xl border border-danger/30 px-4 py-2 text-xs font-bold tracking-wide text-danger transition-all hover:bg-danger/5 active:scale-95"
+                            className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-danger/30 px-4 py-2 text-xs font-bold tracking-wide text-danger transition-all hover:bg-danger/5 active:scale-95 sm:w-auto"
                           >
                             Decline
                           </button>
@@ -619,11 +619,11 @@ export default function BidsPage({ params }: { params: Promise<{ projectId: stri
                     {project.status === 'Approved' &&
                       userRole === 'SK_Chairperson' &&
                       bid.status === 'recommended' && (
-                        <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-border pt-4">
+                        <div className="mt-4 flex flex-col gap-2 border-t border-border pt-4 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
                           <button
                             onClick={() => initiateAward(bid)}
                             disabled={isPending}
-                            className="inline-flex items-center gap-2 rounded-xl bg-success px-4 py-2 text-xs font-bold tracking-wide text-white transition-all hover:bg-success/90 active:scale-95 disabled:opacity-50"
+                            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-success px-4 py-2 text-xs font-bold tracking-wide text-white transition-all hover:bg-success/90 active:scale-95 disabled:opacity-50 sm:w-auto"
                           >
                             {isPending && selectedBidId === bid.id ? (
                               <>
@@ -637,7 +637,7 @@ export default function BidsPage({ params }: { params: Promise<{ projectId: stri
                               </>
                             )}
                           </button>
-                          <p className="text-xs text-secondary-foreground">
+                          <p className="text-xs leading-relaxed text-secondary-foreground">
                             This will record the award on the Sepolia ledger
                             before finalizing.
                           </p>
@@ -650,7 +650,7 @@ export default function BidsPage({ params }: { params: Promise<{ projectId: stri
                           href={`https://sepolia.etherscan.io/tx/${project.award_tx_hash}`}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex items-center gap-2 rounded-xl bg-success/10 px-4 py-2 text-xs font-bold text-success transition-all hover:bg-success/20"
+                          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-success/10 px-4 py-2 text-center text-xs font-bold text-success transition-all hover:bg-success/20 sm:w-auto"
                         >
                           <ExternalLink className="h-4 w-4" />
                           Award recorded on-chain — View transaction
