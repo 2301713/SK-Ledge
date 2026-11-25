@@ -1,12 +1,12 @@
 import { Mail, MapPin, Clock, Send } from "lucide-react";
 
-const CONTACT_EMAIL = "hello@skledge.ph";
+const CONTACT_EMAIL = "2301713@ub.edu.ph";
 
 const CARDS = [
   {
     icon: Mail,
     title: "Email Us",
-    lines: ["hello@skledge.ph", "Replies within 24 hours"],
+    lines: ["2301713@ub.edu.ph", "Replies within 24 hours"],
   },
   {
     icon: MapPin,

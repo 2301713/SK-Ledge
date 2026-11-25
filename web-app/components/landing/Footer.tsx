@@ -89,10 +89,10 @@ export default function Footer() {
             <li className="flex items-center gap-2.5 text-slate-400">
               <Mail className="w-4 h-4 text-tertiary" />
               <a
-                href="mailto:hello@skledge.ph"
+                href="mailto:2301713@ub.edu.ph"
                 className="hover:text-white transition-colors"
               >
-                hello@skledge.ph
+                2301713@ub.edu.ph
               </a>
             </li>
             <li className="flex items-center gap-2.5 text-slate-400">

@@ -139,10 +139,10 @@ export default function LegalPage({ document }: { document: LegalDocument }) {
           <p className="mt-2 text-sm leading-relaxed text-slate-400">
             Email{" "}
             <a
-              href="mailto:hello@skledge.ph"
+              href="mailto:2301713@ub.edu.ph"
               className="text-slate-300 underline decoration-tertiary/40 underline-offset-2 transition-colors hover:text-white"
             >
-              hello@skledge.ph
+              2301713@ub.edu.ph
             </a>{" "}
             or write to SK-Ledge, Corner Dona Aurelia, Batangas City, 4200
             Batangas, Philippines.

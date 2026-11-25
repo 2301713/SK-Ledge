@@ -117,7 +117,7 @@ export const LEGAL_CONTENT: Record<LegalDocument, LegalContent> = {
       {
         title: "Contact",
         paragraphs: [
-          "For questions about these Terms, contact us at hello@skledge.ph or write to SK-Ledge, Corner Dona Aurelia, Batangas City, 4200 Batangas, Philippines.",
+          "For questions about these Terms, contact us at 2301713@ub.edu.ph or write to SK-Ledge, Corner Dona Aurelia, Batangas City, 4200 Batangas, Philippines.",
         ],
       },
     ],
@@ -149,7 +149,7 @@ export const LEGAL_CONTENT: Record<LegalDocument, LegalContent> = {
         paragraphs: [
           "You sign in with Google. When you do, Google shares your basic profile with us: your name, email address, and profile picture. We request only the openid, email, and profile scopes — we do not request access to Gmail, Drive, Calendar, Contacts, or any other Google service.",
           "We use that information only to create and identify your SK-Ledge account, display your name and avatar, send account-related notices, and enforce role-based access. We do not sell Google user data, use it for advertising, or use it to train machine-learning models.",
-          "Google user data is stored with our database provider and kept while your account exists. You can revoke SK-Ledge's access at any time from your Google Account permissions page, and you can ask us to delete your account data at hello@skledge.ph. SK-Ledge's use of information received from Google APIs adheres to the Google API Services User Data Policy, including the Limited Use requirements.",
+          "Google user data is stored with our database provider and kept while your account exists. You can revoke SK-Ledge's access at any time from your Google Account permissions page, and you can ask us to delete your account data at 2301713@ub.edu.ph. SK-Ledge's use of information received from Google APIs adheres to the Google API Services User Data Policy, including the Limited Use requirements.",
         ],
       },
       {
@@ -197,14 +197,14 @@ export const LEGAL_CONTENT: Record<LegalDocument, LegalContent> = {
         title: "Security",
         paragraphs: [
           "We implement administrative, technical, and physical safeguards designed to protect information against unauthorized access, alteration, or disclosure. These include access controls, encryption in transit, document hashing, wallet-based authentication, and monitoring.",
-          "No system is completely secure. If you believe your account or a Platform record has been compromised, contact us immediately at hello@skledge.ph. Government offices may also have separate obligations to notify the NPC and affected individuals of personal data breaches.",
+          "No system is completely secure. If you believe your account or a Platform record has been compromised, contact us immediately at 2301713@ub.edu.ph. Government offices may also have separate obligations to notify the NPC and affected individuals of personal data breaches.",
         ],
       },
       {
         title: "Your Rights",
         paragraphs: [
           "Subject to the Data Privacy Act, you have the right to be informed, to object to processing, to access your data, to correct inaccurate data, to request erasure or blocking, to claim damages, to data portability, and to file a complaint with the National Privacy Commission.",
-          "To exercise your rights, contact us at hello@skledge.ph. We may need to verify your identity before acting on your request. Some requests may be limited by legal retention obligations, audit requirements, and the immutable nature of blockchain records.",
+          "To exercise your rights, contact us at 2301713@ub.edu.ph. We may need to verify your identity before acting on your request. Some requests may be limited by legal retention obligations, audit requirements, and the immutable nature of blockchain records.",
         ],
       },
       {
@@ -228,7 +228,7 @@ export const LEGAL_CONTENT: Record<LegalDocument, LegalContent> = {
       {
         title: "Contact and Data Protection",
         paragraphs: [
-          "For privacy questions, requests, or concerns, contact our data protection team at hello@skledge.ph or write to SK-Ledge, Corner Dona Aurelia, Batangas City, 4200 Batangas, Philippines. You may also contact the National Privacy Commission at complaints@privacy.gov.ph.",
+          "For privacy questions, requests, or concerns, contact our data protection team at 2301713@ub.edu.ph or write to SK-Ledge, Corner Dona Aurelia, Batangas City, 4200 Batangas, Philippines. You may also contact the National Privacy Commission at complaints@privacy.gov.ph.",
         ],
       },
     ],
