@@ -28,6 +28,8 @@ type OnChainRecord = {
   timestamp: bigint;
   purpose: string;
   recordType: string;
+  approved?: boolean;
+  voided?: boolean;
   deployment: "Current" | "Legacy";
 };
 
@@ -132,10 +134,14 @@ export default function OnChainVerifier() {
   };
 
   const records: OnChainRecord[] = [
-    ...((currentRecords as OnChainRecord[] | undefined) ?? []).map((r) => ({
-      ...r,
-      deployment: "Current" as const,
-    })),
+    ...((currentRecords as OnChainRecord[] | undefined) ?? [])
+      // Voided records stay on-chain as history, but they are not live ledger
+      // entries and must not inflate the explorer's totals.
+      .filter((r) => !r.voided)
+      .map((r) => ({
+        ...r,
+        deployment: "Current" as const,
+      })),
     ...((legacyRecords as readonly LegacyRecord[] | undefined) ?? []).map((r) => ({
       id: r.id,
       official: r.official,
