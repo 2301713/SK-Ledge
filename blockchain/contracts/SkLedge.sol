@@ -239,6 +239,30 @@ contract SkLedge {
     }
 
     /**
+     * @notice Authorizes or revokes several SK Official wallets in one call.
+     * @param _officials Wallet addresses of the SK Officials.
+     * @param _status True = authorize, False = revoke.
+     */
+    function setOfficialAuthorizations(
+        address[] calldata _officials,
+        bool _status
+    ) external onlyOwner {
+        for (uint256 i = 0; i < _officials.length; i++) {
+            require(
+                _officials[i] != address(0),
+                "SkLedge: Invalid wallet address"
+            );
+
+            isAuthorizedOfficial[_officials[i]] = _status;
+
+            emit OfficialAuthorizationChanged(
+                _officials[i],
+                _status
+            );
+        }
+    }
+
+    /**
      * @notice Assigns or revokes an official's access to a registered barangay.
      * @param _official Wallet address of the SK Official.
      * @param _barangay Registered canonical barangay name or alias.
@@ -263,6 +287,35 @@ contract SkLedge {
             canonicalBarangayNames[barangayId - 1],
             _status
         );
+    }
+
+    /**
+     * @notice Assigns or revokes one official's access to many barangays.
+     * @param _official Wallet address of the SK Official.
+     * @param _barangays Registered canonical barangay names or aliases.
+     * @param _status True = authorize, False = revoke.
+     */
+    function setOfficialBarangayAuthorizations(
+        address _official,
+        string[] calldata _barangays,
+        bool _status
+    ) external onlyOwner {
+        require(
+            _official != address(0),
+            "SkLedge: Invalid wallet address"
+        );
+
+        for (uint256 i = 0; i < _barangays.length; i++) {
+            uint256 barangayId = _getBarangayId(_barangays[i]);
+            officialBarangayAuthorizationById[_official][barangayId] = _status;
+
+            emit OfficialBarangayAuthorizationChanged(
+                _official,
+                barangayId,
+                canonicalBarangayNames[barangayId - 1],
+                _status
+            );
+        }
     }
 
     /**
@@ -395,6 +448,31 @@ contract SkLedge {
             canonicalBarangayNames[barangayId - 1],
             _ceiling
         );
+    }
+
+    /**
+     * @notice Sets the same allocation ceiling for several barangays at once.
+     * @param _barangays Registered barangay names or aliases.
+     * @param _ceiling Maximum allowed allocation amount.
+     */
+    function setAllocationCeilings(
+        string[] calldata _barangays,
+        uint256 _ceiling
+    ) external onlyOwner {
+        require(
+            _ceiling > 0,
+            "SkLedge: Ceiling must be greater than zero"
+        );
+
+        for (uint256 i = 0; i < _barangays.length; i++) {
+            uint256 barangayId = _getBarangayId(_barangays[i]);
+            allocationCeilingsById[barangayId] = _ceiling;
+
+            emit AllocationCeilingChanged(
+                canonicalBarangayNames[barangayId - 1],
+                _ceiling
+            );
+        }
     }
 
     function allocationCeilings(

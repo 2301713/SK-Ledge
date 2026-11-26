@@ -1,0 +1,59 @@
+{
+  "deploymentId": "skledge-final-20261126",
+  "network": "sepolia",
+  "chainId": 11155111,
+  "contractAddress": "0x752646AD19F53f89a22F0de0B9e1Ff10398BBD0f",
+  "deploymentTransaction": "0x8d8c8fa6f4cc5b3dde165498b39adf6463f55868a5310a2c54501610b4331a43",
+  "deploymentBlock": 12217357,
+  "deploymentTimestamp": 1795706832,
+  "deploymentDateUtc": "2026-11-26T15:27:12.000Z",
+  "deploymentDatePht": "2026-11-26T23:27:12.000+08:00",
+  "deployer": "0x48055a56f677E8DAa706544f1ebbD3d2F858D1B2",
+  "owner": "0x48055a56f677E8DAa706544f1ebbD3d2F858D1B2",
+  "source": {
+    "file": "blockchain/contracts/SkLedge.sol",
+    "repoHead": "3d26578841ea03755802fe7f3461229d926f4f1a",
+    "contractSourceDirty": true,
+    "generatedAt": "2026-11-26T16:00:29.420Z"
+  },
+  "compiler": {
+    "version": "0.8.28+commit.7893614a",
+    "optimizer": true,
+    "runs": 200,
+    "evmVersion": "cancun"
+  },
+  "fingerprints": {
+    "abiSha256": "1cb631a78c9d047df45db21b7c35d58c114cf17d00a86c89a3f74abb3ee23e4d",
+    "creationBytecodeSha256": "016e312c585512ec06132fa5ac2c91131f2d0d7a9d0f88a13d68d5c81533c415",
+    "deploymentTransactionInputSha256": "016e312c585512ec06132fa5ac2c91131f2d0d7a9d0f88a13d68d5c81533c415",
+    "artifactRuntimeBytecodeSha256": "df991b9db84b4e95aaa9330f4b816f578d366f7bf1aacb8a40bf9d0ee722c3d0",
+    "onChainRuntimeBytecodeSha256": "df991b9db84b4e95aaa9330f4b816f578d366f7bf1aacb8a40bf9d0ee722c3d0",
+    "runtimeBytecodeLength": 16746,
+    "hashingNotes": "ABI hash is sha256 of JSON.stringify(artifact.abi); bytecode hashes are sha256 of the raw hex bytes."
+  },
+  "etherscan": {
+    "url": "https://sepolia.etherscan.io/address/0x752646AD19F53f89a22F0de0B9e1Ff10398BBD0f",
+    "verified": true,
+    "contractName": "SkLedge",
+    "compilerVersion": "v0.8.28+commit.7893614a",
+    "optimizationUsed": true,
+    "runs": "200",
+    "evmVersion": "cancun",
+    "proxy": false
+  },
+  "onChainBytecodeMatch": true,
+  "metadataMatches": true,
+  "creationBytecodeMatchesTransaction": true,
+  "env": {
+    "blockchainDotEnv": "0x752646AD19F53f89a22F0de0B9e1Ff10398BBD0f",
+    "webAppDotEnv": "0x752646AD19F53f89a22F0de0B9e1Ff10398BBD0f"
+  },
+  "verification": {
+    "owner": "0x48055a56f677E8DAa706544f1ebbD3d2F858D1B2",
+    "nextRecordId": "1",
+    "canonicalBarangayCount": "851",
+    "totalRecords": 0,
+    "isDeployerAuthorized": true
+  },
+  "warnings": []
+}

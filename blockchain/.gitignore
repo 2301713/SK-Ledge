@@ -24,6 +24,10 @@
 .env.*
 !.env.example
 
+# Local demo seed artifacts (contains testnet private keys)
+.demo-wallets.json
+.demo-seed.json
+
 # Hardhat coverage reports
 /coverage
 

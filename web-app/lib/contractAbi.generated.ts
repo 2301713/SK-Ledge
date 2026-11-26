@@ -946,6 +946,24 @@ export const SK_LEDGE_ABI = [
   {
     "inputs": [
       {
+        "internalType": "string[]",
+        "name": "_barangays",
+        "type": "string[]"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_ceiling",
+        "type": "uint256"
+      }
+    ],
+    "name": "setAllocationCeilings",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "address",
         "name": "_approver",
         "type": "address"
@@ -982,6 +1000,24 @@ export const SK_LEDGE_ABI = [
   {
     "inputs": [
       {
+        "internalType": "address[]",
+        "name": "_officials",
+        "type": "address[]"
+      },
+      {
+        "internalType": "bool",
+        "name": "_status",
+        "type": "bool"
+      }
+    ],
+    "name": "setOfficialAuthorizations",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "address",
         "name": "_official",
         "type": "address"
@@ -998,6 +1034,29 @@ export const SK_LEDGE_ABI = [
       }
     ],
     "name": "setOfficialBarangayAuthorization",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_official",
+        "type": "address"
+      },
+      {
+        "internalType": "string[]",
+        "name": "_barangays",
+        "type": "string[]"
+      },
+      {
+        "internalType": "bool",
+        "name": "_status",
+        "type": "bool"
+      }
+    ],
+    "name": "setOfficialBarangayAuthorizations",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
