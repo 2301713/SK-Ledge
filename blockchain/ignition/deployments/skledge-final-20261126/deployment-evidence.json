@@ -12,9 +12,9 @@
   "owner": "0x48055a56f677E8DAa706544f1ebbD3d2F858D1B2",
   "source": {
     "file": "blockchain/contracts/SkLedge.sol",
-    "repoHead": "3d26578841ea03755802fe7f3461229d926f4f1a",
-    "contractSourceDirty": true,
-    "generatedAt": "2026-11-26T16:00:29.420Z"
+    "repoHead": "45c6dc50ff2767778659899fba275d1efb6ab06b",
+    "contractSourceDirty": false,
+    "generatedAt": "2026-11-26T16:11:41.854Z"
   },
   "compiler": {
     "version": "0.8.28+commit.7893614a",
