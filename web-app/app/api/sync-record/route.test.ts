@@ -16,6 +16,8 @@ import {
 const CONTRACT = "0x1111111111111111111111111111111111111111" as const;
 const OFFICIAL = "0x2222222222222222222222222222222222222222" as const;
 const OTHER_ADDRESS = "0x3333333333333333333333333333333333333333" as const;
+// MetaMask Delegation Manager: how smart-account wallets submit the call.
+const DELEGATOR = "0xdb9B1e94B5b69Df7e401DDbedE43491141047dB3" as const;
 const USER_ID = "11111111-1111-1111-1111-111111111111";
 const BARANGAY = "Adia, Agoncillo";
 const OTHER_BARANGAY = "Bagong Sikat, Agoncillo";
@@ -83,6 +85,8 @@ type ChainOptions = {
   purpose?: string;
   from?: `0x${string}`;
   to?: `0x${string}`;
+  /** Smart-account router that submits the outer transaction. */
+  routedThrough?: `0x${string}`;
   official?: `0x${string}`;
 };
 
@@ -94,8 +98,11 @@ function buildChain(options: ChainOptions = {}) {
     purpose = PURPOSE,
     from = OFFICIAL,
     to = CONTRACT,
+    routedThrough,
     official = OFFICIAL,
   } = options;
+
+  const recipient = routedThrough ?? to;
 
   const input = encodeFunctionData({
     abi: SK_LEDGE_ABI,
@@ -119,11 +126,16 @@ function buildChain(options: ChainOptions = {}) {
     [barangay, amount, BigInt(1700000000), type],
   );
 
-  state.chain.transaction = { from, to, input };
+  state.chain.transaction = {
+    from,
+    to: recipient,
+    // Routed calls wrap addRecord in the router's own calldata.
+    input: routedThrough ? "0x12345678" : input,
+  };
   state.chain.receipt = {
     status: "success",
     from,
-    to,
+    to: recipient,
     logs: [{ address: to, data, topics }],
   };
 }
@@ -590,6 +602,41 @@ describe("POST /api/sync-record blockchain verification", () => {
 
     expect(status).toBe(422);
     expect(responseBody.error).toContain("recipient does not match");
+  });
+
+  it("accepts an award routed through MetaMask's delegation manager", async () => {
+    buildChain({ routedThrough: DELEGATOR });
+
+    const { status, body: responseBody } = await call(payload());
+
+    expect(status).toBe(201);
+    expect(responseBody.message).toBe(
+      "Record synchronized and verified successfully.",
+    );
+  });
+
+  it("rejects a routed call that does not emit the contract's RecordAdded", async () => {
+    buildChain({ routedThrough: DELEGATOR });
+    state.chain.receipt = {
+      ...state.chain.receipt,
+      logs: (state.chain.receipt.logs as { address: string }[]).map((log) => ({
+        ...log,
+        address: OTHER_ADDRESS,
+      })),
+    };
+
+    const { status, body: responseBody } = await call(payload());
+
+    expect(status).toBe(422);
+    expect(responseBody.error).toContain("RecordAdded event");
+  });
+
+  it("rejects a routed call whose on-chain amount differs", async () => {
+    buildChain({ routedThrough: DELEGATOR, amount: BigInt(999) });
+
+    const { status } = await call(payload());
+
+    expect(status).toBe(422);
   });
 
   it("returns 422 when transaction and receipt senders differ", async () => {

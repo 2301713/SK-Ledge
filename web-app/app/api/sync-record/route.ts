@@ -38,6 +38,26 @@ const EVENT_RECORD_TYPES: Record<RecordType, string> = {
 const errorResponse = (error: string, status: number) =>
   NextResponse.json({ error }, { status });
 
+// MetaMask upgrades accounts to smart accounts and executes contract calls
+// through its Delegation Manager, so the transaction's recipient is the
+// delegator rather than the SkLedge contract. The RecordAdded event emitted by
+// the contract is what proves the call actually reached the ledger.
+const TRUSTED_CALL_ROUTERS: ReadonlySet<string> = new Set([
+  "0xdb9b1e94b5b69df7e401ddbede43491141047db3", // MetaMask Delegation Manager
+]);
+
+function isTrustedRecipient(
+  address: string | null | undefined,
+  expectedContract: string,
+) {
+  if (!address) return false;
+  const normalized = address.toLowerCase();
+  return (
+    normalized === expectedContract.toLowerCase() ||
+    TRUSTED_CALL_ROUTERS.has(normalized)
+  );
+}
+
 function isRecordType(value: unknown): value is RecordType {
   return typeof value === "string" && RECORD_TYPE_SET.has(value);
 }
@@ -414,10 +434,8 @@ export async function POST(req: NextRequest) {
     }
 
     if (
-      !transaction.to ||
-      transaction.to.toLowerCase() !== expectedContract.toLowerCase() ||
-      !receipt.to ||
-      receipt.to.toLowerCase() !== expectedContract.toLowerCase() ||
+      !isTrustedRecipient(transaction.to, expectedContract) ||
+      !isTrustedRecipient(receipt.to, expectedContract) ||
       transaction.from.toLowerCase() !== receipt.from.toLowerCase()
     ) {
       return errorResponse(
@@ -426,42 +444,51 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    let decodedCall;
-    try {
-      decodedCall = decodeFunctionData({
-        abi: SK_LEDGE_ABI,
-        data: transaction.input,
-      });
-    } catch {
-      return errorResponse(
-        "Transaction call data does not match a valid record submission.",
-        422,
-      );
-    }
+    // A smart-account wallet submits the call through its router, so the outer
+    // calldata is the redemption rather than addRecord. The RecordAdded event
+    // check below then carries the barangay, amount, record type, and official.
+    const isRoutedCall =
+      (transaction.to as string).toLowerCase() !==
+      expectedContract.toLowerCase();
 
-    if (decodedCall.functionName !== "addRecord") {
-      return errorResponse(
-        "Transaction did not call the record submission function.",
-        422,
-      );
-    }
+    if (!isRoutedCall) {
+      let decodedCall;
+      try {
+        decodedCall = decodeFunctionData({
+          abi: SK_LEDGE_ABI,
+          data: transaction.input,
+        });
+      } catch {
+        return errorResponse(
+          "Transaction call data does not match a valid record submission.",
+          422,
+        );
+      }
 
-    const [callBarangay, callAmount, callPurpose, callRecordType] =
-      decodedCall.args;
-    const canonicalCallBarangay =
-      typeof callBarangay === "string"
-        ? canonicalizeBarangay(callBarangay)
-        : null;
-    if (
-      canonicalCallBarangay !== canonicalBarangay ||
-      callAmount !== BigInt(amount) ||
-      callPurpose !== purpose ||
-      callRecordType !== EVENT_RECORD_TYPES[type]
-    ) {
-      return errorResponse(
-        "Transaction call data does not match the submitted record details.",
-        422,
-      );
+      if (decodedCall.functionName !== "addRecord") {
+        return errorResponse(
+          "Transaction did not call the record submission function.",
+          422,
+        );
+      }
+
+      const [callBarangay, callAmount, callPurpose, callRecordType] =
+        decodedCall.args;
+      const canonicalCallBarangay =
+        typeof callBarangay === "string"
+          ? canonicalizeBarangay(callBarangay)
+          : null;
+      if (
+        canonicalCallBarangay !== canonicalBarangay ||
+        callAmount !== BigInt(amount) ||
+        callPurpose !== purpose ||
+        callRecordType !== EVENT_RECORD_TYPES[type]
+      ) {
+        return errorResponse(
+          "Transaction call data does not match the submitted record details.",
+          422,
+        );
+      }
     }
 
     let recordAddedEventCount = 0;
