@@ -62,57 +62,72 @@ function FundBreakdownChart({
   segments: CategorySegment[];
   total: number;
 }) {
-  const hasData = total > 0 && segments.some((segment) => segment.amount > 0);
-  const radius = 38;
-  const circumference = 2 * Math.PI * radius;
-  const gap = segments.length > 1 ? 1.5 : 0;
-  let offset = 0;
+  const radius = 46;
+  const activeSegments = segments.filter((segment) => segment.amount > 0);
+
+  const pointOnCircle = (angleDeg: number) => {
+    const radians = ((angleDeg - 90) * Math.PI) / 180;
+    return [50 + radius * Math.cos(radians), 50 + radius * Math.sin(radians)];
+  };
+
+  // Each slice starts where the slices before it end, so compute the running
+  // angle up front instead of mutating a counter inside `map`.
+  const slices = activeSegments.map((segment, index) => {
+    const startAngle =
+      total > 0
+        ? (activeSegments
+            .slice(0, index)
+            .reduce((sum, previous) => sum + previous.amount, 0) /
+            total) *
+          360
+        : 0;
+    const share = total > 0 ? segment.amount / total : 0;
+    const endAngle = startAngle + share * 360;
+    const [x1, y1] = pointOnCircle(startAngle);
+    const [x2, y2] = pointOnCircle(endAngle);
+    const path =
+      share >= 0.9999
+        ? null
+        : `M 50 50 L ${x1} ${y1} A ${radius} ${radius} 0 ${
+            endAngle - startAngle > 180 ? 1 : 0
+          } 1 ${x2} ${y2} Z`;
+
+    return { ...segment, share, path };
+  });
 
   return (
-    <div className="relative mx-auto h-44 w-44 shrink-0 sm:h-52 sm:w-52">
-      <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
-        <circle
-          cx="50"
-          cy="50"
-          r={radius}
-          fill="none"
-          stroke="#E2E8F0"
-          strokeWidth="26"
-        />
-        {hasData &&
-          segments.map((segment) => {
-            const share = segment.amount / total;
-            const length = Math.max(circumference * share - gap, 0);
-            const dashOffset = -offset;
-            offset += circumference * share;
-
-            return (
-              <circle
-                key={segment.label}
-                cx="50"
-                cy="50"
-                r={radius}
-                fill="none"
-                stroke={segment.color}
-                strokeWidth="26"
-                strokeDasharray={`${length} ${circumference - length}`}
-                strokeDashoffset={dashOffset}
-              >
-                <title>{`${segment.label}: ${formatCompactPeso(
-                  segment.amount,
-                )} (${Math.round(share * 100)}%)`}</title>
-              </circle>
-            );
-          })}
+    <div className="mx-auto h-44 w-44 shrink-0 sm:h-52 sm:w-52">
+      <svg viewBox="0 0 100 100" className="h-full w-full">
+        <circle cx="50" cy="50" r={radius} fill="#E2E8F0" />
+        {slices.map((slice) =>
+          slice.path ? (
+            <path
+              key={slice.label}
+              d={slice.path}
+              fill={slice.color}
+              stroke="#FFFFFF"
+              strokeWidth={0.8}
+              strokeLinejoin="round"
+            >
+              <title>{`${slice.label}: ${formatCompactPeso(
+                slice.amount,
+              )} (${Math.round(slice.share * 100)}%)`}</title>
+            </path>
+          ) : (
+            <circle
+              key={slice.label}
+              cx="50"
+              cy="50"
+              r={radius}
+              fill={slice.color}
+            >
+              <title>{`${slice.label}: ${formatCompactPeso(
+                slice.amount,
+              )} (${Math.round(slice.share * 100)}%)`}</title>
+            </circle>
+          ),
+        )}
       </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
-        <span className="text-2xl font-bold tracking-tight text-primary-foreground">
-          {formatCompactPeso(total)}
-        </span>
-        <span className="mt-1 text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
-          Total Fund
-        </span>
-      </div>
     </div>
   );
 }
