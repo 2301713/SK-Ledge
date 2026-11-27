@@ -202,7 +202,7 @@ export default function CeilingPage() {
   if (isLoading) return <LogoLoader />;
 
   return (
-    <div className="flex min-h-screen gap-4 bg-background p-4 selection:bg-tertiary selection:text-primary">
+    <div className="flex min-h-screen flex-col lg:flex-row gap-4 bg-background p-4 selection:bg-tertiary selection:text-primary">
       {currentUser && (
         <SideBar
           userName={currentUser.full_name}

@@ -12,6 +12,7 @@ import { useAuthStore, UserAccount } from "@/lib/useAuthStore";
 import { AlertCircle, UserCircle, Pencil } from "lucide-react";
 import { useToast } from "@/lib/useToast";
 import { WalletBinding } from "@/components/WalletBinding";
+import DeleteAccountCard from "@/components/DeleteAccountCard";
 import {
   isValidContactNumber,
   normalizeContactNumber,
@@ -114,6 +115,12 @@ export default function AccountPage() {
     }
   };
 
+  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (userProfile) {
+      setUserProfile({ ...userProfile, username: e.target.value });
+    }
+  };
+
   const handleSave = async () => {
     if (!userProfile) return;
 
@@ -132,27 +139,51 @@ export default function AccountPage() {
       return;
     }
 
+    const username = (userProfile.username || "").trim();
+
+    if (!/^[A-Za-z0-9._-]{3,32}$/.test(username)) {
+      toast.error(
+        "Usernames must be 3–32 characters using letters, numbers, dots, dashes, or underscores.",
+      );
+      setIsSaving(false);
+      return;
+    }
+
     try {
-      const { error: updateError } = await supabase
+      const { data: updatedRows, error: updateError } = await supabase
         .from("profiles")
         .update({
           full_name: userProfile.full_name,
+          username,
           contact_number: contactNumber,
         })
-        .eq("id", userProfile.id);
+        .eq("id", userProfile.id)
+        .select("id, full_name, username, contact_number");
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        if (updateError.code === "23505") {
+          throw new Error("That username is already taken.");
+        }
+        throw updateError;
+      }
+
+      // RLS silently filters rows, so an empty result means nothing was saved.
+      const saved = updatedRows?.[0];
+      if (!saved) {
+        throw new Error("The profile update was rejected. Please sign in again.");
+      }
 
       // Update the sidebar name dynamically without reloading
       if (currentUser) {
         setCurrentUser({
           ...currentUser,
-          full_name: userProfile.full_name,
-          contact_number: contactNumber,
+          full_name: saved.full_name ?? userProfile.full_name,
+          username: saved.username,
+          contact_number: saved.contact_number ?? contactNumber,
         });
       }
 
-      toast.success("Profile updated — your name and contact number are saved.");
+      toast.success("Profile updated — your name, username, and contact number are saved.");
       setIsEditing(false);
     } catch (err) {
       const message =
@@ -206,7 +237,7 @@ export default function AccountPage() {
 
   // MAIN DASHBOARD LAYOUT
   return (
-    <div className="flex min-h-screen gap-4 bg-background p-4 selection:bg-tertiary selection:text-primary">
+    <div className="flex min-h-screen flex-col lg:flex-row gap-2 bg-background p-2 selection:bg-tertiary selection:text-primary sm:gap-4 sm:p-4">
       <SideBar
         userName={currentUser.full_name}
         roleType={currentUser.role_type}
@@ -289,7 +320,7 @@ export default function AccountPage() {
         <Card>
           <CardHeader eyebrow="Credentials" title="System & Personal Details" />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-8">
             {/* FULL NAME (Editable) */}
             <div className="space-y-2">
               <label className="ml-1 text-[10px] font-bold uppercase tracking-wider text-secondary-foreground">
@@ -331,16 +362,28 @@ export default function AccountPage() {
               )}
             </div>
 
-            {/* USERNAME (Read-Only) */}
+            {/* USERNAME (Editable) */}
             <div className="space-y-2">
               <label className="ml-1 text-[10px] font-bold uppercase tracking-wider text-secondary-foreground">
                 System Username
               </label>
-              <div className={staticField}>
-                {userProfile?.username || "N/A"}
-              </div>
+              {!isEditing ? (
+                <div className="rounded-xl border border-border bg-white px-4 py-3 text-sm font-bold text-primary-foreground">
+                  {userProfile?.username || "N/A"}
+                </div>
+              ) : (
+                <input
+                  type="text"
+                  value={userProfile?.username || ""}
+                  onChange={handleUsernameChange}
+                  className={editableField}
+                  placeholder="Enter a username"
+                  autoComplete="off"
+                />
+              )}
               <p className="ml-1 text-[10px] text-secondary-foreground/70">
-                Username is fixed to your login credentials.
+                Used across the portal. Your Google sign-in email does not
+                change.
               </p>
             </div>
 
@@ -367,7 +410,7 @@ export default function AccountPage() {
 
           {/* ACTION BUTTONS (Only visible when editing) */}
           {isEditing && (
-            <div className="mt-10 flex justify-end gap-4 border-t border-border pt-6">
+            <div className="mt-10 flex flex-col-reverse gap-3 border-t border-border pt-6 sm:flex-row sm:justify-end sm:gap-4">
               <button
                 onClick={() => {
                   setIsEditing(false);
@@ -401,6 +444,8 @@ export default function AccountPage() {
             </div>
           )}
         </Card>
+
+        <DeleteAccountCard username={userProfile?.username} />
       </main>
     </div>
   );

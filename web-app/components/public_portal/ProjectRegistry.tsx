@@ -28,6 +28,7 @@ export interface Project {
   is_open_for_bidding?: boolean;
   transaction_hash?: string;
   tx_hash?: string;
+  award_tx_hash?: string;
 }
 
 interface ProjectRegistryProps {
@@ -200,7 +201,10 @@ export default function ProjectRegistry({
                           ? rawBudget
                           : `₱${rawBudget}`;
 
-                    const txHash = p.transaction_hash || p.tx_hash;
+                    const txHash =
+                      p.award_tx_hash || p.transaction_hash || p.tx_hash;
+                    const isAwarded =
+                      p.status === "Awarded" || p.status === "Completed";
 
                     return (
                       <tr
@@ -257,7 +261,7 @@ export default function ProjectRegistry({
                             </a>
                           ) : (
                             <span className="text-[10px] font-bold uppercase tracking-wider text-secondary-foreground/70">
-                              Pending Sync
+                              {isAwarded ? "Pending Sync" : "Not yet awarded"}
                             </span>
                           )}
                         </td>

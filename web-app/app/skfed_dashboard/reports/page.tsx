@@ -7,7 +7,6 @@ import SideBar from "@/components/dashboard/SideBar";
 import TopBar from "@/components/dashboard/ui/TopBar";
 import PageHeader from "@/components/dashboard/ui/PageHeader";
 import StatCard from "@/components/dashboard/ui/StatCard";
-import DonutGauge from "@/components/dashboard/ui/DonutGauge";
 import { Card, CardHeader } from "@/components/dashboard/ui/Card";
 import { supabase } from "@/lib/supabase";
 import { UserAccount } from "@/lib/useAuthStore";
@@ -15,13 +14,7 @@ import { useRecordsSync } from "@/lib/useRecordsSync";
 import { canonicalizeBarangay } from "@/lib/batangasBarangays";
 
 import { BRAND, SUCCESS, PENDING, DANGER } from "@/components/dashboard/ui/chartColors";
-import {
-  FileDown,
-  FilePieChart,
-  Users2,
-  ShieldCheck,
-  TrendingUp,
-} from "lucide-react";
+import { FileDown, FilePieChart, Users2, TrendingUp } from "lucide-react";
 
 interface ReportProject {
   id: string;
@@ -56,6 +49,73 @@ interface ComplianceRow {
 }
 
 const CATEGORY_COLORS = [BRAND, SUCCESS, PENDING, DANGER, "#94A3B8"];
+
+const formatCompactPeso = (amount: number) =>
+  amount >= 1_000_000
+    ? `₱${(amount / 1_000_000).toFixed(1)}M`
+    : `₱${Math.round(amount).toLocaleString("en-PH")}`;
+
+function FundBreakdownChart({
+  segments,
+  total,
+}: {
+  segments: CategorySegment[];
+  total: number;
+}) {
+  const hasData = total > 0 && segments.some((segment) => segment.amount > 0);
+  const radius = 38;
+  const circumference = 2 * Math.PI * radius;
+  const gap = segments.length > 1 ? 1.5 : 0;
+  let offset = 0;
+
+  return (
+    <div className="relative mx-auto h-44 w-44 shrink-0 sm:h-52 sm:w-52">
+      <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
+        <circle
+          cx="50"
+          cy="50"
+          r={radius}
+          fill="none"
+          stroke="#E2E8F0"
+          strokeWidth="26"
+        />
+        {hasData &&
+          segments.map((segment) => {
+            const share = segment.amount / total;
+            const length = Math.max(circumference * share - gap, 0);
+            const dashOffset = -offset;
+            offset += circumference * share;
+
+            return (
+              <circle
+                key={segment.label}
+                cx="50"
+                cy="50"
+                r={radius}
+                fill="none"
+                stroke={segment.color}
+                strokeWidth="26"
+                strokeDasharray={`${length} ${circumference - length}`}
+                strokeDashoffset={dashOffset}
+              >
+                <title>{`${segment.label}: ${formatCompactPeso(
+                  segment.amount,
+                )} (${Math.round(share * 100)}%)`}</title>
+              </circle>
+            );
+          })}
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
+        <span className="text-2xl font-bold tracking-tight text-primary-foreground">
+          {formatCompactPeso(total)}
+        </span>
+        <span className="mt-1 text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
+          Total Fund
+        </span>
+      </div>
+    </div>
+  );
+}
 
 export default function SKFederationDashboard() {
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
@@ -322,17 +382,6 @@ export default function SKFederationDashboard() {
     });
   };
 
-  const formatCompact = (amount: number) =>
-    amount >= 1_000_000
-      ? `₱${(amount / 1_000_000).toFixed(1)}M`
-      : `₱${Math.round(amount).toLocaleString("en-PH")}`;
-
-  const formatPeso = (amount: number) =>
-    `₱${amount.toLocaleString("en-PH", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`;
-
   // LOADING STATE
   if (isLoading) return <LogoLoader />;
 
@@ -340,7 +389,7 @@ export default function SKFederationDashboard() {
   if (!currentUser) return null;
 
   return (
-    <div className="flex min-h-screen gap-4 bg-background p-4 selection:bg-tertiary selection:text-primary">
+    <div className="flex min-h-screen flex-col lg:flex-row gap-4 bg-background p-4 selection:bg-tertiary selection:text-primary">
       <SideBar
         userName={currentUser.full_name}
         roleType={currentUser.role_type}
@@ -388,7 +437,7 @@ export default function SKFederationDashboard() {
           />
           <StatCard
             label="Total Fund"
-            value={formatCompact(reportSummary.totalFund)}
+            value={formatCompactPeso(reportSummary.totalFund)}
             icon={FilePieChart}
             trend="Across all registered projects"
           />
@@ -408,10 +457,9 @@ export default function SKFederationDashboard() {
           />
 
           <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-[auto_1fr]">
-            <DonutGauge
-              centerValue={formatCompact(reportSummary.totalFund)}
-              centerLabel="Total Fund"
+            <FundBreakdownChart
               segments={reportSummary.segments}
+              total={reportSummary.totalFund}
             />
 
             <div className="space-y-3">
@@ -444,92 +492,13 @@ export default function SKFederationDashboard() {
                         {share.toFixed(0)}%
                       </span>
                       <p className="text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
-                        {formatCompact(item.amount)}
+                        {formatCompactPeso(item.amount)}
                       </p>
                     </div>
                   </div>
                 );
               })}
             </div>
-          </div>
-        </Card>
-
-        {/* COMPLIANCE MATRIX */}
-        <Card>
-          <CardHeader
-            eyebrow="Compliance"
-            title="Barangay Compliance Matrix"
-            subtitle="Submission status and impact scoring per barangay"
-            action={
-              <div className="inline-flex items-center gap-2 rounded-xl border border-border bg-secondary/60 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
-                <ShieldCheck className="h-3.5 w-3.5 text-success" />
-                Live
-              </div>
-            }
-          />
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-border text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
-                  <th className="p-4">Barangay Name</th>
-                  <th className="p-4 text-center">Projects</th>
-                  <th className="p-4 text-center">Awarded</th>
-                  <th className="p-4 text-right">Allocated</th>
-                  <th className="p-4 text-right">Spent</th>
-                  <th className="p-4">Utilization</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border text-sm">
-                {complianceMatrix.length === 0 && (
-                  <tr>
-                    <td
-                      colSpan={6}
-                      className="p-8 text-center text-xs font-medium text-secondary-foreground"
-                    >
-                      No barangay ledger records yet.
-                    </td>
-                  </tr>
-                )}
-                {complianceMatrix.map((row) => (
-                  <tr
-                    key={row.barangay}
-                    className="transition-colors hover:bg-secondary/50"
-                  >
-                    <td className="p-4 font-bold text-primary-foreground">
-                      Barangay {row.barangay}
-                    </td>
-                    <td className="p-4 text-center text-primary-foreground">
-                      {row.projects}
-                    </td>
-                    <td className="p-4 text-center text-primary-foreground">
-                      {row.awarded}
-                    </td>
-                    <td className="p-4 text-right text-primary-foreground">
-                      {formatPeso(row.allocated)}
-                    </td>
-                    <td className="p-4 text-right text-primary-foreground">
-                      {formatPeso(row.spent)}
-                    </td>
-                    <td className="p-4">
-                      <div className="flex items-center gap-2">
-                        <div className="h-1.5 w-full max-w-24 overflow-hidden rounded-full bg-border">
-                          <div
-                            className={`h-full rounded-full ${
-                              row.utilization >= 100 ? "bg-danger" : "bg-primary"
-                            }`}
-                            style={{ width: `${Math.min(row.utilization, 100)}%` }}
-                          />
-                        </div>
-                        <span className="text-xs font-bold text-primary-foreground">
-                          {row.utilization}%
-                        </span>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
           </div>
         </Card>
       </main>

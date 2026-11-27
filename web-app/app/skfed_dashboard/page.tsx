@@ -16,7 +16,6 @@ import { canonicalizeBarangay } from "@/lib/batangasBarangays";
 import {
   Building2,
   Megaphone,
-  ChevronRight,
   TrendingUp,
   FolderKanban,
   CircleAlert,
@@ -343,7 +342,7 @@ export default function SKFederationDashboard() {
   });
 
   return (
-    <div className="flex min-h-screen gap-4 bg-background p-4 selection:bg-tertiary selection:text-primary">
+    <div className="flex min-h-screen flex-col lg:flex-row gap-4 bg-background p-4 selection:bg-tertiary selection:text-primary">
       <SideBar
         userName={currentUser.full_name}
         roleType={currentUser.role_type}
@@ -400,11 +399,6 @@ export default function SKFederationDashboard() {
               eyebrow="Monitoring"
               title="Barangay Oversight"
               subtitle="Monitor constituent performance"
-              action={
-                <button className="inline-flex items-center gap-1 rounded-xl bg-secondary px-4 py-2 text-xs font-bold uppercase tracking-widest text-primary transition hover:bg-secondary-foreground/10">
-                  View Directory <ChevronRight className="h-4 w-4" />
-                </button>
-              }
             />
 
             <div className="space-y-3">

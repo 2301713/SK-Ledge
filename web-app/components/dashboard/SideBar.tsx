@@ -26,6 +26,7 @@ import {
   Sliders,
   X,
   Loader2,
+  Menu,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -150,12 +151,6 @@ const ROLE_LINKS: Record<
       icon: FileText,
     },
     {
-      id: "id_18",
-      label: "Auditor Portal",
-      href: "/coa_dashboard/auditor",
-      icon: ShieldCheck,
-    },
-    {
       id: "id_19",
       label: "Account",
       href: "/coa_dashboard/account",
@@ -214,10 +209,18 @@ export default function Sidebar({
   const toast = useToast();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [showNav, setShowNav] = useState(false);
 
   const resolvedAvatarUrl = useAvatarUrl(avatarUrl);
 
   const navLinks = ROLE_LINKS[roleType] || [];
+  const currentLink = navLinks
+    .filter(
+      (link) =>
+        pathname === link.href || pathname.startsWith(`${link.href}/`),
+    )
+    .sort((a, b) => b.href.length - a.href.length)[0];
+  const currentLabel = currentLink?.label ?? "Dashboard";
 
   const confirmLogout = async () => {
     setIsLoggingOut(true);
@@ -235,7 +238,39 @@ export default function Sidebar({
 
   return (
     <>
-      <aside className="sticky top-4 z-50 flex h-[calc(100vh-2rem)] w-20 shrink-0 flex-col rounded-3xl border border-border bg-white p-3 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_32px_-16px_rgba(15,23,42,0.12)] lg:w-65 lg:p-5">
+      {/* MOBILE TOP BAR */}
+      <header className="sticky top-0 z-50 flex items-center justify-between gap-3 rounded-2xl border border-border bg-white/95 px-3 py-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_32px_-16px_rgba(15,23,42,0.12)] backdrop-blur lg:hidden">
+        <Link
+          href={navLinks[0]?.href ?? "/"}
+          className="flex min-w-0 items-center gap-2.5"
+        >
+          <Image
+            src="/skledge-logo.png"
+            height={32}
+            width={32}
+            alt="SK-Ledge Logo"
+          />
+          <div className="min-w-0">
+            <p className="truncate text-sm font-bold leading-tight text-primary-foreground">
+              {currentLabel}
+            </p>
+            <p className="truncate text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
+              {roleType.replace("_", " ")}
+            </p>
+          </div>
+        </Link>
+        <button
+          type="button"
+          onClick={() => setShowNav(true)}
+          aria-label="Open navigation"
+          aria-expanded={showNav}
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-white text-primary-foreground transition hover:bg-secondary"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+      </header>
+
+      <aside className="sticky top-4 z-50 hidden h-[calc(100vh-2rem)] w-20 shrink-0 flex-col rounded-3xl border border-border bg-white p-3 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_32px_-16px_rgba(15,23,42,0.12)] lg:flex lg:w-65 lg:p-5">
         {/* BRAND */}
         <div className="flex items-center justify-center gap-3 px-0 pb-6 pt-1 lg:justify-start lg:px-2">
           <Image
@@ -347,6 +382,131 @@ export default function Sidebar({
           </div>
         </div>
       </aside>
+
+      {/* MOBILE NAVIGATION DRAWER */}
+      {showNav && (
+        <div
+          className="fixed inset-0 z-[100] flex bg-slate-950/45 backdrop-blur-sm animate-fadein lg:hidden"
+          onClick={() => setShowNav(false)}
+        >
+          <aside
+            role="dialog"
+            aria-modal="true"
+            aria-label="Navigation"
+            onClick={(e) => e.stopPropagation()}
+            className="relative flex h-full w-[86%] max-w-xs flex-col overflow-hidden rounded-r-3xl border-r border-border bg-white shadow-[24px_0_60px_-24px_rgba(1,56,168,0.35)] animate-slidein-left"
+          >
+            <div className="h-1 w-full bg-primary" />
+
+            <header className="flex items-center justify-between gap-4 border-b border-border px-5 py-4">
+              <div className="flex items-center gap-3">
+                <Image
+                  src="/skledge-logo.png"
+                  height={34}
+                  width={34}
+                  alt="SK-Ledge Logo"
+                />
+                <div>
+                  <p className="text-base font-bold leading-none tracking-tight text-primary-foreground">
+                    SK-Ledge
+                  </p>
+                  <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
+                    Portal
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowNav(false)}
+                aria-label="Close navigation"
+                className="flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-white text-secondary-foreground transition hover:bg-secondary hover:text-primary-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </header>
+
+            <nav className="no-scrollbar flex-1 overflow-y-auto px-3 py-4">
+              <p className="px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-secondary-foreground">
+                Menu
+              </p>
+              <div className="space-y-1">
+                {navLinks.map((link) => {
+                  const isActive = pathname === link.href;
+                  const Icon = link.icon;
+                  return (
+                    <Link
+                      key={link.id}
+                      href={link.href}
+                      onClick={() => setShowNav(false)}
+                      className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 transition-all ${
+                        isActive
+                          ? "bg-primary/5 text-primary"
+                          : "text-primary-foreground hover:bg-secondary"
+                      }`}
+                    >
+                      <span
+                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors ${
+                          isActive
+                            ? "bg-primary text-white shadow-[0_4px_12px_-4px_rgba(1,56,168,0.5)]"
+                            : "bg-secondary text-secondary-foreground"
+                        }`}
+                      >
+                        <Icon className="h-5 w-5" />
+                      </span>
+                      <span className="text-sm font-semibold">{link.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </nav>
+
+            <div className="border-t border-border px-3 py-4">
+              <div className="flex items-center gap-3 rounded-2xl border border-border bg-secondary/40 p-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary text-sm font-bold text-white">
+                  {resolvedAvatarUrl ? (
+                    <Image
+                      src={resolvedAvatarUrl}
+                      alt={userName}
+                      width={40}
+                      height={40}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    userName.charAt(0).toUpperCase()
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p
+                    className="truncate text-sm font-semibold text-primary-foreground"
+                    title={userName}
+                  >
+                    {userName}
+                  </p>
+                  <p className="truncate text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
+                    {roleType.replace("_", " ")}
+                  </p>
+                  {displayBarangay && displayBarangay !== "N/A" && (
+                    <p className="truncate text-[10px] text-secondary-foreground">
+                      {displayBarangay}
+                    </p>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowNav(false);
+                    setShowLogoutConfirm(true);
+                  }}
+                  aria-label="Sign out"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-secondary-foreground shadow-sm transition hover:bg-danger/10 hover:text-danger"
+                >
+                  <LogOut className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          </aside>
+        </div>
+      )}
 
       {/* LOGOUT CONFIRMATION DRAWER */}
       {showLogoutConfirm && (

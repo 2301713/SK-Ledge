@@ -45,7 +45,7 @@ export default function COADashboard() {
   const authAttemptedRef = useRef(false);
   const [projects, setProjects] = useState<{ id: string; budget: number }[]>([]);
 
-  const { records, isLoading: isRecordsLoading, lastSyncedAt } = useRecordsSync({
+  const { records, isLoading: isRecordsLoading } = useRecordsSync({
     enabled: Boolean(currentUser),
     limit: 500,
   });
@@ -94,12 +94,6 @@ export default function COADashboard() {
       (record) => Number(record.timestamp) * 1000 < URGENT_CUTOFF_MS,
     );
 
-    const currentYear = new Date().getFullYear();
-    const requestsYTD = records.filter((record) => {
-      if (!record.created_at) return false;
-      return new Date(record.created_at).getFullYear() === currentYear;
-    });
-
     const totalBudget = projects.reduce(
       (sum, project) => sum + project.budget,
       0,
@@ -111,7 +105,6 @@ export default function COADashboard() {
       pendingDisbursements: records.filter(
         (record) => record.record_type === "expense",
       ).length,
-      totalRequestsYTD: requestsYTD.length,
       urgentFlags: urgentRecords.length,
       totalBudget,
       approvedAmount,
@@ -121,7 +114,6 @@ export default function COADashboard() {
 
   const pendingApprovalCount = overview.pendingApprovals;
   const pendingDisbursementCount = overview.pendingDisbursements;
-  const totalRequestsYTD = overview.totalRequestsYTD;
   const urgentFlags = overview.urgentFlags;
 
   useEffect(() => {
@@ -236,7 +228,7 @@ export default function COADashboard() {
   }
 
   return (
-    <div className="flex min-h-screen gap-4 bg-background p-4 selection:bg-tertiary selection:text-primary">
+    <div className="flex min-h-screen flex-col lg:flex-row gap-4 bg-background p-4 selection:bg-tertiary selection:text-primary">
       <SideBar
         userName={currentUser.full_name}
         roleType={currentUser.role_type}
@@ -275,7 +267,7 @@ export default function COADashboard() {
         />
 
         {/* STAT ROW */}
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
           <StatCard
             label="Pending Approvals"
             value={isChainLoading ? "—" : pendingApprovalCount}
@@ -289,19 +281,6 @@ export default function COADashboard() {
             value={isRecordsLoading ? "—" : pendingDisbursementCount}
             icon={FileText}
             trend="Awaiting audit review"
-          />
-          <StatCard
-            label="Total Requests YTD"
-            value={isRecordsLoading ? "—" : totalRequestsYTD.toLocaleString()}
-            icon={TrendingUp}
-            trend={
-              lastSyncedAt
-                ? `Last sync: ${lastSyncedAt.toLocaleTimeString("en-US", {
-                    hour: "numeric",
-                    minute: "2-digit",
-                  })}`
-                : "Awaiting first sync"
-            }
           />
           <StatCard
             label="Urgent Flags"

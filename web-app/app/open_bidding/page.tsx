@@ -8,9 +8,6 @@ import {
   CheckCircle2,
   FileText,
   MapPin,
-  Layers,
-  Radio,
-  Headset,
   FileStack,
   ShieldCheck,
   Inbox,
@@ -92,39 +89,6 @@ const toBiddingProject = (row: ProjectRow): BiddingProject => {
     awardTxHash: row.award_tx_hash ?? undefined,
   };
 };
-
-const marketplaceStats = (
-  projectCount: number,
-  openBidsCount: number,
-): {
-  icon: React.ElementType;
-  label: string;
-  value: string;
-  sub: string;
-  color: string;
-}[] => [
-  {
-    icon: Layers,
-    label: "Marketplace Status",
-    value: String(projectCount),
-    sub: "Total published bid opportunities",
-    color: "text-primary",
-  },
-  {
-    icon: Radio,
-    label: "Open for Submission",
-    value: String(openBidsCount),
-    sub: "Procurements accepting proposals",
-    color: "text-success",
-  },
-  {
-    icon: Headset,
-    label: "Vendor Readiness",
-    value: "24/7",
-    sub: "Tender documents available online",
-    color: "text-tertiary",
-  },
-];
 
 export default function BiddingPortal() {
   const [projects, setProjects] = useState<BiddingProject[]>([]);
@@ -342,33 +306,6 @@ export default function BiddingPortal() {
         </section>
 
         <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6">
-          {/* MARKETPLACE SNAPSHOT */}
-          <div className="animate-rise overflow-hidden rounded-3xl border border-border bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(15,23,42,0.10)] motion-reduce:animate-none">
-            <div className="grid grid-cols-1 divide-y divide-border sm:grid-cols-3 sm:divide-x sm:divide-y-0">
-              {marketplaceStats(projects.length, openBidsCount).map((stat) => {
-                const Icon = stat.icon;
-                return (
-                  <div key={stat.label} className="p-5 sm:p-6">
-                    <div className="flex items-center justify-between">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-secondary-foreground">
-                        {stat.label}
-                      </p>
-                      <Icon className={`h-4 w-4 ${stat.color}`} />
-                    </div>
-                    <p
-                      className={`mt-3 text-3xl font-black tabular-nums ${stat.color}`}
-                    >
-                      {stat.value}
-                    </p>
-                    <p className="mt-1.5 text-xs text-secondary-foreground">
-                      {stat.sub}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
           {/* BIDDING LEDGER */}
           <div
             className="animate-rise overflow-hidden rounded-3xl border border-border bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(15,23,42,0.10)] motion-reduce:animate-none"

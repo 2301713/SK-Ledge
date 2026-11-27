@@ -22,6 +22,7 @@
 
   --animate-fadein: fadein 0.7s ease-in-out;
   --animate-slidein: slidein 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-slidein-left: slidein-left 0.35s cubic-bezier(0.22, 1, 0.36, 1);
   --animate-breathe: breathe 2.8s ease-in-out infinite;
   --animate-sweep: sweep 1.8s cubic-bezier(0.65, 0, 0.35, 1) infinite;
   --animate-rise: rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
@@ -44,6 +45,18 @@
     from {
       opacity: 0.6;
       transform: translateX(100%);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes slidein-left {
+    from {
+      opacity: 0.6;
+      transform: translateX(-100%);
     }
 
     to {

@@ -2,7 +2,6 @@
 
 import LogoLoader from "@/components/LogoLoader";
 import { useState, useEffect, useMemo } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import SideBar from "@/components/dashboard/SideBar";
 import TopBar from "@/components/dashboard/ui/TopBar";
@@ -17,8 +16,6 @@ import {
   PiggyBank,
   Receipt,
   Gauge,
-  Coins,
-  ArrowRight,
 } from "lucide-react";
 import { useReadContract } from "wagmi";
 import { CONTRACT_ADDRESS, SK_LEDGE_ABI } from "@/lib/contractConfig";
@@ -377,7 +374,7 @@ export default function ABYIPPage() {
   if (isLoading) return <LogoLoader />;
 
   return (
-    <div className="flex min-h-screen gap-4 bg-background p-4 selection:bg-tertiary selection:text-primary">
+    <div className="flex min-h-screen flex-col lg:flex-row gap-2 bg-background p-2 selection:bg-tertiary selection:text-primary sm:gap-4 sm:p-4">
       {currentUser && (
         <SideBar
           userName={currentUser.full_name}
@@ -423,7 +420,7 @@ export default function ABYIPPage() {
         />
 
         {/* OVERVIEW STATS (REPLACED WITH ON-CHAIN DATA) */}
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 xl:grid-cols-4">
           <StatCard
             label="Total Allocation"
             value={formatM(onChainCeiling)}
@@ -470,101 +467,6 @@ export default function ABYIPPage() {
             </p>
           </div>
         </div>
-
-        {/* BUDGET ALLOCATION */}
-        <Card>
-          <CardHeader
-            eyebrow="Blockchain"
-            title="Budget Allocation"
-            subtitle="Allocations are signed on the dedicated Fund Allocations screen"
-          />
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
-            <div className="flex flex-col justify-between gap-5 rounded-3xl border border-border bg-secondary/40 p-6">
-              <div className="flex items-start gap-3">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                  <Coins className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-primary-foreground">
-                    Allocations have their own screen
-                  </p>
-                  <p className="mt-1 text-xs leading-relaxed text-secondary-foreground">
-                    {currentUser?.role_type === "SK_Treasurer"
-                      ? `Sign new ABYIP allocations for ${barangay ?? "your barangay"} and review the allocations recorded on the Sepolia ledger on the Fund Allocations page.`
-                      : `ABYIP allocations for ${barangay ?? "your barangay"} are recorded by your SK Treasurer and shown here as a planning reference.`}
-                  </p>
-                </div>
-              </div>
-
-              {currentUser?.role_type === "SK_Treasurer" && (
-                <Link
-                  href="/sk_dashboard/allocations"
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white shadow-[0_6px_16px_-6px_rgba(1,56,168,0.5)] transition hover:bg-primary/90 active:scale-[0.98]"
-                >
-                  Open Fund Allocations
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              )}
-            </div>
-            <aside className="flex flex-col gap-5 rounded-3xl border border-border bg-secondary/40 p-6">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-secondary-foreground">
-                  Live Budget
-                </p>
-                <p className="mt-1 text-lg font-bold tracking-tight text-primary-foreground">
-                  {currentUser?.barangay ?? "No Barangay"}
-                </p>
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex items-center justify-between gap-3 border-b border-border pb-3">
-                  <span className="text-xs font-semibold text-secondary-foreground">
-                    Ceiling
-                  </span>
-                  <span className="text-sm font-bold text-primary-foreground">
-                    {formatPeso(onChainCeiling)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between gap-3 border-b border-border pb-3">
-                  <span className="text-xs font-semibold text-secondary-foreground">
-                    Allocated
-                  </span>
-                  <span className="text-sm font-bold text-primary">
-                    {formatPeso(onChainAllocated)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between gap-3 border-b border-border pb-3">
-                  <span className="text-xs font-semibold text-secondary-foreground">
-                    Remaining
-                  </span>
-                  <span className="text-sm font-bold text-primary-foreground">
-                    {formatPeso(onChainRemaining)}
-                  </span>
-                </div>
-              </div>
-
-              <div>
-                <div className="mb-2 flex items-center justify-between gap-3">
-                  <span className="text-xs font-semibold text-secondary-foreground">
-                    Utilization
-                  </span>
-                  <span className="text-xs font-bold text-primary-foreground">
-                    {onChainUtilization}%
-                  </span>
-                </div>
-                <div className="h-2 overflow-hidden rounded-full bg-border">
-                  <div
-                    className={`h-full rounded-full ${getProgressColor(onChainUtilization)} transition-all duration-700`}
-                    style={{ width: `${Math.min(onChainUtilization, 100)}%` }}
-                  />
-                </div>
-                <p className="mt-2 text-[10px] font-medium text-secondary-foreground">
-                  Budget usage across categories
-                </p>
-              </div>
-            </aside>
-          </div>
-        </Card>
 
         {/* ABYIP PROJECTS */}
         <Card>
