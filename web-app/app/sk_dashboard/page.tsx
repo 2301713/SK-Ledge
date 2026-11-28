@@ -470,7 +470,7 @@ export default function SKDashboard() {
                 </div>
 
                 <div className="md:w-1/4">
-                  <span className="inline-flex rounded-lg border border-border bg-white px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-secondary-foreground shadow-sm">
+                  <span className="inline-flex whitespace-nowrap rounded-lg border border-border bg-white px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-secondary-foreground shadow-sm">
                     {p.category}
                   </span>
                 </div>

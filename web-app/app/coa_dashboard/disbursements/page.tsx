@@ -481,7 +481,7 @@ export default function DisbursementsPage() {
                         </td>
 
                         <td className="px-4 py-4 align-middle">
-                          <span className="inline-flex rounded-lg border border-border bg-secondary/60 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
+                          <span className="inline-flex whitespace-nowrap rounded-lg border border-border bg-secondary/60 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-secondary-foreground">
                             {item.category}
                           </span>
                         </td>
@@ -520,7 +520,7 @@ export default function DisbursementsPage() {
                               type="button"
                               onClick={() => setSelectedExpense(item)}
                               disabled={!item.recordId}
-                              className="rounded-xl bg-primary px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-white shadow-sm transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40"
+                              className="inline-flex items-center justify-center whitespace-nowrap rounded-xl bg-primary px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40"
                             >
                               {item.audit
                                 ? `Re-audit · ${AUDIT_STATUS_LABELS[item.audit.status]}`
